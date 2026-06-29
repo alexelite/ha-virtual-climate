@@ -1,0 +1,98 @@
+zone_manager.set_packing_mode:
+  name: Set packing mode
+  description: Choose simultaneous or staggered packing for zone slots.
+  fields:
+    packing:
+      required: true
+      example: simultaneous
+      selector:
+        select:
+          options:
+            - simultaneous
+            - staggered
+
+zone_manager.set_cycle_bounds:
+  name: Set cycle bounds
+  description: Set min and max cycle length (seconds).
+  fields:
+    t_cycle_min_s:
+      required: true
+      selector: number
+    t_cycle_max_s:
+      required: true
+      selector: number
+
+zone_manager.set_humidity_limits:
+  name: Set humidity limits
+  description: Configure RH alert and fault thresholds.
+  fields:
+    rh_alert:
+      required: true
+      selector: number
+    rh_fault:
+      required: true
+      selector: number
+
+virtual_climate.update_zone:
+  name: Update zone settings
+  description: Update zone configuration at runtime without restart.
+  fields:
+    zone_id:
+      required: true
+      description: Zone ID to update
+      selector:
+        text:
+    floor_limits:
+      required: false
+      description: Floor temperature limits
+      selector:
+        object:
+    open_s:
+      required: false
+      description: Actuator open time in seconds
+      selector:
+        number:
+          min: 0
+          max: 600
+    close_s:
+      required: false
+      description: Actuator close time in seconds
+      selector:
+        number:
+          min: 0
+          max: 600
+    zone_min_on_s:
+      required: false
+      description: Minimum zone ON time in seconds
+      selector:
+        number:
+          min: 0
+          max: 3600
+    zone_min_off_s:
+      required: false
+      description: Minimum zone OFF time in seconds
+      selector:
+        number:
+          min: 0
+          max: 3600
+    sensor_floor:
+      required: false
+      description: Floor temperature sensor entity
+      selector:
+        entity:
+          domain: sensor
+    window_switch:
+      required: false
+      description: Window contact sensor entity
+      selector:
+        entity:
+          domain: binary_sensor
+    support_mode:
+      required: false
+      description: Supported HVAC modes
+      selector:
+        select:
+          options:
+            - HEAT
+            - COOL
+            - BOTH

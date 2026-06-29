@@ -1,0 +1,168 @@
+{
+    "config": {
+      "step": {
+        "user": {
+          "title": "Climat Virtual — Setări globale",
+          "description": "Alegeți helper-ul global pentru modul HEAT/COOL și setările de coordonare de bază.",
+          "data": {
+            "global_co_mode_entity": "Helper mod global (HEAT/COOL)",
+            "packing_mode": "Mod de împachetare",
+            "t_cycle_seconds": "Durata ciclului (secunde)",
+            "t_cycle_min": "Durata minimă a ciclului (secunde)",
+            "t_cycle_max": "Durata maximă a ciclului (secunde)",
+            "rh_alert": "Pragul de alertă RH (%)",
+            "rh_fault": "Pragul de eroare RH (%)",
+            "dp_safety_margin_c": "Marja de siguranță punct de rouă (°C)"
+          }
+        },
+        "choose_method": {
+          "title": "Alegeți metoda de configurare",
+          "description": "Importați zone din JSON pentru o configurare rapidă sau adăugați-le cu asistentul.",
+          "menu_options": {
+            "zones_json": "Import din JSON",
+            "zone_wizard": "Adaugă o zonă (asistent)",
+            "finish": "Finalizează configurarea"
+          }
+        },
+        "zones_json": {
+          "title": "Import zone din JSON",
+          "description": "Lipiți un array JSON de zone. Necesar per zonă: id, name, sensor_air, sensor_rh, switch_actuator. Opțional: sensor_floor, window_switch, support_mode, floor_limits, open_s, close_s, zone_min_on_s, zone_min_off_s.",
+          "data": {
+            "zones_json": "Zone JSON"
+          }
+        },
+        "zone_wizard": {
+          "title": "Adaugă o zonă",
+          "description": "Alegeți senzorii și actuatorul pentru această zonă, apoi salvați pentru a adăuga alta sau finalizați.",
+          "data": {
+            "id": "ID Zonă",
+            "name": "Numele zonei",
+            "sensor_air": "Senzor temperatură aer",
+            "sensor_floor": "Senzor temperatură podea (opțional)",
+            "sensor_rh": "Senzor umiditate",
+            "switch_actuator": "Actuator zonă (switch/grup)",
+            "window_switch": "Contact fereastră (opțional)",
+            "support_mode": "Moduri suportate",
+            "floor_limits": "Limite podea JSON (opțional: {\"heat_min\":24,\"heat_max\":28,\"cool_min\":20,\"cool_max\":24})",
+            "open_s": "Timp deschidere actuator (s)",
+            "close_s": "Timp închidere actuator (s)",
+            "zone_min_on_s": "Timp minim ON zonă (s)",
+            "zone_min_off_s": "Timp minim OFF zonă (s)"
+          }
+        },
+        "finish": {
+          "title": "Finalizează configurarea",
+          "description": "Creați integrarea cu zonele configurate."
+        }
+      },
+      "error": {
+        "invalid_zones_json": "JSON zone invalid. Furnizați un array ne-gol de obiecte zonă.",
+        "invalid_zone": "Valori zonă invalide. Verificați câmpurile necesare și formatele JSON."
+      }
+    },
+    "options": {
+      "step": {
+        "init": {
+          "title": "Opțiuni Climat Virtual",
+          "description": "Configurați setările globale sau editați zonele individuale.",
+          "menu_options": {
+            "global_options": "Setări Globale",
+            "zones_pick": "Editează Zone",
+            "finish": "Finalizează"
+          }
+        },
+        "global_options": {
+          "title": "Setări Globale",
+          "description": "Configurați parametrii globali de coordonare.",
+          "data": {
+            "global_co_mode_entity": "Helper mod global (HEAT/COOL)",
+            "packing_mode": "Mod de împachetare",
+            "t_cycle_seconds": "Durata ciclului (secunde)",
+            "t_cycle_min": "Durata minimă a ciclului (secunde)",
+            "t_cycle_max": "Durata maximă a ciclului (secunde)",
+            "rh_alert": "Pragul de alertă RH (%)",
+            "rh_fault": "Pragul de eroare RH (%)",
+            "dp_safety_margin_c": "Marja de siguranță punct de rouă (°C)"
+          }
+        },
+        "zones_pick": {
+          "title": "Selectează Zona",
+          "description": "Alegeți o zonă pentru a edita setările sale.",
+          "data": {
+            "zone_id": "Zonă"
+          }
+        },
+        "zone_edit": {
+          "title": "Editează Setările Zonei",
+          "description": "Configurați parametrii specifici zonei.",
+          "data": {
+            "support_mode": "Moduri suportate",
+            "heat_min": "Temperatură minimă încălzire (°C)",
+            "heat_max": "Temperatură maximă încălzire (°C)",
+            "cool_min": "Temperatură minimă răcire (°C)",
+            "cool_max": "Temperatură maximă răcire (°C)",
+            "open_s": "Timp deschidere actuator (s)",
+            "close_s": "Timp închidere actuator (s)",
+            "zone_min_on_s": "Timp minim ON zonă (s)",
+            "zone_min_off_s": "Timp minim OFF zonă (s)",
+            "sensor_floor": "Senzor temperatură podea",
+            "window_switch": "Senzor contact fereastră"
+          }
+        },
+        "finish": {
+          "title": "Opțiuni Actualizate",
+          "description": "Configurația a fost salvată cu succes."
+        }
+      },
+      "error": {
+        "no_zones": "Nu s-au găsit zone. Vă rugăm să adăugați zone mai întâi.",
+        "invalid_floor_limits": "Limite podea invalide. Minimul trebuie să fie mai mic decât maximul pentru fiecare mod.",
+        "invalid_number": "Format număr invalid. Vă rugăm să introduceți valori numerice valide.",
+        "zone_not_found": "Zona nu a fost găsită."
+      }
+    },
+    "services": {
+      "virtual_climate.update_zone": {
+        "name": "Actualizează setările zonei",
+        "description": "Actualizează configurația zonei în timp real fără repornire.",
+        "fields": {
+          "zone_id": {
+            "name": "ID Zonă",
+            "description": "ID-ul zonei de actualizat"
+          },
+          "floor_limits": {
+            "name": "Limite podea",
+            "description": "Limitele de temperatură ale podelei"
+          },
+          "open_s": {
+            "name": "Timp deschidere",
+            "description": "Timpul de deschidere al actuatorului în secunde"
+          },
+          "close_s": {
+            "name": "Timp închidere",
+            "description": "Timpul de închidere al actuatorului în secunde"
+          },
+          "zone_min_on_s": {
+            "name": "Timp minim ON",
+            "description": "Timpul minim ON al zonei în secunde"
+          },
+          "zone_min_off_s": {
+            "name": "Timp minim OFF",
+            "description": "Timpul minim OFF al zonei în secunde"
+          },
+          "sensor_floor": {
+            "name": "Senzor podea",
+            "description": "Entitatea senzorului de temperatură a podelei"
+          },
+          "window_switch": {
+            "name": "Senzor fereastră",
+            "description": "Entitatea senzorului de contact al ferestrei"
+          },
+          "support_mode": {
+            "name": "Mod suport",
+            "description": "Modurile HVAC suportate"
+          }
+        }
+      }
+    }
+  }
