@@ -122,7 +122,7 @@
       }
     },
     "services": {
-      "virtual_climate.update_zone": {
+      "update_zone": {
         "name": "Update zone settings",
         "description": "Update zone configuration at runtime without restart.",
         "fields": {

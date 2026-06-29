@@ -1,4 +1,4 @@
-zone_manager.set_packing_mode:
+set_packing_mode:
   name: Set packing mode
   description: Choose simultaneous or staggered packing for zone slots.
   fields:
@@ -11,7 +11,7 @@ zone_manager.set_packing_mode:
             - simultaneous
             - staggered
 
-zone_manager.set_cycle_bounds:
+set_cycle_bounds:
   name: Set cycle bounds
   description: Set min and max cycle length (seconds).
   fields:
@@ -22,7 +22,7 @@ zone_manager.set_cycle_bounds:
       required: true
       selector: number
 
-zone_manager.set_humidity_limits:
+set_humidity_limits:
   name: Set humidity limits
   description: Configure RH alert and fault thresholds.
   fields:
@@ -33,7 +33,7 @@ zone_manager.set_humidity_limits:
       required: true
       selector: number
 
-virtual_climate.update_zone:
+update_zone:
   name: Update zone settings
   description: Update zone configuration at runtime without restart.
   fields:
