@@ -92,7 +92,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_GLOBAL_CO_MODE_ENTITY): selector({
                         "entity": {
                             "multiple": False,
-                            "domain": ["input_select", "input_boolean"]
+                            "domain": ["input_select", "input_boolean", "select"]
                         }
                     }),
                     vol.Optional(CONF_PACKING_MODE, default=DEFAULTS[CONF_PACKING_MODE]): selector({
@@ -294,8 +294,71 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry):
         """Initialize options flow."""
-        self.config_entry = config_entry
+        self._config_entry = config_entry
         self.current_config = get_current_config(config_entry)
+
+    def _get_zone_edit_defaults(
+        self, selected_zone: Dict[str, Any], user_input: Dict[str, Any] | None = None
+    ) -> Dict[str, Any]:
+        """Build normalized defaults for the zone edit form."""
+        floor_limits = selected_zone.get(ZK_FLOOR_LIMITS) or {}
+        defaults = {
+            ZK_SUPPORT_MODE: selected_zone.get(ZK_SUPPORT_MODE, "BOTH"),
+            ZK_OPEN_S: selected_zone.get(ZK_OPEN_S, DEFAULTS[ZK_OPEN_S]),
+            ZK_CLOSE_S: selected_zone.get(ZK_CLOSE_S, DEFAULTS[ZK_CLOSE_S]),
+            ZK_ZONE_MIN_ON: selected_zone.get(ZK_ZONE_MIN_ON, DEFAULTS[ZK_ZONE_MIN_ON]),
+            ZK_ZONE_MIN_OFF: selected_zone.get(ZK_ZONE_MIN_OFF, DEFAULTS[ZK_ZONE_MIN_OFF]),
+            ZK_SENSOR_FLOOR: selected_zone.get(ZK_SENSOR_FLOOR),
+            ZK_WINDOW_SWITCH: selected_zone.get(ZK_WINDOW_SWITCH),
+            "heat_min": floor_limits.get("heat_min", ""),
+            "heat_max": floor_limits.get("heat_max", ""),
+            "cool_min": floor_limits.get("cool_min", ""),
+            "cool_max": floor_limits.get("cool_max", ""),
+        }
+        if user_input:
+            defaults.update(user_input)
+            defaults[ZK_SENSOR_FLOOR] = user_input.get(ZK_SENSOR_FLOOR) or None
+            defaults[ZK_WINDOW_SWITCH] = user_input.get(ZK_WINDOW_SWITCH) or None
+        return defaults
+
+    def _build_zone_edit_schema(self, defaults: Dict[str, Any]) -> vol.Schema:
+        """Build the zone edit schema."""
+        schema: Dict[Any, Any] = {
+            vol.Optional(ZK_SUPPORT_MODE, default=defaults[ZK_SUPPORT_MODE]): selector({
+                "select": {"options": ["HEAT", "COOL", "BOTH"]}
+            }),
+            vol.Optional(ZK_SENSOR_FLOOR, default=defaults[ZK_SENSOR_FLOOR]): selector({
+                "entity": {"domain": "sensor"}
+            }),
+            vol.Optional("heat_min", default=defaults["heat_min"]): selector({
+                "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
+            }),
+            vol.Optional("heat_max", default=defaults["heat_max"]): selector({
+                "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
+            }),
+            vol.Optional("cool_min", default=defaults["cool_min"]): selector({
+                "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
+            }),
+            vol.Optional("cool_max", default=defaults["cool_max"]): selector({
+                "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
+            }),
+            vol.Optional(ZK_WINDOW_SWITCH, default=defaults[ZK_WINDOW_SWITCH]): selector({
+                "entity": {"domain": "binary_sensor"}
+            }),
+            vol.Optional(ZK_OPEN_S, default=defaults[ZK_OPEN_S]): selector({
+                "number": {"min": 0, "max": 600, "mode": "box"}
+            }),
+            vol.Optional(ZK_CLOSE_S, default=defaults[ZK_CLOSE_S]): selector({
+                "number": {"min": 0, "max": 600, "mode": "box"}
+            }),
+            vol.Optional(ZK_ZONE_MIN_ON, default=defaults[ZK_ZONE_MIN_ON]): selector({
+                "number": {"min": 0, "max": 3600, "mode": "box"}
+            }),
+            vol.Optional(ZK_ZONE_MIN_OFF, default=defaults[ZK_ZONE_MIN_OFF]): selector({
+                "number": {"min": 0, "max": 3600, "mode": "box"}
+            }),
+        }
+        return vol.Schema(schema)
 
     async def async_step_init(self, user_input=None):
         """Handle the initial step."""
@@ -326,7 +389,7 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
                     vol.Required(CONF_GLOBAL_CO_MODE_ENTITY, default=current_global[CONF_GLOBAL_CO_MODE_ENTITY]): selector({
                         "entity": {
                             "multiple": False,
-                            "domain": ["input_select", "input_boolean"]
+                            "domain": ["input_select", "input_boolean", "select"]
                         }
                     }),
                     vol.Optional(CONF_PACKING_MODE, default=current_global[CONF_PACKING_MODE]): selector({
@@ -354,7 +417,7 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
             )
 
         # Save global options
-        options = self.config_entry.options.copy()
+        options = self._config_entry.options.copy()
         options.update({
             CONF_GLOBAL_CO_MODE_ENTITY: user_input[CONF_GLOBAL_CO_MODE_ENTITY],
             CONF_PACKING_MODE: user_input[CONF_PACKING_MODE],
@@ -416,71 +479,10 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
             return await self.async_step_zones_pick()
         
         if user_input is None:
-            # Pre-fill with current zone values
-            current_zone = {
-                ZK_SUPPORT_MODE: selected_zone.get(ZK_SUPPORT_MODE, "BOTH"),
-                ZK_OPEN_S: selected_zone.get(ZK_OPEN_S, DEFAULTS.get(ZK_OPEN_S, 60)),
-                ZK_CLOSE_S: selected_zone.get(ZK_CLOSE_S, DEFAULTS.get(ZK_CLOSE_S, 60)),
-                ZK_ZONE_MIN_ON: selected_zone.get(ZK_ZONE_MIN_ON, DEFAULTS.get(ZK_ZONE_MIN_ON, 180)),
-                ZK_ZONE_MIN_OFF: selected_zone.get(ZK_ZONE_MIN_OFF, DEFAULTS.get(ZK_ZONE_MIN_OFF, 180)),
-                ZK_SENSOR_FLOOR: selected_zone.get(ZK_SENSOR_FLOOR) or "",
-                ZK_WINDOW_SWITCH: selected_zone.get(ZK_WINDOW_SWITCH) or "",
-            }
-            
-            # Handle floor_limits
-            floor_limits = selected_zone.get(ZK_FLOOR_LIMITS, {})
-            if floor_limits:
-                current_zone.update({
-                    "heat_min": floor_limits.get("heat_min", ""),
-                    "heat_max": floor_limits.get("heat_max", ""),
-                    "cool_min": floor_limits.get("cool_min", ""),
-                    "cool_max": floor_limits.get("cool_max", ""),
-                })
-            else:
-                current_zone.update({
-                    "heat_min": "",
-                    "heat_max": "",
-                    "cool_min": "",
-                    "cool_max": "",
-                })
-            
+            current_zone = self._get_zone_edit_defaults(selected_zone)
             return self.async_show_form(
                 step_id="zone_edit",
-                data_schema=vol.Schema({
-                    vol.Optional(ZK_SUPPORT_MODE, default=current_zone[ZK_SUPPORT_MODE]): selector({
-                        "select": {"options": ["HEAT", "COOL", "BOTH"]}
-                    }),
-                    vol.Optional("heat_min", default=current_zone["heat_min"]): selector({
-                        "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
-                    }),
-                    vol.Optional("heat_max", default=current_zone["heat_max"]): selector({
-                        "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
-                    }),
-                    vol.Optional("cool_min", default=current_zone["cool_min"]): selector({
-                        "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
-                    }),
-                    vol.Optional("cool_max", default=current_zone["cool_max"]): selector({
-                        "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
-                    }),
-                    vol.Optional(ZK_OPEN_S, default=current_zone[ZK_OPEN_S]): selector({
-                        "number": {"min": 0, "max": 600, "mode": "box"}
-                    }),
-                    vol.Optional(ZK_CLOSE_S, default=current_zone[ZK_CLOSE_S]): selector({
-                        "number": {"min": 0, "max": 600, "mode": "box"}
-                    }),
-                    vol.Optional(ZK_ZONE_MIN_ON, default=current_zone[ZK_ZONE_MIN_ON]): selector({
-                        "number": {"min": 0, "max": 3600, "mode": "box"}
-                    }),
-                    vol.Optional(ZK_ZONE_MIN_OFF, default=current_zone[ZK_ZONE_MIN_OFF]): selector({
-                        "number": {"min": 0, "max": 3600, "mode": "box"}
-                    }),
-                    vol.Optional(ZK_SENSOR_FLOOR, default=current_zone[ZK_SENSOR_FLOOR]): selector({
-                        "entity": {"domain": "sensor"}
-                    }),
-                    vol.Optional(ZK_WINDOW_SWITCH, default=current_zone[ZK_WINDOW_SWITCH]): selector({
-                        "entity": {"domain": "binary_sensor"}
-                    }),
-                })
+                data_schema=self._build_zone_edit_schema(current_zone)
             )
         
         # Validate and save zone options
@@ -506,43 +508,10 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
                     errors["base"] = "invalid_floor_limits"
             
             if errors:
+                current_zone = self._get_zone_edit_defaults(selected_zone, user_input)
                 return self.async_show_form(
                     step_id="zone_edit",
-                    data_schema=vol.Schema({
-                        vol.Optional(ZK_SUPPORT_MODE, default=user_input.get(ZK_SUPPORT_MODE, "BOTH")): selector({
-                            "select": {"options": ["HEAT", "COOL", "BOTH"]}
-                        }),
-                        vol.Optional("heat_min", default=user_input.get("heat_min", "")): selector({
-                            "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
-                        }),
-                        vol.Optional("heat_max", default=user_input.get("heat_max", "")): selector({
-                            "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
-                        }),
-                        vol.Optional("cool_min", default=user_input.get("cool_min", "")): selector({
-                            "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
-                        }),
-                        vol.Optional("cool_max", default=user_input.get("cool_max", "")): selector({
-                            "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
-                        }),
-                        vol.Optional(ZK_OPEN_S, default=user_input.get(ZK_OPEN_S, 60)): selector({
-                            "number": {"min": 0, "max": 600, "mode": "box"}
-                        }),
-                        vol.Optional(ZK_CLOSE_S, default=user_input.get(ZK_CLOSE_S, 60)): selector({
-                            "number": {"min": 0, "max": 600, "mode": "box"}
-                        }),
-                        vol.Optional(ZK_ZONE_MIN_ON, default=user_input.get(ZK_ZONE_MIN_ON, 180)): selector({
-                            "number": {"min": 0, "max": 3600, "mode": "box"}
-                        }),
-                        vol.Optional(ZK_ZONE_MIN_OFF, default=user_input.get(ZK_ZONE_MIN_OFF, 180)): selector({
-                            "number": {"min": 0, "max": 3600, "mode": "box"}
-                        }),
-                        vol.Optional(ZK_SENSOR_FLOOR, default=user_input.get(ZK_SENSOR_FLOOR, "")): selector({
-                            "entity": {"domain": "sensor"}
-                        }),
-                        vol.Optional(ZK_WINDOW_SWITCH, default=user_input.get(ZK_WINDOW_SWITCH, "")): selector({
-                            "entity": {"domain": "binary_sensor"}
-                        }),
-                    }),
+                    data_schema=self._build_zone_edit_schema(current_zone),
                     errors=errors
                 )
             
@@ -563,7 +532,7 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
                 zone_update[ZK_FLOOR_LIMITS] = None
             
             # Update options
-            options = self.config_entry.options.copy()
+            options = self._config_entry.options.copy()
             if "zones" not in options:
                 options["zones"] = []
             
@@ -585,46 +554,13 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
             
         except (ValueError, TypeError) as e:
             errors["base"] = "invalid_number"
+            current_zone = self._get_zone_edit_defaults(selected_zone, user_input)
             return self.async_show_form(
                 step_id="zone_edit",
-                data_schema=vol.Schema({
-                    vol.Optional(ZK_SUPPORT_MODE, default=user_input.get(ZK_SUPPORT_MODE, "BOTH")): selector({
-                        "select": {"options": ["HEAT", "COOL", "BOTH"]}
-                    }),
-                    vol.Optional("heat_min", default=user_input.get("heat_min", "")): selector({
-                        "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
-                    }),
-                    vol.Optional("heat_max", default=user_input.get("heat_max", "")): selector({
-                        "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
-                    }),
-                    vol.Optional("cool_min", default=user_input.get("cool_min", "")): selector({
-                        "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
-                    }),
-                    vol.Optional("cool_max", default=user_input.get("cool_max", "")): selector({
-                        "number": {"min": 10, "max": 40, "step": 0.5, "mode": "box"}
-                    }),
-                    vol.Optional(ZK_OPEN_S, default=user_input.get(ZK_OPEN_S, 60)): selector({
-                        "number": {"min": 0, "max": 600, "mode": "box"}
-                    }),
-                    vol.Optional(ZK_CLOSE_S, default=user_input.get(ZK_CLOSE_S, 60)): selector({
-                        "number": {"min": 0, "max": 600, "mode": "box"}
-                    }),
-                    vol.Optional(ZK_ZONE_MIN_ON, default=user_input.get(ZK_ZONE_MIN_ON, 180)): selector({
-                        "number": {"min": 0, "max": 3600, "mode": "box"}
-                    }),
-                    vol.Optional(ZK_ZONE_MIN_OFF, default=user_input.get(ZK_ZONE_MIN_OFF, 180)): selector({
-                        "number": {"min": 0, "max": 3600, "mode": "box"}
-                    }),
-                    vol.Optional(ZK_SENSOR_FLOOR, default=user_input.get(ZK_SENSOR_FLOOR, "")): selector({
-                        "entity": {"domain": "sensor"}
-                    }),
-                    vol.Optional(ZK_WINDOW_SWITCH, default=user_input.get(ZK_WINDOW_SWITCH, "")): selector({
-                        "entity": {"domain": "binary_sensor"}
-                    }),
-                }),
+                data_schema=self._build_zone_edit_schema(current_zone),
                 errors=errors
             )
 
     async def async_step_finish(self, user_input=None):
         """Handle finish step."""
-        return self.async_create_entry(title="", data=self.config_entry.options)
+        return self.async_create_entry(title="", data=self._config_entry.options)

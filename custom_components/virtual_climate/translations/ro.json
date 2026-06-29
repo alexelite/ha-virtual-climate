@@ -3,9 +3,9 @@
       "step": {
         "user": {
           "title": "Climat Virtual — Setări globale",
-          "description": "Alegeți helper-ul global pentru modul HEAT/COOL și setările de coordonare de bază.",
+          "description": "Alegeți helper-ul global pentru modul HEAT/COOL/OFF și setările de coordonare de bază.",
           "data": {
-            "global_co_mode_entity": "Helper mod global (HEAT/COOL)",
+            "global_co_mode_entity": "Helper mod global (HEAT/COOL/OFF)",
             "packing_mode": "Mod de împachetare",
             "t_cycle_seconds": "Durata ciclului (secunde)",
             "t_cycle_min": "Durata minimă a ciclului (secunde)",
@@ -75,7 +75,7 @@
           "title": "Setări Globale",
           "description": "Configurați parametrii globali de coordonare.",
           "data": {
-            "global_co_mode_entity": "Helper mod global (HEAT/COOL)",
+            "global_co_mode_entity": "Helper mod global (HEAT/COOL/OFF)",
             "packing_mode": "Mod de împachetare",
             "t_cycle_seconds": "Durata ciclului (secunde)",
             "t_cycle_min": "Durata minimă a ciclului (secunde)",
@@ -94,19 +94,19 @@
         },
         "zone_edit": {
           "title": "Editează Setările Zonei",
-          "description": "Configurați parametrii specifici zonei.",
+          "description": "Configurați parametrii specifici zonei. Limitele de siguranță pentru pardoseală de mai jos sunt rezervate pentru utilizare viitoare și nu reprezintă setpoint-ul temperaturii camerei. Ele se aplică doar când este configurat un senzor valid de temperatură a pardoselii.",
           "data": {
             "support_mode": "Moduri suportate",
-            "heat_min": "Temperatură minimă încălzire (°C)",
-            "heat_max": "Temperatură maximă încălzire (°C)",
-            "cool_min": "Temperatură minimă răcire (°C)",
-            "cool_max": "Temperatură maximă răcire (°C)",
+            "sensor_floor": "Senzor temperatură podea (opțional)",
+            "heat_min": "Limită minimă de siguranță podea la încălzire (°C)",
+            "heat_max": "Limită maximă de siguranță podea la încălzire (°C)",
+            "cool_min": "Limită minimă de siguranță podea la răcire (°C)",
+            "cool_max": "Limită maximă de siguranță podea la răcire (°C)",
+            "window_switch": "Senzor contact fereastră (opțional)",
             "open_s": "Timp deschidere actuator (s)",
             "close_s": "Timp închidere actuator (s)",
             "zone_min_on_s": "Timp minim ON zonă (s)",
-            "zone_min_off_s": "Timp minim OFF zonă (s)",
-            "sensor_floor": "Senzor temperatură podea",
-            "window_switch": "Senzor contact fereastră"
+            "zone_min_off_s": "Timp minim OFF zonă (s)"
           }
         },
         "finish": {

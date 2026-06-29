@@ -3,9 +3,9 @@
       "step": {
         "user": {
           "title": "Virtual Climate — Global settings",
-          "description": "Pick the global HEAT/COOL mode helper and base coordination settings.",
+          "description": "Pick the global HEAT/COOL/OFF mode helper and base coordination settings.",
           "data": {
-            "global_co_mode_entity": "Global mode helper (HEAT/COOL)",
+            "global_co_mode_entity": "Global mode helper (HEAT/COOL/OFF)",
             "packing_mode": "Packing mode",
             "t_cycle_seconds": "Cycle length (seconds)",
             "t_cycle_min": "Min cycle length (seconds)",
@@ -75,7 +75,7 @@
           "title": "Global Settings",
           "description": "Configure global coordination parameters.",
           "data": {
-            "global_co_mode_entity": "Global mode helper (HEAT/COOL)",
+            "global_co_mode_entity": "Global mode helper (HEAT/COOL/OFF)",
             "packing_mode": "Packing mode",
             "t_cycle_seconds": "Cycle length (seconds)",
             "t_cycle_min": "Min cycle length (seconds)",
@@ -94,19 +94,19 @@
         },
         "zone_edit": {
           "title": "Edit Zone Settings",
-          "description": "Configure zone-specific parameters.",
+          "description": "Configure zone-specific parameters. The floor safety limits below are reserved for future use and are not the room temperature setpoint. They only apply when a valid floor temperature sensor is configured.",
           "data": {
             "support_mode": "Supported modes",
-            "heat_min": "Heat minimum temperature (°C)",
-            "heat_max": "Heat maximum temperature (°C)",
-            "cool_min": "Cool minimum temperature (°C)",
-            "cool_max": "Cool maximum temperature (°C)",
+            "sensor_floor": "Floor temperature sensor (optional)",
+            "heat_min": "Floor safety minimum in heating (°C)",
+            "heat_max": "Floor safety maximum in heating (°C)",
+            "cool_min": "Floor safety minimum in cooling (°C)",
+            "cool_max": "Floor safety maximum in cooling (°C)",
+            "window_switch": "Window contact sensor (optional)",
             "open_s": "Actuator open time (s)",
             "close_s": "Actuator close time (s)",
             "zone_min_on_s": "Zone min ON time (s)",
-            "zone_min_off_s": "Zone min OFF time (s)",
-            "sensor_floor": "Floor temperature sensor",
-            "window_switch": "Window contact sensor"
+            "zone_min_off_s": "Zone min OFF time (s)"
           }
         },
         "finish": {

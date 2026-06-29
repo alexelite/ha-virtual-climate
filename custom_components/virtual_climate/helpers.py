@@ -30,20 +30,29 @@ def get_state_str(hass: HomeAssistant, entity_id: str | None):
     return None if not st else st.state
 
 def co_mode_from_entity(hass: HomeAssistant, data: dict) -> str:
-    """Read the global HEAT/COOL mode from an HA helper (input_boolean/select)."""
+    """Read the global HEAT/COOL/OFF mode from an HA helper."""
     ent = data.get(CONF_GLOBAL_CO_MODE_ENTITY)
     if not ent:
         return "HEAT"  # fallback
     st = hass.states.get(ent)
     if not st:
         return "HEAT"
-    # Accept a few common patterns
     val = (st.state or "").lower()
-    if val in ("cool", "cooling", "on", "true", "1"):
-        return "COOL"
-    if val in ("heat", "heating", "off", "false", "0"):
+
+    # Legacy input_boolean behavior: off=HEAT, on=COOL
+    if ent.startswith("input_boolean."):
+        if val in ("on", "true", "1"):
+            return "COOL"
         return "HEAT"
-    # For input_select with explicit values
+
+    if val in ("off", "idle", "disabled"):
+        return "OFF"
+    if val in ("cool", "cooling"):
+        return "COOL"
+    if val in ("heat", "heating"):
+        return "HEAT"
     if "cool" in val:
         return "COOL"
+    if "off" in val:
+        return "OFF"
     return "HEAT"

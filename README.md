@@ -8,6 +8,7 @@ It exposes one climate entity per zone and coordinates slow thermal actuators wi
 
 - Multi-zone virtual thermostats for UFH and similar hydronic systems
 - Shared heat/cool cycle coordination across zones
+- Global system mode with `HEAT`, `COOL`, and optional `OFF`
 - Separate heating and cooling setpoints
 - Optional floor sensor safety limits
 - Optional humidity and dew point protection in cooling mode
@@ -48,10 +49,50 @@ custom_components/virtual_climate/
 
 The integration supports:
 
-- a global entity that indicates `HEAT` or `COOL`
+- a global entity that indicates `HEAT`, `COOL`, or optionally `OFF`
 - multiple zones with air sensor, RH sensor, and actuator
 - optional floor sensor and window contact per zone
 - optional per-zone floor safety limits and actuator timings
+
+## Operating model
+
+The integration uses a two-level control model:
+
+- Global system mode: `HEAT`, `COOL`, or `OFF`
+- Per-zone mode: `AUTO` or `OFF`
+
+### Global mode helper
+
+The global mode helper can behave in three ways:
+
+- `input_boolean`: legacy behavior is preserved
+  - `off` => `HEAT`
+  - `on` => `COOL`
+- `input_select` or `select` with `HEAT/COOL`
+  - the system works only with those two modes
+- `input_select` or `select` with `HEAT/COOL/OFF`
+  - `OFF` disables the whole system
+
+### What global `OFF` does
+
+When the global helper is set to `OFF`:
+
+- the coordinator stops planning new cycles
+- all zone actuators are turned off
+- zones in `AUTO` remain logically in `AUTO`, but they are inactive
+- if you later return to `HEAT` or `COOL`, zones in `AUTO` resume normal operation
+
+### Zone `AUTO/OFF`
+
+Each virtual thermostat exposes:
+
+- `AUTO`: the zone follows the global system mode
+- `OFF`: manual override
+
+If a user switches a zone from `AUTO` to `OFF`, that zone stays off even if the
+global helper changes later. If the user switches the zone back to `AUTO` while
+the global system is still `OFF`, the zone remains ready but inactive until the
+global mode returns to `HEAT` or `COOL`.
 
 ## Development notes
 

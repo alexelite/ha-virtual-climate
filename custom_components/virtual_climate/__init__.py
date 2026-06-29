@@ -6,9 +6,10 @@ import logging
 
 from .config_flow import get_current_config
 from .const import (
-    ZK_ID, ZK_SUPPORT_MODE, ZK_FLOOR_LIMITS, ZK_OPEN_S, ZK_CLOSE_S,
+    DATA_KEY_MANAGER, ZK_ID, ZK_SUPPORT_MODE, ZK_FLOOR_LIMITS, ZK_OPEN_S, ZK_CLOSE_S,
     ZK_ZONE_MIN_ON, ZK_ZONE_MIN_OFF, ZK_SENSOR_FLOOR, ZK_WINDOW_SWITCH
 )
+from .zone_manager import ZoneManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,6 +21,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     # Forward to platforms (creates entities, e.g., our VirtualThermostat)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    manager = ZoneManager(hass, entry)
+    await manager.async_start()
+    hass.data[DOMAIN][entry.entry_id] = {DATA_KEY_MANAGER: manager}
     
     # Set up options update listener
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
@@ -40,6 +45,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload the config entry and its platforms."""
+    entry_data = hass.data.get(DOMAIN, {}).pop(entry.entry_id, {})
+    manager: ZoneManager | None = entry_data.get(DATA_KEY_MANAGER)
+    if manager:
+        await manager.async_stop()
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:

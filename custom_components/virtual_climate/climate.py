@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import timedelta
 from homeassistant.components.climate import ClimateEntity
-from homeassistant.components.climate.const import HVACMode, ClimateEntityFeature
+from homeassistant.components.climate.const import HVACAction, HVACMode, ClimateEntityFeature
 from homeassistant.const import UnitOfTemperature, STATE_ON, STATE_OFF, STATE_UNAVAILABLE, STATE_UNKNOWN, ATTR_TEMPERATURE
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.event import async_track_time_interval
@@ -55,9 +55,11 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
         self._rh = None
         self._dew = None
         self._window_open = False
+        self._last_active_co_mode = "HEAT"
+        self._manual_off = False
 
-        # UI mode (we don't expose HVACMode.COOL/HEAT switch here; the global co_mode controls behavior)
-        self._hvac_mode = HVACMode.AUTO  # cosmetic; real mode is global
+        # UI mode: AUTO follows the global system mode, OFF is a manual override.
+        self._hvac_mode = HVACMode.AUTO
 
         # Simple publish timer
         self._unsub_pub = None
@@ -72,12 +74,28 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
 
     @property
     def hvac_modes(self):
-        # Keep simple UI; actual mode is global. You may expose OFF as well.
-        return [HVACMode.AUTO]
+        return [HVACMode.AUTO, HVACMode.OFF]
 
     @property
     def hvac_mode(self):
-        return self._hvac_mode
+        return HVACMode.OFF if self._manual_off else HVACMode.AUTO
+
+    @property
+    def hvac_action(self):
+        co_mode = co_mode_from_entity(self.hass, get_current_config(self.entry))
+        if self._manual_off or co_mode == "OFF":
+            return HVACAction.OFF
+
+        if self._t_air is None:
+            return HVACAction.IDLE
+
+        target = self._t_cool if co_mode == "COOL" else self._t_heat
+        delta = target - self._t_air
+        if co_mode == "HEAT" and delta > 0:
+            return HVACAction.HEATING
+        if co_mode == "COOL" and delta < 0:
+            return HVACAction.COOLING
+        return HVACAction.IDLE
 
     @property
     def current_temperature(self):
@@ -91,23 +109,51 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
         await super().async_added_to_hass()
         self._unsub_pub = async_track_time_interval(self.hass, self._async_publish_status, SCAN_INTERVAL)
 
-        # restore last target temps if any
         last = await self.async_get_last_state()
-        if last and (ATTR_TEMPERATURE in last.attributes):
-            # last target doesn't tell us heat/cool split; keep defaults for MVP
-            pass
+        if not last:
+            return
+
+        if last.state == HVACMode.OFF:
+            self._manual_off = True
+        if "t_set_heat" in last.attributes:
+            self._t_heat = float(last.attributes["t_set_heat"])
+        if "t_set_cool" in last.attributes:
+            self._t_cool = float(last.attributes["t_set_cool"])
+        if last.attributes.get("last_active_co_mode") in ("HEAT", "COOL"):
+            self._last_active_co_mode = last.attributes["last_active_co_mode"]
+        self._recompute_target()
 
     async def async_will_remove_from_hass(self):
         if self._unsub_pub:
             self._unsub_pub()
             self._unsub_pub = None
 
+    async def async_set_hvac_mode(self, hvac_mode: HVACMode):
+        """Set zone AUTO/OFF. OFF acts as a manual override."""
+        self._manual_off = hvac_mode == HVACMode.OFF
+        self._hvac_mode = HVACMode.OFF if self._manual_off else HVACMode.AUTO
+
+        if self._manual_off:
+            ent = self._z.get(ZK_SWITCH_ACTUATOR)
+            if ent:
+                await self.hass.services.async_call(
+                    "homeassistant",
+                    "turn_off",
+                    {"entity_id": ent},
+                    blocking=False,
+                )
+
+        self.async_write_ha_state()
+        await self._async_publish_status(None)
+
     async def async_set_temperature(self, **kwargs):
         """Set per-mode setpoint. Only the *current global mode* is updated."""
         t = kwargs.get(ATTR_TEMPERATURE)
         if t is None:
             return
-        co_mode = co_mode_from_entity(self.hass, self.entry.data)
+        co_mode = co_mode_from_entity(self.hass, get_current_config(self.entry))
+        if co_mode == "OFF":
+            co_mode = self._last_active_co_mode
         if co_mode == "COOL":
             self._t_cool = float(t)
         else:
@@ -116,8 +162,11 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
         self.async_write_ha_state()
 
     def _recompute_target(self):
-        co_mode = co_mode_from_entity(self.hass, self.entry.data)
-        self._target_temp = self._t_cool if co_mode == "COOL" else self._t_heat
+        co_mode = co_mode_from_entity(self.hass, get_current_config(self.entry))
+        if co_mode in ("HEAT", "COOL"):
+            self._last_active_co_mode = co_mode
+        active_mode = self._last_active_co_mode if co_mode == "OFF" else co_mode
+        self._target_temp = self._t_cool if active_mode == "COOL" else self._t_heat
 
     async def async_update(self):
         """Pull sensor states and recompute dew point + attributes."""
@@ -147,6 +196,9 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
             "dew_point": self._dew,
             "t_set_heat": self._t_heat,
             "t_set_cool": self._t_cool,
+            "system_mode": co_mode_from_entity(self.hass, get_current_config(self.entry)),
+            "zone_mode": "OFF" if self._manual_off else "AUTO",
+            "last_active_co_mode": self._last_active_co_mode,
             "actuator_open_s": z.get(ZK_OPEN_S),
             "actuator_close_s": z.get(ZK_CLOSE_S),
             "floor_limits": z.get(ZK_FLOOR_LIMITS)
@@ -154,18 +206,22 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
 
     async def _async_publish_status(self, now):
         """Publish a compact status payload to the ZoneManager via hass.bus."""
-        co_mode = co_mode_from_entity(self.hass, self.entry.data)
+        co_mode = co_mode_from_entity(self.hass, get_current_config(self.entry))
 
         # Compute sign-consistent delta for COOL/HEAT
         delta = None
+        active_mode = self._last_active_co_mode if co_mode == "OFF" else co_mode
         if self._t_air is not None:
-            target = self._t_cool if co_mode == "COOL" else self._t_heat
+            target = self._t_cool if active_mode == "COOL" else self._t_heat
             delta = (target - self._t_air)  # positive = too cold in HEAT, negative = too hot in COOL
 
         payload = {
             "zone_id": self.zid,
             "name": self._name,
-            "co_mode": co_mode,                    # "HEAT" | "COOL"
+            "co_mode": co_mode,                    # "HEAT" | "COOL" | "OFF"
+            "active_co_mode": active_mode,
+            "manual_off": self._manual_off,
+            "zone_hvac_mode": "OFF" if self._manual_off else "AUTO",
             "support_mode": self._z.get(ZK_SUPPORT_MODE, "BOTH"),
             "eligible_window": (not self._window_open),
             "t_air": self._t_air,

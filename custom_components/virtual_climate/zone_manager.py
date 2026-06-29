@@ -16,6 +16,7 @@ from .const import (
     DEFAULTS
 )
 from .config_flow import get_current_config
+from .helpers import co_mode_from_entity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,6 +65,12 @@ class ZoneManager:
 
     async def _on_tick(self, now):
         """Cycle state machine (PLAN → START/RUN → STOP). Runs every second."""
+        system_mode = co_mode_from_entity(self.hass, self._options)
+        if system_mode == "OFF":
+            if self._cycle_active:
+                await self._stop_cycle()
+            return
+
         if not self._cycle_active:
             # PLAN: decide if we need to run a cycle
             plan = self._plan_cycle()
@@ -97,6 +104,8 @@ class ZoneManager:
                 break
         if co_mode is None:
             co_mode = "HEAT"
+        if co_mode == "OFF":
+            return None
 
         wants: Dict[str, Dict[str, float]] = {}
         any_demand = False
@@ -105,6 +114,8 @@ class ZoneManager:
         for z in zones:
             zid = z["zone_id"]
             # Base eligibility checks
+            if z.get("manual_off"):
+                continue
             if not z.get("eligible_window", True):
                 continue
             support = (z.get("support_mode") or "BOTH").upper()

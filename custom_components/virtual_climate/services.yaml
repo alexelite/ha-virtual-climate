@@ -17,10 +17,18 @@ set_cycle_bounds:
   fields:
     t_cycle_min_s:
       required: true
-      selector: number
+      selector:
+        number:
+          min: 60
+          max: 3600
+          mode: box
     t_cycle_max_s:
       required: true
-      selector: number
+      selector:
+        number:
+          min: 120
+          max: 7200
+          mode: box
 
 set_humidity_limits:
   name: Set humidity limits
@@ -28,10 +36,20 @@ set_humidity_limits:
   fields:
     rh_alert:
       required: true
-      selector: number
+      selector:
+        number:
+          min: 30
+          max: 90
+          step: 1
+          mode: box
     rh_fault:
       required: true
-      selector: number
+      selector:
+        number:
+          min: 40
+          max: 100
+          step: 1
+          mode: box
 
 update_zone:
   name: Update zone settings
@@ -41,12 +59,12 @@ update_zone:
       required: true
       description: Zone ID to update
       selector:
-        text:
+        text: {}
     floor_limits:
       required: false
       description: Floor temperature limits
       selector:
-        object:
+        object: {}
     open_s:
       required: false
       description: Actuator open time in seconds
