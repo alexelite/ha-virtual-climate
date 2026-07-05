@@ -61,6 +61,19 @@ class ZoneManager:
         self._global_diag: Dict[str, Any] = {}
         self._listeners: list[Callable[[], None]] = []
 
+    def _zone_slot_is_running(self, zid: str, now_ts: float | None = None) -> bool:
+        """Return whether a scheduled zone is within its active slot right now."""
+        if not self._cycle_active:
+            return False
+        slot = self._slots.get(zid)
+        if not slot:
+            return False
+        if now_ts is None:
+            now_ts = time.time()
+        start_at = self._cycle_start + float(slot.get("start_off", 0.0) or 0.0)
+        end_at = start_at + float(slot.get("t_on", 0.0) or 0.0)
+        return start_at <= now_ts < end_at
+
     async def async_start(self):
         """Start listening for zone status and ticking the cycle."""
         self._unsub_bus = self.hass.bus.async_listen(EVT_ZONE_STATUS, self._on_zone_status)
@@ -131,8 +144,12 @@ class ZoneManager:
             phase = self._global_diag.get("coordinator_phase", "idle")
 
         zone_states = list(self._zones.values())
+        now_ts = time.time()
         scheduled_zones = sum(1 for z in zone_states if z.get("zone_id") in self._slots)
-        running_zones = sum(1 for z in zone_states if z.get("coordinator_status") == "running")
+        running_zones = sum(
+            1 for z in zone_states
+            if self._zone_slot_is_running(z.get("zone_id"), now_ts)
+        )
         blocked_zones = sum(1 for z in zone_states if z.get("coordinator_status") == "blocked")
         previous_ratio = float(self._global_diag.get("aggregated_demand_ratio", 0.0) or 0.0)
         rounded_ratio = round(float(demand_ratio), GLOBAL_DEMAND_RATIO_PRECISION)
@@ -619,12 +636,13 @@ class ZoneManager:
             demand_ratio = sum(w["p"] for w in wants.values()) / max(1, len(wants))
         self._refresh_global_diagnostics(demand_ratio=demand_ratio, system_mode=system_mode, phase=phase)
 
+        now_ts = time.time()
         for zid, z in self._zones.items():
             slot = self._slots.get(zid, {})
             block_reasons = list(z.get("last_block_reasons") or [])
             scheduled = zid in self._slots
             zone_status = z.get("coordinator_status", "idle")
-            is_running = self._cycle_active and scheduled and zone_status == "running"
+            is_running = self._zone_slot_is_running(zid, now_ts)
             if is_running:
                 coordinator_status = "running"
             elif scheduled:
