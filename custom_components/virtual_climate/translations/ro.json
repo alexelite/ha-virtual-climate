@@ -2,10 +2,38 @@
     "config": {
       "step": {
         "user": {
+          "title": "Climat Virtual",
+          "description": "Alegeți dacă importați configurația completă din JSON sau o configurați pas cu pas.",
+          "menu_options": {
+            "full_json": "Import JSON complet",
+            "manual_global": "Configurare manuală"
+          }
+        },
+        "full_json": {
+          "title": "Import configurație completă",
+          "description": "Lipiți fie un obiect JSON complet cu setări globale și zone, fie un array vechi doar cu zone. Format recomandat: {\"global\": {...}, \"zones\": [...]}",
+          "data": {
+            "config_json": "JSON configurație"
+          }
+        },
+        "manual_global": {
           "title": "Climat Virtual — Setări globale",
           "description": "Alegeți helper-ul global pentru modul HEAT/COOL/OFF și setările de coordonare de bază.",
           "data": {
             "global_co_mode_entity": "Helper mod global (HEAT/COOL/OFF)",
+            "heating_source_entity": "Switch sursă încălzire",
+            "cooling_source_entity": "Switch sursă răcire",
+            "changeover_entity": "Switch changeover (CO)",
+            "circulation_pump_entity": "Switch pompă circulație",
+            "target_supply_temperature_entity": "Entitate țintă temperatură tur",
+            "heating_supply_target": "Țintă tur încălzire (°C)",
+            "cooling_supply_target": "Țintă tur răcire (°C)",
+            "pump_start_delay_seconds": "Întârziere pornire pompă (s)",
+            "heating_source_start_delay_seconds": "Întârziere pornire sursă încălzire (s)",
+            "cooling_source_start_delay_seconds": "Întârziere pornire sursă răcire (s)",
+            "minimum_run_time_seconds": "Timp minim de funcționare (s)",
+            "pump_post_run_seconds": "Timp post-funcționare pompă (s)",
+            "minimum_off_time_seconds": "Timp minim de oprire (s)",
             "packing_mode": "Mod de împachetare",
             "t_cycle_seconds": "Durata ciclului (secunde)",
             "t_cycle_min": "Durata minimă a ciclului (secunde)",
@@ -56,6 +84,7 @@
         }
       },
       "error": {
+        "invalid_config_json": "JSON configurație invalid. Furnizați un obiect complet de configurare sau un array ne-gol de zone.",
         "invalid_zones_json": "JSON zone invalid. Furnizați un array ne-gol de obiecte zonă.",
         "invalid_zone": "Valori zonă invalide. Verificați câmpurile necesare și formatele JSON."
       }
@@ -64,11 +93,27 @@
       "step": {
         "init": {
           "title": "Opțiuni Climat Virtual",
-          "description": "Configurați setările globale sau editați zonele individuale.",
+          "description": "Configurați setările globale, editați zonele, înlocuiți configurația din JSON sau exportați configurația curentă.",
           "menu_options": {
             "global_options": "Setări Globale",
             "zones_pick": "Editează Zone",
+            "import_json_replace": "Import JSON (replace)",
+            "export_json": "Export JSON",
             "finish": "Finalizează"
+          }
+        },
+        "import_json_replace": {
+          "title": "Import JSON (Replace)",
+          "description": "Lipiți un obiect JSON complet de configurare pentru a înlocui configurația curentă a integrării. Acest pas golește override-urile existente și înlocuiește lista de zone.",
+          "data": {
+            "config_json": "JSON configurație"
+          }
+        },
+        "export_json": {
+          "title": "Export JSON Configurație",
+          "description": "Copiați JSON-ul de mai jos. Are același format ca importul complet și poate fi lipit înapoi în pasul de import JSON complet.",
+          "data": {
+            "config_json": "JSON configurație"
           }
         },
         "global_options": {
@@ -76,6 +121,19 @@
           "description": "Configurați parametrii globali de coordonare.",
           "data": {
             "global_co_mode_entity": "Helper mod global (HEAT/COOL/OFF)",
+            "heating_source_entity": "Switch sursă încălzire",
+            "cooling_source_entity": "Switch sursă răcire",
+            "changeover_entity": "Switch changeover (CO)",
+            "circulation_pump_entity": "Switch pompă circulație",
+            "target_supply_temperature_entity": "Entitate țintă temperatură tur",
+            "heating_supply_target": "Țintă tur încălzire (°C)",
+            "cooling_supply_target": "Țintă tur răcire (°C)",
+            "pump_start_delay_seconds": "Întârziere pornire pompă (s)",
+            "heating_source_start_delay_seconds": "Întârziere pornire sursă încălzire (s)",
+            "cooling_source_start_delay_seconds": "Întârziere pornire sursă răcire (s)",
+            "minimum_run_time_seconds": "Timp minim de funcționare (s)",
+            "pump_post_run_seconds": "Timp post-funcționare pompă (s)",
+            "minimum_off_time_seconds": "Timp minim de oprire (s)",
             "packing_mode": "Mod de împachetare",
             "t_cycle_seconds": "Durata ciclului (secunde)",
             "t_cycle_min": "Durata minimă a ciclului (secunde)",
@@ -97,6 +155,9 @@
           "description": "Configurați parametrii specifici zonei. Limitele de siguranță pentru pardoseală de mai jos sunt rezervate pentru utilizare viitoare și nu reprezintă setpoint-ul temperaturii camerei. Ele se aplică doar când este configurat un senzor valid de temperatură a pardoselii.",
           "data": {
             "support_mode": "Moduri suportate",
+            "sensor_air": "Senzor temperatură aer",
+            "sensor_rh": "Senzor umiditate relativă (RH)",
+            "switch_actuator": "Actuator zonă (switch/grup)",
             "sensor_floor": "Senzor temperatură podea (opțional)",
             "heat_min": "Limită minimă de siguranță podea la încălzire (°C)",
             "heat_max": "Limită maximă de siguranță podea la încălzire (°C)",
@@ -115,6 +176,7 @@
         }
       },
       "error": {
+        "invalid_config_json": "JSON configurație invalid. Furnizați un obiect complet de configurare sau un array ne-gol de zone.",
         "no_zones": "Nu s-au găsit zone. Vă rugăm să adăugați zone mai întâi.",
         "invalid_floor_limits": "Limite podea invalide. Minimul trebuie să fie mai mic decât maximul pentru fiecare mod.",
         "invalid_number": "Format număr invalid. Vă rugăm să introduceți valori numerice valide.",
@@ -162,6 +224,48 @@
             "name": "Mod suport",
             "description": "Modurile HVAC suportate"
           }
+        }
+      }
+    },
+    "entity": {
+      "sensor": {
+        "system_mode": {
+          "name": "Mod sistem"
+        },
+        "coordinator_phase": {
+          "name": "Fază coordinator"
+        },
+        "packing_mode": {
+          "name": "Mod împachetare"
+        },
+        "aggregated_demand_ratio": {
+          "name": "Raport cerere agregată"
+        },
+        "plant_state": {
+          "name": "Stare plantă"
+        },
+        "plant_mode": {
+          "name": "Mod plantă"
+        },
+        "scheduled_zones": {
+          "name": "Zone programate"
+        },
+        "running_zones": {
+          "name": "Zone active"
+        },
+        "blocked_zones": {
+          "name": "Zone blocate"
+        },
+        "total_zones": {
+          "name": "Total zone"
+        },
+        "cycle_length_s": {
+          "name": "Durata ciclului"
+        }
+      },
+      "binary_sensor": {
+        "cycle_active": {
+          "name": "Ciclu activ"
         }
       }
     }

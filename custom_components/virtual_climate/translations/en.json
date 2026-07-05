@@ -2,10 +2,38 @@
     "config": {
       "step": {
         "user": {
+          "title": "Virtual Climate",
+          "description": "Choose whether to import the full configuration from JSON or configure it step by step.",
+          "menu_options": {
+            "full_json": "Import full JSON",
+            "manual_global": "Manual setup"
+          }
+        },
+        "full_json": {
+          "title": "Import full configuration",
+          "description": "Paste either a full JSON object with global settings and zones, or a legacy zones-only array. Recommended format: {\"global\": {...}, \"zones\": [...]}",
+          "data": {
+            "config_json": "Configuration JSON"
+          }
+        },
+        "manual_global": {
           "title": "Virtual Climate — Global settings",
           "description": "Pick the global HEAT/COOL/OFF mode helper and base coordination settings.",
           "data": {
             "global_co_mode_entity": "Global mode helper (HEAT/COOL/OFF)",
+            "heating_source_entity": "Heating source switch",
+            "cooling_source_entity": "Cooling source switch",
+            "changeover_entity": "Changeover switch (CO)",
+            "circulation_pump_entity": "Circulation pump switch",
+            "target_supply_temperature_entity": "Target supply temperature entity",
+            "heating_supply_target": "Heating supply target (°C)",
+            "cooling_supply_target": "Cooling supply target (°C)",
+            "pump_start_delay_seconds": "Pump start delay (s)",
+            "heating_source_start_delay_seconds": "Heating source start delay (s)",
+            "cooling_source_start_delay_seconds": "Cooling source start delay (s)",
+            "minimum_run_time_seconds": "Minimum run time (s)",
+            "pump_post_run_seconds": "Pump post-run time (s)",
+            "minimum_off_time_seconds": "Minimum off time (s)",
             "packing_mode": "Packing mode",
             "t_cycle_seconds": "Cycle length (seconds)",
             "t_cycle_min": "Min cycle length (seconds)",
@@ -56,6 +84,7 @@
         }
       },
       "error": {
+        "invalid_config_json": "Invalid configuration JSON. Provide a full config object or a non-empty zone array.",
         "invalid_zones_json": "Invalid zones JSON. Provide a non-empty array of zone objects.",
         "invalid_zone": "Invalid zone values. Check required fields and JSON formats."
       }
@@ -64,11 +93,27 @@
       "step": {
         "init": {
           "title": "Virtual Climate Options",
-          "description": "Configure global settings or edit individual zones.",
+          "description": "Configure global settings, edit zones, replace the configuration from JSON, or export the current configuration.",
           "menu_options": {
             "global_options": "Global Settings",
             "zones_pick": "Edit Zones",
+            "import_json_replace": "Import JSON (replace)",
+            "export_json": "Export JSON",
             "finish": "Finish"
+          }
+        },
+        "import_json_replace": {
+          "title": "Import JSON (Replace)",
+          "description": "Paste a full configuration JSON object to replace the current integration configuration. This clears existing overrides and replaces the zone list.",
+          "data": {
+            "config_json": "Configuration JSON"
+          }
+        },
+        "export_json": {
+          "title": "Export Configuration JSON",
+          "description": "Copy the JSON below. It matches the full import format and can be pasted back into the full JSON import step.",
+          "data": {
+            "config_json": "Configuration JSON"
           }
         },
         "global_options": {
@@ -76,6 +121,19 @@
           "description": "Configure global coordination parameters.",
           "data": {
             "global_co_mode_entity": "Global mode helper (HEAT/COOL/OFF)",
+            "heating_source_entity": "Heating source switch",
+            "cooling_source_entity": "Cooling source switch",
+            "changeover_entity": "Changeover switch (CO)",
+            "circulation_pump_entity": "Circulation pump switch",
+            "target_supply_temperature_entity": "Target supply temperature entity",
+            "heating_supply_target": "Heating supply target (°C)",
+            "cooling_supply_target": "Cooling supply target (°C)",
+            "pump_start_delay_seconds": "Pump start delay (s)",
+            "heating_source_start_delay_seconds": "Heating source start delay (s)",
+            "cooling_source_start_delay_seconds": "Cooling source start delay (s)",
+            "minimum_run_time_seconds": "Minimum run time (s)",
+            "pump_post_run_seconds": "Pump post-run time (s)",
+            "minimum_off_time_seconds": "Minimum off time (s)",
             "packing_mode": "Packing mode",
             "t_cycle_seconds": "Cycle length (seconds)",
             "t_cycle_min": "Min cycle length (seconds)",
@@ -97,6 +155,9 @@
           "description": "Configure zone-specific parameters. The floor safety limits below are reserved for future use and are not the room temperature setpoint. They only apply when a valid floor temperature sensor is configured.",
           "data": {
             "support_mode": "Supported modes",
+            "sensor_air": "Air temperature sensor",
+            "sensor_rh": "Relative humidity sensor (RH)",
+            "switch_actuator": "Zone actuator (switch/group)",
             "sensor_floor": "Floor temperature sensor (optional)",
             "heat_min": "Floor safety minimum in heating (°C)",
             "heat_max": "Floor safety maximum in heating (°C)",
@@ -115,6 +176,7 @@
         }
       },
       "error": {
+        "invalid_config_json": "Invalid configuration JSON. Provide a full config object or a non-empty zone array.",
         "no_zones": "No zones found. Please add zones first.",
         "invalid_floor_limits": "Invalid floor limits. Minimum must be less than maximum for each mode.",
         "invalid_number": "Invalid number format. Please enter valid numeric values.",
@@ -162,6 +224,48 @@
             "name": "Support mode",
             "description": "Supported HVAC modes"
           }
+        }
+      }
+    },
+    "entity": {
+      "sensor": {
+        "system_mode": {
+          "name": "System mode"
+        },
+        "coordinator_phase": {
+          "name": "Coordinator phase"
+        },
+        "packing_mode": {
+          "name": "Packing mode"
+        },
+        "aggregated_demand_ratio": {
+          "name": "Aggregated demand ratio"
+        },
+        "plant_state": {
+          "name": "Plant state"
+        },
+        "plant_mode": {
+          "name": "Plant mode"
+        },
+        "scheduled_zones": {
+          "name": "Scheduled zones"
+        },
+        "running_zones": {
+          "name": "Running zones"
+        },
+        "blocked_zones": {
+          "name": "Blocked zones"
+        },
+        "total_zones": {
+          "name": "Total zones"
+        },
+        "cycle_length_s": {
+          "name": "Cycle length"
+        }
+      },
+      "binary_sensor": {
+        "cycle_active": {
+          "name": "Cycle active"
         }
       }
     }

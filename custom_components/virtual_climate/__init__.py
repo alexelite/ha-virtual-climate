@@ -1,12 +1,11 @@
 from __future__ import annotations
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.helpers import service
 import logging
 
 from .config_flow import get_current_config
 from .const import (
-    DATA_KEY_MANAGER, ZK_ID, ZK_SUPPORT_MODE, ZK_FLOOR_LIMITS, ZK_OPEN_S, ZK_CLOSE_S,
+    DATA_KEY_ENTRIES, DATA_KEY_MANAGER, PLATFORMS, ZK_ID, ZK_SUPPORT_MODE, ZK_FLOOR_LIMITS, ZK_OPEN_S, ZK_CLOSE_S,
     ZK_ZONE_MIN_ON, ZK_ZONE_MIN_OFF, ZK_SENSOR_FLOOR, ZK_WINDOW_SWITCH
 )
 from .zone_manager import ZoneManager
@@ -14,46 +13,70 @@ from .zone_manager import ZoneManager
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "virtual_climate"
-PLATFORMS = ["climate"]  # ensure climate platform is loaded
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up the Virtual Climate integration from a config entry."""
     hass.data.setdefault(DOMAIN, {})
-    # Forward to platforms (creates entities, e.g., our VirtualThermostat)
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
+    hass.data[DOMAIN].setdefault(DATA_KEY_ENTRIES, set()).add(entry.entry_id)
     manager = ZoneManager(hass, entry)
-    await manager.async_start()
     hass.data[DOMAIN][entry.entry_id] = {DATA_KEY_MANAGER: manager}
-    
-    # Set up options update listener
+
+    # Forward to platforms after the manager is available in hass.data.
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await manager.async_start()
+
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
-    
-    # Register the update_zone service
-    async def handle_update_zone(call: ServiceCall) -> None:
-        """Handle the update_zone service call."""
-        await async_update_zone(hass, entry, call.data)
-    
-    hass.services.async_register(
-        DOMAIN,
-        "update_zone",
-        handle_update_zone,
-        schema=None  # Will use the schema from services.yaml
-    )
-    
+
+    if not hass.services.has_service(DOMAIN, "update_zone"):
+        hass.services.async_register(
+            DOMAIN,
+            "update_zone",
+            lambda call: async_handle_update_zone(hass, call),
+            schema=None,
+        )
+
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload the config entry and its platforms."""
     entry_data = hass.data.get(DOMAIN, {}).pop(entry.entry_id, {})
+    hass.data.get(DOMAIN, {}).get(DATA_KEY_ENTRIES, set()).discard(entry.entry_id)
     manager: ZoneManager | None = entry_data.get(DATA_KEY_MANAGER)
     if manager:
         await manager.async_stop()
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if not hass.data.get(DOMAIN, {}).get(DATA_KEY_ENTRIES) and hass.services.has_service(DOMAIN, "update_zone"):
+        hass.services.async_remove(DOMAIN, "update_zone")
+    return unload_ok
 
 async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Reload the integration when options are updated."""
     await hass.config_entries.async_reload(entry.entry_id)
+
+async def async_handle_update_zone(hass: HomeAssistant, call: ServiceCall) -> None:
+    """Handle the update_zone service call for the matching config entry."""
+    zone_id = call.data.get("zone_id")
+    if not zone_id:
+        _LOGGER.error("zone_id is required")
+        return
+
+    matching_entries: list[ConfigEntry] = []
+    for entry_id in hass.data.get(DOMAIN, {}).get(DATA_KEY_ENTRIES, set()):
+        entry = hass.config_entries.async_get_entry(entry_id)
+        if not entry:
+            continue
+        zones = get_current_config(entry).get("zones", [])
+        if any(zone.get(ZK_ID) == zone_id for zone in zones):
+            matching_entries.append(entry)
+
+    if not matching_entries:
+        _LOGGER.error("Zone '%s' not found in any Virtual Climate entry", zone_id)
+        return
+    if len(matching_entries) > 1:
+        _LOGGER.error("Zone '%s' is ambiguous across multiple Virtual Climate entries", zone_id)
+        return
+
+    await async_update_zone(hass, matching_entries[0], call.data)
 
 async def async_update_zone(hass: HomeAssistant, entry: ConfigEntry, data: dict) -> None:
     """Update zone configuration at runtime."""
