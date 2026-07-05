@@ -3,7 +3,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 import logging
 
-from .config_flow import get_current_config
+from .config_flow import get_current_config, _coerce_zone_defaults
 from .const import (
     DATA_KEY_ENTRIES, DATA_KEY_MANAGER, PLATFORMS, ZK_ID, ZK_SUPPORT_MODE, ZK_FLOOR_LIMITS, ZK_OPEN_S, ZK_CLOSE_S,
     ZK_ZONE_MIN_ON, ZK_ZONE_MIN_OFF, ZK_SENSOR_FLOOR, ZK_WINDOW_SWITCH
@@ -155,24 +155,22 @@ async def async_update_zone(hass: HomeAssistant, entry: ConfigEntry, data: dict)
         _LOGGER.warning("No valid fields to update")
         return
     
-    # Update options
+    # Persist a full merged zone list so runtime and restart use the same source of truth.
     options = entry.options.copy()
-    if "zones" not in options:
-        options["zones"] = []
-    
-    # Find and update the zone in options
+    merged_zones = [dict(zone) for zone in current_config.get("zones", [])]
     zone_updated = False
-    for i, zone in enumerate(options["zones"]):
+    for i, zone in enumerate(merged_zones):
         if zone.get(ZK_ID) == zone_id:
-            options["zones"][i].update(zone_update)
+            merged_zones[i].update(zone_update)
             zone_updated = True
             break
-    
+
     if not zone_updated:
-        # Create new zone entry in options
         new_zone = {ZK_ID: zone_id}
         new_zone.update(zone_update)
-        options["zones"].append(new_zone)
+        merged_zones.append(new_zone)
+
+    options["zones"] = [_coerce_zone_defaults(dict(zone)) for zone in merged_zones]
     
     # Save the updated options
     hass.config_entries.async_update_entry(entry, options=options)

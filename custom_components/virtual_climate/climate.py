@@ -13,7 +13,8 @@ from homeassistant.helpers.restore_state import RestoreEntity
 from .const import (
     DOMAIN, CONF_ZONES, ZK_ID, ZK_NAME, ZK_SENSOR_AIR, ZK_SENSOR_FLOOR, ZK_SENSOR_RH,
     ZK_SWITCH_ACTUATOR, ZK_SUPPORT_MODE, ZK_FLOOR_LIMITS, ZK_OPEN_S, ZK_CLOSE_S,
-    ZK_ZONE_MIN_ON, ZK_ZONE_MIN_OFF, ZK_WINDOW_SWITCH, EVT_ZONE_STATUS, EVT_ZONE_SCHEDULE
+    ZK_ZONE_MIN_ON, ZK_ZONE_MIN_OFF, ZK_WINDOW_SWITCH, EVT_ZONE_STATUS, EVT_ZONE_SCHEDULE,
+    EVENT_ENTRY_ID,
 )
 from .helpers import dew_point_c, get_state_float, get_state_str, co_mode_from_entity
 from .config_flow import get_current_config
@@ -188,6 +189,8 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
     @callback
     def _on_zone_schedule(self, event):
         data = event.data or {}
+        if data.get(EVENT_ENTRY_ID) != self.entry.entry_id:
+            return
         if data.get("zone_id") != self.zid:
             return
         self._coordinator_diag = dict(data)
@@ -322,6 +325,7 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
             delta = (target - self._t_air)  # positive = too cold in HEAT, negative = too hot in COOL
 
         payload = {
+            EVENT_ENTRY_ID: self.entry.entry_id,
             "zone_id": self.zid,
             "name": self._name,
             "co_mode": co_mode,                    # "HEAT" | "COOL" | "OFF"

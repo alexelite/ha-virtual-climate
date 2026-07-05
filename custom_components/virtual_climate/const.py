@@ -50,6 +50,9 @@ EVT_ZONE_STATUS = f"{DOMAIN}/zone_status"
 EVT_ZONE_SCHEDULE = f"{DOMAIN}/zone_schedule"
 EVT_HYDRONICS_DEMAND = f"{DOMAIN}/hydronics_demand"
 
+# Internal event payload keys
+EVENT_ENTRY_ID = "entry_id"
+
 # Defaults
 DEFAULTS = {
     CONF_PACKING_MODE: "simultaneous",

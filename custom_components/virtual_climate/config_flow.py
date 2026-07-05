@@ -221,6 +221,41 @@ def _build_export_payload(config: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _merge_zone_lists(
+    base_zones: List[Dict[str, Any]] | None,
+    override_zones: List[Dict[str, Any]] | None,
+) -> List[Dict[str, Any]]:
+    """Merge zones by id while preserving base order and appending new override zones."""
+    base_zones = [dict(zone) for zone in (base_zones or [])]
+    override_zones = [dict(zone) for zone in (override_zones or [])]
+
+    overrides_by_id = {
+        zone.get(ZK_ID): zone
+        for zone in override_zones
+        if zone.get(ZK_ID)
+    }
+    merged_zones: List[Dict[str, Any]] = []
+    seen_ids: set[str] = set()
+
+    for zone in base_zones:
+        zone_id = zone.get(ZK_ID)
+        if not zone_id:
+            continue
+        merged_zone = dict(zone)
+        merged_zone.update(overrides_by_id.get(zone_id, {}))
+        merged_zones.append(_coerce_zone_defaults(merged_zone))
+        seen_ids.add(zone_id)
+
+    for zone in override_zones:
+        zone_id = zone.get(ZK_ID)
+        if not zone_id or zone_id in seen_ids:
+            continue
+        merged_zones.append(_coerce_zone_defaults(dict(zone)))
+        seen_ids.add(zone_id)
+
+    return merged_zones
+
+
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow with dual path: wizard steps OR JSON import for faster setup."""
     VERSION = 1
@@ -485,16 +520,10 @@ def get_current_config(entry: config_entries.ConfigEntry) -> Dict[str, Any]:
         data.update(entry.options)
         # Handle zones specially - merge zone options
         if "zones" in entry.options and "zones" in entry.data:
-            zones_data = {zone.get(ZK_ID): zone for zone in entry.data.get("zones", [])}
-            zones_options = {zone.get(ZK_ID): zone for zone in entry.options.get("zones", [])}
-            # Merge each zone's options over its data
-            merged_zones = []
-            for zone_id, zone_data in zones_data.items():
-                zone_options = zones_options.get(zone_id, {})
-                merged_zone = zone_data.copy()
-                merged_zone.update(zone_options)
-                merged_zones.append(merged_zone)
-            data["zones"] = merged_zones
+            data["zones"] = _merge_zone_lists(
+                entry.data.get("zones", []),
+                entry.options.get("zones", []),
+            )
     return data
 
 
@@ -871,25 +900,22 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
             else:
                 zone_update[ZK_FLOOR_LIMITS] = None
             
-            # Update options
+            # Persist a full merged zone list so restart does not depend on sparse overrides.
             options = self._config_entry.options.copy()
-            if "zones" not in options:
-                options["zones"] = []
-            
-            # Find and update the zone in options
+            zones = [dict(zone) for zone in self.current_config.get(CONF_ZONES, [])]
             zone_found = False
-            for i, zone in enumerate(options["zones"]):
+            for i, zone in enumerate(zones):
                 if zone.get(ZK_ID) == self.selected_zone_id:
-                    options["zones"][i].update(zone_update)
+                    zones[i].update(zone_update)
                     zone_found = True
                     break
-            
+
             if not zone_found:
-                # Create new zone entry in options
                 new_zone = {ZK_ID: self.selected_zone_id}
                 new_zone.update(zone_update)
-                options["zones"].append(new_zone)
-            
+                zones.append(_coerce_zone_defaults(new_zone))
+
+            options[CONF_ZONES] = [_coerce_zone_defaults(dict(zone)) for zone in zones]
             return self.async_create_entry(title="", data=options)
             
         except (ValueError, TypeError) as e:

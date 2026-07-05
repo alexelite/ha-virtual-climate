@@ -20,7 +20,7 @@ from .const import (
     CONF_PUMP_START_DELAY_SECONDS, CONF_HEATING_SOURCE_START_DELAY_SECONDS,
     CONF_COOLING_SOURCE_START_DELAY_SECONDS, CONF_MINIMUM_RUN_TIME_SECONDS,
     CONF_PUMP_POST_RUN_SECONDS, CONF_MINIMUM_OFF_TIME_SECONDS,
-    DEFAULTS
+    DEFAULTS, EVENT_ENTRY_ID
 )
 from .config_flow import get_current_config
 from .helpers import co_mode_from_entity
@@ -93,6 +93,8 @@ class ZoneManager:
     @callback
     def _on_zone_status(self, event):
         data: dict = event.data or {}
+        if data.get(EVENT_ENTRY_ID) != self.entry.entry_id:
+            return
         zid = data.get("zone_id")
         if not zid:
             return
@@ -631,6 +633,7 @@ class ZoneManager:
                 coordinator_status = zone_status
 
             payload = {
+                EVENT_ENTRY_ID: self.entry.entry_id,
                 "zone_id": zid,
                 "system_mode": system_mode,
                 "active_co_mode": z.get("active_co_mode", z.get("co_mode")),
@@ -690,6 +693,7 @@ class ZoneManager:
         if wants:
             demand_ratio = sum(w["p"] for w in wants.values()) / max(1, len(wants))
         payload = {
+            EVENT_ENTRY_ID: self.entry.entry_id,
             "cycle_id": int(self._cycle_start),
             "mode": system_mode,
             "demand_ratio": round(demand_ratio, 3),
