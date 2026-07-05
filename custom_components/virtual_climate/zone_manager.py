@@ -27,6 +27,9 @@ from .helpers import co_mode_from_entity
 
 _LOGGER = logging.getLogger(__name__)
 
+GLOBAL_DEMAND_RATIO_PRECISION = 2
+GLOBAL_DEMAND_RATIO_MIN_DELTA = 0.02
+
 class ZoneManager:
     """Central coordinator for zone scheduling and source control."""
 
@@ -95,7 +98,6 @@ class ZoneManager:
             return
         data.setdefault("last_block_reasons", [])
         self._zones[zid] = data
-        self._refresh_global_diagnostics()
 
     @callback
     def async_add_listener(self, listener: Callable[[], None]) -> Callable[[], None]:
@@ -130,6 +132,10 @@ class ZoneManager:
         scheduled_zones = sum(1 for z in zone_states if z.get("zone_id") in self._slots)
         running_zones = sum(1 for z in zone_states if z.get("coordinator_status") == "running")
         blocked_zones = sum(1 for z in zone_states if z.get("coordinator_status") == "blocked")
+        previous_ratio = float(self._global_diag.get("aggregated_demand_ratio", 0.0) or 0.0)
+        rounded_ratio = round(float(demand_ratio), GLOBAL_DEMAND_RATIO_PRECISION)
+        if abs(rounded_ratio - previous_ratio) < GLOBAL_DEMAND_RATIO_MIN_DELTA:
+            rounded_ratio = previous_ratio
 
         self._global_diag = {
             "system_mode": system_mode,
@@ -137,7 +143,7 @@ class ZoneManager:
             "cycle_active": self._cycle_active,
             "cycle_length_s": self._cycle_length,
             "packing_mode": self._packing,
-            "aggregated_demand_ratio": round(float(demand_ratio), 4),
+            "aggregated_demand_ratio": rounded_ratio,
             "plant_state": self._plant_state,
             "plant_mode": self._plant_mode or "OFF",
             "total_zones": len(zone_states),

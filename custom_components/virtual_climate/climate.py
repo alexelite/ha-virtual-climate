@@ -7,6 +7,7 @@ from homeassistant.components.climate.const import HVACAction, HVACMode, Climate
 from homeassistant.const import UnitOfTemperature, STATE_ON, STATE_OFF, STATE_UNAVAILABLE, STATE_UNKNOWN, ATTR_TEMPERATURE
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import (
@@ -66,6 +67,16 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
         self._unsub_schedule = None
         self._coordinator_diag = {}
 
+    def _zone_config(self) -> dict:
+        """Return the latest merged zone config for this entity."""
+        zones = get_current_config(self.entry).get(CONF_ZONES, [])
+        for zone in zones:
+            if zone.get(ZK_ID) == self.zid:
+                self._z = zone
+                self._name = zone.get(ZK_NAME, self._name)
+                return zone
+        return self._z
+
     @property
     def name(self):
         return f"VT {self._name}"
@@ -73,6 +84,15 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
     @property
     def unique_id(self):
         return f"{DOMAIN}.{self.zid}"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        return DeviceInfo(
+            identifiers={(DOMAIN, f"{self.entry.entry_id}_{self.zid}")},
+            name=f"VT {self._name}",
+            model="Virtual Climate Zone",
+            manufacturer="Virtual Climate",
+        )
 
     @property
     def hvac_modes(self):
@@ -83,7 +103,7 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
         return HVACMode.OFF if self._manual_off else HVACMode.AUTO
 
     def _mode_supported(self, co_mode: str) -> bool:
-        support_mode = (self._z.get(ZK_SUPPORT_MODE) or "BOTH").upper()
+        support_mode = (self._zone_config().get(ZK_SUPPORT_MODE) or "BOTH").upper()
         if co_mode == "HEAT":
             return support_mode in ("HEAT", "BOTH")
         if co_mode == "COOL":
@@ -99,7 +119,7 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
         if self._mode_supported(co_mode):
             return co_mode
 
-        support_mode = (self._z.get(ZK_SUPPORT_MODE) or "BOTH").upper()
+        support_mode = (self._zone_config().get(ZK_SUPPORT_MODE) or "BOTH").upper()
         if support_mode == "HEAT":
             return "HEAT"
         if support_mode == "COOL":
@@ -179,7 +199,7 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
         self._hvac_mode = HVACMode.OFF if self._manual_off else HVACMode.AUTO
 
         if self._manual_off:
-            ent = self._z.get(ZK_SWITCH_ACTUATOR)
+            ent = self._zone_config().get(ZK_SWITCH_ACTUATOR)
             if ent:
                 await self.hass.services.async_call(
                     "homeassistant",
@@ -212,7 +232,7 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
         self._target_temp = self._t_cool if active_mode == "COOL" else self._t_heat
 
     def _floor_limit_state(self) -> str:
-        floor_limits = self._z.get(ZK_FLOOR_LIMITS) or {}
+        floor_limits = self._zone_config().get(ZK_FLOOR_LIMITS) or {}
         if self._t_floor is None:
             return "no_floor_sensor"
         if not floor_limits:
@@ -237,7 +257,7 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
 
     async def async_update(self):
         """Pull sensor states and recompute dew point + attributes."""
-        z = self._z
+        z = self._zone_config()
         self._t_air = get_state_float(self.hass, z.get(ZK_SENSOR_AIR))
         self._t_floor = get_state_float(self.hass, z.get(ZK_SENSOR_FLOOR))
         self._rh = get_state_float(self.hass, z.get(ZK_SENSOR_RH))
@@ -252,7 +272,7 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
 
     @property
     def extra_state_attributes(self):
-        z = self._z
+        z = self._zone_config()
         coordinator = self._coordinator_diag
         return {
             "zone_id": self.zid,
@@ -308,7 +328,7 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
             "active_co_mode": active_mode,
             "manual_off": self._manual_off,
             "zone_hvac_mode": "OFF" if self._manual_off else "AUTO",
-            "support_mode": self._z.get(ZK_SUPPORT_MODE, "BOTH"),
+            "support_mode": self._zone_config().get(ZK_SUPPORT_MODE, "BOTH"),
             "eligible_window": (not self._window_open),
             "t_air": self._t_air,
             "t_floor": self._t_floor,
@@ -316,14 +336,14 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
             "dew_point": self._dew,
             "delta_air": delta,
             "actuator": {
-                "entity_id": self._z.get(ZK_SWITCH_ACTUATOR),
-                "open_s": self._z.get(ZK_OPEN_S, 20),
-                "close_s": self._z.get(ZK_CLOSE_S, 20),
+                "entity_id": self._zone_config().get(ZK_SWITCH_ACTUATOR),
+                "open_s": self._zone_config().get(ZK_OPEN_S, 20),
+                "close_s": self._zone_config().get(ZK_CLOSE_S, 20),
             },
             "limits": {
-                "floor": self._z.get(ZK_FLOOR_LIMITS, {}),
-                "zone_min_on_s": self._z.get(ZK_ZONE_MIN_ON, 180),
-                "zone_min_off_s": self._z.get(ZK_ZONE_MIN_OFF, 180),
+                "floor": self._zone_config().get(ZK_FLOOR_LIMITS, {}),
+                "zone_min_on_s": self._zone_config().get(ZK_ZONE_MIN_ON, 180),
+                "zone_min_off_s": self._zone_config().get(ZK_ZONE_MIN_OFF, 180),
             },
             "window_open": self._window_open,
             "floor_limit_state": self._floor_limit_state(),
