@@ -51,9 +51,19 @@ set_humidity_limits:
           step: 1
           mode: box
 
+reset_supply_learning:
+  name: Reset supply learning
+  description: Reset learned supply corrections and experience without changing the configured curve.
+  fields:
+    entry_id:
+      name: Configuration entry ID
+      required: true
+      selector:
+        text:
+
 update_zone:
   name: Update zone settings
-  description: Update zone configuration at runtime without restart.
+  description: Update zone configuration and reload the integration.
   fields:
     zone_id:
       required: true
@@ -65,6 +75,11 @@ update_zone:
       description: Floor temperature limits
       selector:
         object: {}
+    temperature_filter_enabled:
+      required: false
+      description: Smooth room temperature using a three-minute EMA sampled once a minute.
+      selector:
+        boolean: {}
     open_s:
       required: false
       description: Actuator open time in seconds

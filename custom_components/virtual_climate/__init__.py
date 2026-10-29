@@ -2,11 +2,12 @@ from __future__ import annotations
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 import logging
+import voluptuous as vol
 
 from .config_flow import get_current_config, _coerce_zone_defaults
 from .const import (
     DATA_KEY_ENTRIES, DATA_KEY_MANAGER, PLATFORMS, ZK_ID, ZK_SUPPORT_MODE, ZK_FLOOR_LIMITS, ZK_OPEN_S, ZK_CLOSE_S,
-    ZK_ZONE_MIN_ON, ZK_ZONE_MIN_OFF, ZK_SENSOR_FLOOR, ZK_WINDOW_SWITCH
+    ZK_ZONE_MIN_ON, ZK_ZONE_MIN_OFF, ZK_SENSOR_FLOOR, ZK_WINDOW_SWITCH, ZK_TEMPERATURE_FILTER
 )
 from .zone_manager import ZoneManager
 
@@ -28,12 +29,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
     if not hass.services.has_service(DOMAIN, "update_zone"):
+        async def handle_update_zone(call: ServiceCall) -> None:
+            await async_handle_update_zone(hass, call)
+
         hass.services.async_register(
             DOMAIN,
             "update_zone",
-            lambda call: async_handle_update_zone(hass, call),
+            handle_update_zone,
             schema=None,
         )
+
+    if not hass.services.has_service(DOMAIN, "reset_supply_learning"):
+        async def reset_supply_learning(call: ServiceCall) -> None:
+            entry_data = hass.data[DOMAIN].get(call.data["entry_id"])
+            if not entry_data or DATA_KEY_MANAGER not in entry_data:
+                raise ValueError("Unknown Virtual Climate entry")
+            await entry_data[DATA_KEY_MANAGER].supply.async_reset_learning()
+
+        hass.services.async_register(DOMAIN, "reset_supply_learning", reset_supply_learning,
+                                     schema=vol.Schema({vol.Required("entry_id"): str}))
 
     return True
 
@@ -47,6 +61,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if not hass.data.get(DOMAIN, {}).get(DATA_KEY_ENTRIES) and hass.services.has_service(DOMAIN, "update_zone"):
         hass.services.async_remove(DOMAIN, "update_zone")
+    if not hass.data.get(DOMAIN, {}).get(DATA_KEY_ENTRIES) and hass.services.has_service(DOMAIN, "reset_supply_learning"):
+        hass.services.async_remove(DOMAIN, "reset_supply_learning")
     return unload_ok
 
 async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -105,6 +121,12 @@ async def async_update_zone(hass: HomeAssistant, entry: ConfigEntry, data: dict)
     fields_changed = []
     
     # Handle each optional field
+    if ZK_TEMPERATURE_FILTER in data:
+        if not isinstance(data[ZK_TEMPERATURE_FILTER], bool):
+            raise ValueError("temperature_filter_enabled must be a boolean")
+        zone_update[ZK_TEMPERATURE_FILTER] = data[ZK_TEMPERATURE_FILTER]
+        fields_changed.append(ZK_TEMPERATURE_FILTER)
+
     if "floor_limits" in data:
         floor_limits = data["floor_limits"]
         if floor_limits:
@@ -176,7 +198,7 @@ async def async_update_zone(hass: HomeAssistant, entry: ConfigEntry, data: dict)
     hass.config_entries.async_update_entry(entry, options=options)
     
     # Fire event
-    hass.bus.fire("virtual_climate/options_updated", {
+    hass.bus.async_fire("virtual_climate/options_updated", {
         "zone_id": zone_id,
         "fields_changed": fields_changed
     })

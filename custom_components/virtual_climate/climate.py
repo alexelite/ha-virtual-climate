@@ -1,27 +1,36 @@
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
+from time import monotonic, time
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import HVACAction, HVACMode, ClimateEntityFeature
 from homeassistant.const import UnitOfTemperature, STATE_ON, STATE_OFF, STATE_UNAVAILABLE, STATE_UNKNOWN, ATTR_TEMPERATURE
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import (
     DOMAIN, CONF_ZONES, ZK_ID, ZK_NAME, ZK_SENSOR_AIR, ZK_SENSOR_FLOOR, ZK_SENSOR_RH,
     ZK_SWITCH_ACTUATOR, ZK_SUPPORT_MODE, ZK_FLOOR_LIMITS, ZK_OPEN_S, ZK_CLOSE_S,
-    ZK_ZONE_MIN_ON, ZK_ZONE_MIN_OFF, ZK_WINDOW_SWITCH, EVT_ZONE_STATUS, EVT_ZONE_SCHEDULE,
-    EVENT_ENTRY_ID,
+    ZK_ZONE_MIN_ON, ZK_ZONE_MIN_OFF, ZK_WINDOW_SWITCH, ZK_TEMPERATURE_FILTER,
+    EVENT_ENTRY_ID, DATA_KEY_MANAGER, THERMAL_UPDATE_SECONDS,
 )
 from .helpers import dew_point_c, get_state_float, get_state_str, co_mode_from_entity
 from .config_flow import get_current_config
+from .temperature_filter import TemperatureFilter
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=5)  # VT publishes status every 5s
+STATE_PUBLISH_INTERVAL_S = THERMAL_UPDATE_SECONDS
+# Measurements and numeric coordinator diagnostics can wait for the next UI
+# sample. Discrete operating/protection changes bypass this interval.
+SAMPLED_ATTRIBUTES = frozenset({
+    "t_air", "t_air_raw", "t_floor", "rh", "dew_point",
+    "coordinator_aggregated_demand_ratio", "coordinator_cycle_length_s",
+    "coordinator_requested_fraction", "coordinator_requested_t_on_s",
+    "coordinator_scheduled_t_on_s", "coordinator_start_offset_s",
+    "coordinator_arbitration_rank",
+})
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     # Use unified config loading that merges options over data
@@ -38,6 +47,9 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
 
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    # The manager samples all zones once per minute before planning.
+    _attr_should_poll = False
+    _unrecorded_attributes = frozenset({"t_air_raw"})
 
     def __init__(self, hass: HomeAssistant, entry, zconf: dict):
         self.hass = hass
@@ -45,6 +57,10 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
         self.zid = zconf.get(ZK_ID)
         self._name = zconf.get(ZK_NAME, self.zid)
         self._z = zconf
+        self._manager = hass.data[DOMAIN][entry.entry_id][DATA_KEY_MANAGER]
+        self._temperature_filter = TemperatureFilter()
+        self._t_air_raw = None
+        self._temperature_sampled_at = None
 
         # Per-mode setpoints
         self._t_heat = 22.0
@@ -63,10 +79,10 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
         # UI mode: AUTO follows the global system mode, OFF is a manual override.
         self._hvac_mode = HVACMode.AUTO
 
-        # Simple publish timer
-        self._unsub_pub = None
-        self._unsub_schedule = None
+        self._unsub_zone = None
         self._coordinator_diag = {}
+        self._last_state_publish = None
+        self._last_operating_state = None
 
     def _zone_config(self) -> dict:
         """Return the latest merged zone config for this entity."""
@@ -136,15 +152,9 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
         if not self._mode_supported(co_mode):
             return HVACAction.IDLE
 
-        if self._t_air is None:
-            return HVACAction.IDLE
-
-        target = self._t_cool if co_mode == "COOL" else self._t_heat
-        delta = target - self._t_air
-        if co_mode == "HEAT" and delta > 0:
-            return HVACAction.HEATING
-        if co_mode == "COOL" and delta < 0:
-            return HVACAction.COOLING
+        actuator = self._zone_config().get(ZK_SWITCH_ACTUATOR)
+        if get_state_str(self.hass, actuator) == "on":
+            return HVACAction.HEATING if co_mode == "HEAT" else HVACAction.COOLING
         return HVACAction.IDLE
 
     @property
@@ -161,8 +171,8 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
 
     async def async_added_to_hass(self):
         await super().async_added_to_hass()
-        self._unsub_pub = async_track_time_interval(self.hass, self._async_publish_status, SCAN_INTERVAL)
-        self._unsub_schedule = self.hass.bus.async_listen(EVT_ZONE_SCHEDULE, self._on_zone_schedule)
+        self._unsub_zone = self._manager.async_register_zone(
+            self.zid, self._async_publish_status, self._on_zone_schedule)
 
         last = await self.async_get_last_state()
         if not last:
@@ -179,22 +189,40 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
         self._recompute_target()
 
     async def async_will_remove_from_hass(self):
-        if self._unsub_pub:
-            self._unsub_pub()
-            self._unsub_pub = None
-        if self._unsub_schedule:
-            self._unsub_schedule()
-            self._unsub_schedule = None
+        if self._unsub_zone:
+            self._unsub_zone()
+            self._unsub_zone = None
 
     @callback
-    def _on_zone_schedule(self, event):
-        data = event.data or {}
+    def _on_zone_schedule(self, data, *, sampled=False):
         if data.get(EVENT_ENTRY_ID) != self.entry.entry_id:
             return
         if data.get("zone_id") != self.zid:
             return
         self._coordinator_diag = dict(data)
-        self.async_write_ha_state()
+        # A completed control sample is the cadence authority; do not gate it
+        # again on a nominal 60 seconds that may differ by milliseconds.
+        self._publish_ha_state(force=sampled)
+
+    @callback
+    def _publish_ha_state(self, *, force=False):
+        """Sample telemetry once a minute without delaying operating changes."""
+        attributes = self.extra_state_attributes
+        operating_state = (
+            self.hvac_mode, self.hvac_action, self.target_temperature,
+            {key: value for key, value in attributes.items()
+             if key not in SAMPLED_ATTRIBUTES},
+            # Loss/recovery of a measurement is meaningful even between samples.
+            tuple(value is None for value in
+                  (self._t_air, self._t_floor, self._rh, self._dew)),
+        )
+        now = monotonic()
+        if (force or self._last_state_publish is None
+                or operating_state != self._last_operating_state
+                or now - self._last_state_publish >= STATE_PUBLISH_INTERVAL_S):
+            self.async_write_ha_state()
+            self._last_state_publish = now
+            self._last_operating_state = operating_state
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode):
         """Set zone AUTO/OFF. OFF acts as a manual override."""
@@ -211,8 +239,9 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
                     blocking=False,
                 )
 
-        self.async_write_ha_state()
+        self._publish_ha_state(force=True)
         await self._async_publish_status(None)
+        self._manager.async_request_evaluation()
 
     async def async_set_temperature(self, **kwargs):
         """Set the setpoint for the mode currently exposed in the UI."""
@@ -225,7 +254,9 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
         else:
             self._t_heat = float(t)
         self._recompute_target()
-        self.async_write_ha_state()
+        self._publish_ha_state(force=True)
+        await self._async_publish_status(None)
+        self._manager.async_request_evaluation()
 
     def _recompute_target(self):
         co_mode = co_mode_from_entity(self.hass, get_current_config(self.entry))
@@ -235,6 +266,8 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
         self._target_temp = self._t_cool if active_mode == "COOL" else self._t_heat
 
     def _floor_limit_state(self) -> str:
+        if not self._zone_config().get(ZK_SENSOR_FLOOR):
+            return "no_floor_sensor"
         floor_limits = self._zone_config().get(ZK_FLOOR_LIMITS) or {}
         if self._t_floor is None:
             return "no_floor_sensor"
@@ -258,16 +291,21 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
                 return "above_cool_max"
         return "ok"
 
-    async def async_update(self):
+    async def async_update(self, *, control_sample=False):
         """Pull sensor states and recompute dew point + attributes."""
         z = self._zone_config()
-        self._t_air = get_state_float(self.hass, z.get(ZK_SENSOR_AIR))
+        self._t_air_raw = get_state_float(self.hass, z.get(ZK_SENSOR_AIR))
+        self._t_air = self._temperature_filter.update(
+            self._t_air_raw, monotonic(), source=z.get(ZK_SENSOR_AIR),
+            enabled=z.get(ZK_TEMPERATURE_FILTER, True), control_sample=control_sample)
+        self._temperature_sampled_at = time()
         self._t_floor = get_state_float(self.hass, z.get(ZK_SENSOR_FLOOR))
         self._rh = get_state_float(self.hass, z.get(ZK_SENSOR_RH))
         self._window_open = (get_state_str(self.hass, z.get(ZK_WINDOW_SWITCH)) == "on")
 
         if self._t_air is not None and self._rh is not None:
-            self._dew = dew_point_c(self._t_air, self._rh)
+            # Dew point describes measured air, not the smoothed comfort signal.
+            self._dew = dew_point_c(self._t_air_raw, self._rh)
         else:
             self._dew = None
 
@@ -282,6 +320,8 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
             "support_mode": z.get(ZK_SUPPORT_MODE),
             "window_open": self._window_open,
             "t_air": self._t_air,
+            "t_air_raw": self._t_air_raw,
+            "temperature_filter_enabled": z.get(ZK_TEMPERATURE_FILTER, True),
             "t_floor": self._t_floor,
             "rh": self._rh,
             "dew_point": self._dew,
@@ -301,6 +341,12 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
             "coordinator_packing_mode": coordinator.get("packing_mode"),
             "coordinator_scheduled": coordinator.get("scheduled"),
             "coordinator_running": coordinator.get("running"),
+            "coordinator_scheduled_running": coordinator.get("scheduled_running"),
+            "actuator_state": coordinator.get("actuator_state"),
+            "actuator_commanded_state": coordinator.get("actuator_commanded_state"),
+            "actuator_mismatch": coordinator.get("actuator_mismatch"),
+            "plant_flow_hold": coordinator.get("plant_flow_hold"),
+            "plant_flow_hold_reason": coordinator.get("plant_flow_hold_reason"),
             "coordinator_requested_fraction": coordinator.get("requested_fraction"),
             "coordinator_requested_t_on_s": coordinator.get("requested_t_on_s"),
             "coordinator_scheduled_t_on_s": coordinator.get("scheduled_t_on_s"),
@@ -313,8 +359,9 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
             "plant_mode": coordinator.get("plant_mode"),
         }
 
-    async def _async_publish_status(self, now):
-        """Publish a compact status payload to the ZoneManager via hass.bus."""
+    async def _async_publish_status(self, now, *, publish=True, control_sample=False):
+        """Sample on the manager's control clock and deliver status in memory."""
+        await self.async_update(control_sample=control_sample)
         co_mode = co_mode_from_entity(self.hass, get_current_config(self.entry))
 
         # Compute sign-consistent delta for COOL/HEAT
@@ -335,6 +382,9 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
             "support_mode": self._zone_config().get(ZK_SUPPORT_MODE, "BOTH"),
             "eligible_window": (not self._window_open),
             "t_air": self._t_air,
+            "temperature_sampled_at": self._temperature_sampled_at,
+            "air_sensor_entity_id": self._zone_config().get(ZK_SENSOR_AIR),
+            "t_air_raw": self._t_air_raw,
             "t_floor": self._t_floor,
             "rh": self._rh,
             "dew_point": self._dew,
@@ -352,4 +402,6 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
             "window_open": self._window_open,
             "floor_limit_state": self._floor_limit_state(),
         }
-        self.hass.bus.async_fire(EVT_ZONE_STATUS, payload)
+        self._manager.async_set_zone_status(payload)
+        if publish:
+            self._publish_ha_state()

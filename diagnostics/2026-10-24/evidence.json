@@ -1,0 +1,2289 @@
+{
+  "description": "Read-only HomerHA observations, 2026-10-24 Europe/Bucharest. No configuration or actuator changes.",
+  "history": {
+    "data": {
+      "success": true,
+      "source": "history",
+      "entities": [
+        {
+          "entity_id": "sensor.virtual_climate_diagnostics_coordinator_phase",
+          "period": {
+            "start": "2026-10-24T05:45:00+03:00",
+            "end": "2026-10-24T06:25:00+03:00"
+          },
+          "states": [
+            {
+              "state": "running",
+              "last_updated": "2026-10-24T06:24:34.829712+03:00",
+              "last_changed": "2026-10-24T06:24:34.829712+03:00"
+            },
+            {
+              "state": "start",
+              "last_updated": "2026-10-24T06:24:33.841513+03:00",
+              "last_changed": "2026-10-24T06:24:33.841513+03:00"
+            },
+            {
+              "state": "stop",
+              "last_updated": "2026-10-24T06:24:33.829750+03:00",
+              "last_changed": "2026-10-24T06:24:33.829750+03:00"
+            },
+            {
+              "state": "running",
+              "last_updated": "2026-10-24T06:15:20.505783+03:00",
+              "last_changed": "2026-10-24T06:15:20.505783+03:00"
+            },
+            {
+              "state": "start",
+              "last_updated": "2026-10-24T06:15:19.519008+03:00",
+              "last_changed": "2026-10-24T06:15:19.519008+03:00"
+            },
+            {
+              "state": "stop",
+              "last_updated": "2026-10-24T06:15:19.506291+03:00",
+              "last_changed": "2026-10-24T06:15:19.506291+03:00"
+            },
+            {
+              "state": "running",
+              "last_updated": "2026-10-24T06:05:53.806640+03:00",
+              "last_changed": "2026-10-24T06:05:53.806640+03:00"
+            },
+            {
+              "state": "start",
+              "last_updated": "2026-10-24T06:05:52.820251+03:00",
+              "last_changed": "2026-10-24T06:05:52.820251+03:00"
+            },
+            {
+              "state": "stop",
+              "last_updated": "2026-10-24T06:05:52.806552+03:00",
+              "last_changed": "2026-10-24T06:05:52.806552+03:00"
+            },
+            {
+              "state": "running",
+              "last_updated": "2026-10-24T05:56:18.421016+03:00",
+              "last_changed": "2026-10-24T05:56:18.421016+03:00"
+            },
+            {
+              "state": "start",
+              "last_updated": "2026-10-24T05:56:17.435041+03:00",
+              "last_changed": "2026-10-24T05:56:17.435041+03:00"
+            },
+            {
+              "state": "stop",
+              "last_updated": "2026-10-24T05:56:17.421339+03:00",
+              "last_changed": "2026-10-24T05:56:17.421339+03:00"
+            },
+            {
+              "state": "running",
+              "last_updated": "2026-10-24T05:46:26.043714+03:00",
+              "last_changed": "2026-10-24T05:46:26.043714+03:00"
+            },
+            {
+              "state": "start",
+              "last_updated": "2026-10-24T05:46:25.063954+03:00",
+              "last_changed": "2026-10-24T05:46:25.063954+03:00"
+            },
+            {
+              "state": "stop",
+              "last_updated": "2026-10-24T05:46:25.043510+03:00",
+              "last_changed": "2026-10-24T05:46:25.043510+03:00"
+            },
+            {
+              "state": "running",
+              "last_updated": "2026-10-24T05:45:00+03:00",
+              "last_changed": "2026-10-24T05:45:00+03:00"
+            }
+          ],
+          "total_count": 16,
+          "offset": 0,
+          "limit": 500,
+          "count": 16,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "sensor.virtual_climate_diagnostics_aggregated_demand_ratio",
+          "period": {
+            "start": "2026-10-24T05:45:00+03:00",
+            "end": "2026-10-24T06:25:00+03:00"
+          },
+          "states": [
+            {
+              "state": "0.0",
+              "last_updated": "2026-10-24T06:24:34.829833+03:00",
+              "last_changed": "2026-10-24T06:24:34.829833+03:00"
+            },
+            {
+              "state": "0.29",
+              "last_updated": "2026-10-24T06:24:33.841584+03:00",
+              "last_changed": "2026-10-24T06:24:33.841584+03:00"
+            },
+            {
+              "state": "0.0",
+              "last_updated": "2026-10-24T06:24:33.829856+03:00",
+              "last_changed": "2026-10-24T06:24:33.829856+03:00"
+            },
+            {
+              "state": "0.3",
+              "last_updated": "2026-10-24T06:19:19.681238+03:00",
+              "last_changed": "2026-10-24T06:19:19.681238+03:00"
+            },
+            {
+              "state": "0.0",
+              "last_updated": "2026-10-24T06:15:20.505906+03:00",
+              "last_changed": "2026-10-24T06:15:20.505906+03:00"
+            },
+            {
+              "state": "0.31",
+              "last_updated": "2026-10-24T06:15:19.519091+03:00",
+              "last_changed": "2026-10-24T06:15:19.519091+03:00"
+            },
+            {
+              "state": "0.0",
+              "last_updated": "2026-10-24T06:15:19.506397+03:00",
+              "last_changed": "2026-10-24T06:15:19.506397+03:00"
+            },
+            {
+              "state": "0.31",
+              "last_updated": "2026-10-24T06:14:17.455946+03:00",
+              "last_changed": "2026-10-24T06:14:17.455946+03:00"
+            },
+            {
+              "state": "0.29",
+              "last_updated": "2026-10-24T06:14:07.449681+03:00",
+              "last_changed": "2026-10-24T06:14:07.449681+03:00"
+            },
+            {
+              "state": "0.31",
+              "last_updated": "2026-10-24T06:12:02.362796+03:00",
+              "last_changed": "2026-10-24T06:12:02.362796+03:00"
+            },
+            {
+              "state": "0.26",
+              "last_updated": "2026-10-24T06:11:47.351869+03:00",
+              "last_changed": "2026-10-24T06:11:47.351869+03:00"
+            },
+            {
+              "state": "0.32",
+              "last_updated": "2026-10-24T06:10:53.027805+03:00",
+              "last_changed": "2026-10-24T06:10:53.027805+03:00"
+            },
+            {
+              "state": "0.3",
+              "last_updated": "2026-10-24T06:10:28.011599+03:00",
+              "last_changed": "2026-10-24T06:10:28.011599+03:00"
+            },
+            {
+              "state": "0.32",
+              "last_updated": "2026-10-24T06:10:07.998621+03:00",
+              "last_changed": "2026-10-24T06:10:07.998621+03:00"
+            },
+            {
+              "state": "0.26",
+              "last_updated": "2026-10-24T06:09:52.981297+03:00",
+              "last_changed": "2026-10-24T06:09:52.981297+03:00"
+            },
+            {
+              "state": "0.0",
+              "last_updated": "2026-10-24T06:05:53.806765+03:00",
+              "last_changed": "2026-10-24T06:05:53.806765+03:00"
+            },
+            {
+              "state": "0.27",
+              "last_updated": "2026-10-24T06:05:52.820352+03:00",
+              "last_changed": "2026-10-24T06:05:52.820352+03:00"
+            },
+            {
+              "state": "0.0",
+              "last_updated": "2026-10-24T06:05:52.806659+03:00",
+              "last_changed": "2026-10-24T06:05:52.806659+03:00"
+            },
+            {
+              "state": "0.27",
+              "last_updated": "2026-10-24T06:04:57.769466+03:00",
+              "last_changed": "2026-10-24T06:04:57.769466+03:00"
+            },
+            {
+              "state": "0.32",
+              "last_updated": "2026-10-24T06:03:57.728860+03:00",
+              "last_changed": "2026-10-24T06:03:57.728860+03:00"
+            },
+            {
+              "state": "0.26",
+              "last_updated": "2026-10-24T06:03:52.725431+03:00",
+              "last_changed": "2026-10-24T06:03:52.725431+03:00"
+            },
+            {
+              "state": "0.32",
+              "last_updated": "2026-10-24T06:03:27.708738+03:00",
+              "last_changed": "2026-10-24T06:03:27.708738+03:00"
+            },
+            {
+              "state": "0.27",
+              "last_updated": "2026-10-24T06:03:22.705545+03:00",
+              "last_changed": "2026-10-24T06:03:22.705545+03:00"
+            },
+            {
+              "state": "0.31",
+              "last_updated": "2026-10-24T06:02:57.689646+03:00",
+              "last_changed": "2026-10-24T06:02:57.689646+03:00"
+            },
+            {
+              "state": "0.26",
+              "last_updated": "2026-10-24T06:02:52.686944+03:00",
+              "last_changed": "2026-10-24T06:02:52.686944+03:00"
+            },
+            {
+              "state": "0.32",
+              "last_updated": "2026-10-24T06:02:32.673558+03:00",
+              "last_changed": "2026-10-24T06:02:32.673558+03:00"
+            },
+            {
+              "state": "0.27",
+              "last_updated": "2026-10-24T06:02:07.656421+03:00",
+              "last_changed": "2026-10-24T06:02:07.656421+03:00"
+            },
+            {
+              "state": "0.32",
+              "last_updated": "2026-10-24T06:02:02.653250+03:00",
+              "last_changed": "2026-10-24T06:02:02.653250+03:00"
+            },
+            {
+              "state": "0.28",
+              "last_updated": "2026-10-24T06:00:17.593328+03:00",
+              "last_changed": "2026-10-24T06:00:17.593328+03:00"
+            },
+            {
+              "state": "0.0",
+              "last_updated": "2026-10-24T05:56:18.421132+03:00",
+              "last_changed": "2026-10-24T05:56:18.421132+03:00"
+            },
+            {
+              "state": "0.27",
+              "last_updated": "2026-10-24T05:56:17.435215+03:00",
+              "last_changed": "2026-10-24T05:56:17.435215+03:00"
+            },
+            {
+              "state": "0.0",
+              "last_updated": "2026-10-24T05:56:17.421439+03:00",
+              "last_changed": "2026-10-24T05:56:17.421439+03:00"
+            },
+            {
+              "state": "0.28",
+              "last_updated": "2026-10-24T05:50:25.257470+03:00",
+              "last_changed": "2026-10-24T05:50:25.257470+03:00"
+            },
+            {
+              "state": "0.0",
+              "last_updated": "2026-10-24T05:46:26.043857+03:00",
+              "last_changed": "2026-10-24T05:46:26.043857+03:00"
+            },
+            {
+              "state": "0.29",
+              "last_updated": "2026-10-24T05:46:25.064028+03:00",
+              "last_changed": "2026-10-24T05:46:25.064028+03:00"
+            },
+            {
+              "state": "0.0",
+              "last_updated": "2026-10-24T05:46:25.043623+03:00",
+              "last_changed": "2026-10-24T05:46:25.043623+03:00"
+            },
+            {
+              "state": "0.3",
+              "last_updated": "2026-10-24T05:45:00+03:00",
+              "last_changed": "2026-10-24T05:45:00+03:00"
+            }
+          ],
+          "total_count": 37,
+          "offset": 0,
+          "limit": 500,
+          "count": 37,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "switch.ufh_noah_bedroom",
+          "period": {
+            "start": "2026-10-24T05:45:00+03:00",
+            "end": "2026-10-24T06:25:00+03:00"
+          },
+          "states": [
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T06:05:53.407098+03:00",
+              "last_changed": "2026-10-24T06:05:53.407098+03:00"
+            },
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T06:05:52.969474+03:00",
+              "last_changed": "2026-10-24T06:05:52.969474+03:00"
+            },
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T05:45:00+03:00",
+              "last_changed": "2026-10-24T05:45:00+03:00"
+            }
+          ],
+          "total_count": 3,
+          "offset": 0,
+          "limit": 500,
+          "count": 3,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "switch.ufh_master_bedroom",
+          "period": {
+            "start": "2026-10-24T05:45:00+03:00",
+            "end": "2026-10-24T06:25:00+03:00"
+          },
+          "states": [
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T05:45:00+03:00",
+              "last_changed": "2026-10-24T05:45:00+03:00"
+            }
+          ],
+          "total_count": 1,
+          "offset": 0,
+          "limit": 500,
+          "count": 1,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "switch.ufh_eva_bedroom",
+          "period": {
+            "start": "2026-10-24T05:45:00+03:00",
+            "end": "2026-10-24T06:25:00+03:00"
+          },
+          "states": [
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T05:45:00+03:00",
+              "last_changed": "2026-10-24T05:45:00+03:00"
+            }
+          ],
+          "total_count": 1,
+          "offset": 0,
+          "limit": 500,
+          "count": 1,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "binary_sensor.cc_ufh2_status",
+          "period": {
+            "start": "2026-10-24T05:45:00+03:00",
+            "end": "2026-10-24T06:25:00+03:00"
+          },
+          "states": [
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T05:45:00+03:00",
+              "last_changed": "2026-10-24T05:45:00+03:00"
+            }
+          ],
+          "total_count": 1,
+          "offset": 0,
+          "limit": 500,
+          "count": 1,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "sensor.cc_ufh2_uptime",
+          "period": {
+            "start": "2026-10-24T05:45:00+03:00",
+            "end": "2026-10-24T06:25:00+03:00"
+          },
+          "states": [
+            {
+              "state": "2654028.5",
+              "last_updated": "2026-10-24T06:24:46.652292+03:00",
+              "last_changed": "2026-10-24T06:24:46.652292+03:00"
+            },
+            {
+              "state": "2653968.5",
+              "last_updated": "2026-10-24T06:23:46.641329+03:00",
+              "last_changed": "2026-10-24T06:23:46.641329+03:00"
+            },
+            {
+              "state": "2653908.5",
+              "last_updated": "2026-10-24T06:22:46.639150+03:00",
+              "last_changed": "2026-10-24T06:22:46.639150+03:00"
+            },
+            {
+              "state": "2653848.5",
+              "last_updated": "2026-10-24T06:21:46.633293+03:00",
+              "last_changed": "2026-10-24T06:21:46.633293+03:00"
+            },
+            {
+              "state": "2653788.5",
+              "last_updated": "2026-10-24T06:20:46.636049+03:00",
+              "last_changed": "2026-10-24T06:20:46.636049+03:00"
+            },
+            {
+              "state": "2653728.5",
+              "last_updated": "2026-10-24T06:19:46.621379+03:00",
+              "last_changed": "2026-10-24T06:19:46.621379+03:00"
+            },
+            {
+              "state": "2653668.5",
+              "last_updated": "2026-10-24T06:18:46.615108+03:00",
+              "last_changed": "2026-10-24T06:18:46.615108+03:00"
+            },
+            {
+              "state": "2653608.5",
+              "last_updated": "2026-10-24T06:17:46.622764+03:00",
+              "last_changed": "2026-10-24T06:17:46.622764+03:00"
+            },
+            {
+              "state": "2653548.5",
+              "last_updated": "2026-10-24T06:16:46.605011+03:00",
+              "last_changed": "2026-10-24T06:16:46.605011+03:00"
+            },
+            {
+              "state": "2653488.5",
+              "last_updated": "2026-10-24T06:15:46.595940+03:00",
+              "last_changed": "2026-10-24T06:15:46.595940+03:00"
+            },
+            {
+              "state": "2653428.5",
+              "last_updated": "2026-10-24T06:14:46.592625+03:00",
+              "last_changed": "2026-10-24T06:14:46.592625+03:00"
+            },
+            {
+              "state": "2653368.5",
+              "last_updated": "2026-10-24T06:13:46.584341+03:00",
+              "last_changed": "2026-10-24T06:13:46.584341+03:00"
+            },
+            {
+              "state": "2653308.5",
+              "last_updated": "2026-10-24T06:12:46.569451+03:00",
+              "last_changed": "2026-10-24T06:12:46.569451+03:00"
+            },
+            {
+              "state": "2653248.5",
+              "last_updated": "2026-10-24T06:11:46.559642+03:00",
+              "last_changed": "2026-10-24T06:11:46.559642+03:00"
+            },
+            {
+              "state": "2653188.5",
+              "last_updated": "2026-10-24T06:10:46.556631+03:00",
+              "last_changed": "2026-10-24T06:10:46.556631+03:00"
+            },
+            {
+              "state": "2653128.5",
+              "last_updated": "2026-10-24T06:09:46.543606+03:00",
+              "last_changed": "2026-10-24T06:09:46.543606+03:00"
+            },
+            {
+              "state": "2653068.5",
+              "last_updated": "2026-10-24T06:08:46.538785+03:00",
+              "last_changed": "2026-10-24T06:08:46.538785+03:00"
+            },
+            {
+              "state": "2653008.5",
+              "last_updated": "2026-10-24T06:07:46.532976+03:00",
+              "last_changed": "2026-10-24T06:07:46.532976+03:00"
+            },
+            {
+              "state": "2652948.5",
+              "last_updated": "2026-10-24T06:06:46.524120+03:00",
+              "last_changed": "2026-10-24T06:06:46.524120+03:00"
+            },
+            {
+              "state": "2652888.5",
+              "last_updated": "2026-10-24T06:05:46.529680+03:00",
+              "last_changed": "2026-10-24T06:05:46.529680+03:00"
+            },
+            {
+              "state": "2652828.5",
+              "last_updated": "2026-10-24T06:04:46.516184+03:00",
+              "last_changed": "2026-10-24T06:04:46.516184+03:00"
+            },
+            {
+              "state": "2652768.5",
+              "last_updated": "2026-10-24T06:03:46.500626+03:00",
+              "last_changed": "2026-10-24T06:03:46.500626+03:00"
+            },
+            {
+              "state": "2652708.5",
+              "last_updated": "2026-10-24T06:02:46.495391+03:00",
+              "last_changed": "2026-10-24T06:02:46.495391+03:00"
+            },
+            {
+              "state": "2652648.5",
+              "last_updated": "2026-10-24T06:01:46.486569+03:00",
+              "last_changed": "2026-10-24T06:01:46.486569+03:00"
+            },
+            {
+              "state": "2652588.5",
+              "last_updated": "2026-10-24T06:00:46.481642+03:00",
+              "last_changed": "2026-10-24T06:00:46.481642+03:00"
+            },
+            {
+              "state": "2652528.5",
+              "last_updated": "2026-10-24T05:59:46.472339+03:00",
+              "last_changed": "2026-10-24T05:59:46.472339+03:00"
+            },
+            {
+              "state": "2652468.5",
+              "last_updated": "2026-10-24T05:58:46.462342+03:00",
+              "last_changed": "2026-10-24T05:58:46.462342+03:00"
+            },
+            {
+              "state": "2652408.5",
+              "last_updated": "2026-10-24T05:57:46.461711+03:00",
+              "last_changed": "2026-10-24T05:57:46.461711+03:00"
+            },
+            {
+              "state": "2652348.5",
+              "last_updated": "2026-10-24T05:56:46.462342+03:00",
+              "last_changed": "2026-10-24T05:56:46.462342+03:00"
+            },
+            {
+              "state": "2652288.5",
+              "last_updated": "2026-10-24T05:55:46.442470+03:00",
+              "last_changed": "2026-10-24T05:55:46.442470+03:00"
+            },
+            {
+              "state": "2652228.5",
+              "last_updated": "2026-10-24T05:54:46.432643+03:00",
+              "last_changed": "2026-10-24T05:54:46.432643+03:00"
+            },
+            {
+              "state": "2652168.5",
+              "last_updated": "2026-10-24T05:53:46.426115+03:00",
+              "last_changed": "2026-10-24T05:53:46.426115+03:00"
+            },
+            {
+              "state": "2652108.5",
+              "last_updated": "2026-10-24T05:52:46.419756+03:00",
+              "last_changed": "2026-10-24T05:52:46.419756+03:00"
+            },
+            {
+              "state": "2652048.5",
+              "last_updated": "2026-10-24T05:51:46.415770+03:00",
+              "last_changed": "2026-10-24T05:51:46.415770+03:00"
+            },
+            {
+              "state": "2651988.5",
+              "last_updated": "2026-10-24T05:50:46.404124+03:00",
+              "last_changed": "2026-10-24T05:50:46.404124+03:00"
+            },
+            {
+              "state": "2651928.5",
+              "last_updated": "2026-10-24T05:49:46.402361+03:00",
+              "last_changed": "2026-10-24T05:49:46.402361+03:00"
+            },
+            {
+              "state": "2651868.5",
+              "last_updated": "2026-10-24T05:48:46.394032+03:00",
+              "last_changed": "2026-10-24T05:48:46.394032+03:00"
+            },
+            {
+              "state": "2651808.5",
+              "last_updated": "2026-10-24T05:47:46.386173+03:00",
+              "last_changed": "2026-10-24T05:47:46.386173+03:00"
+            },
+            {
+              "state": "2651748.5",
+              "last_updated": "2026-10-24T05:46:46.380092+03:00",
+              "last_changed": "2026-10-24T05:46:46.380092+03:00"
+            },
+            {
+              "state": "2651688.5",
+              "last_updated": "2026-10-24T05:45:46.371968+03:00",
+              "last_changed": "2026-10-24T05:45:46.371968+03:00"
+            },
+            {
+              "state": "2651628.5",
+              "last_updated": "2026-10-24T05:45:00+03:00",
+              "last_changed": "2026-10-24T05:45:00+03:00"
+            }
+          ],
+          "total_count": 41,
+          "offset": 0,
+          "limit": 500,
+          "count": 41,
+          "has_more": false,
+          "next_offset": null
+        }
+      ],
+      "period": {
+        "start": "2026-10-24T05:45:00+03:00",
+        "end": "2026-10-24T06:25:00+03:00"
+      },
+      "query_params": {
+        "minimal_response": true,
+        "significant_changes_only": true,
+        "limit": 500,
+        "offset": 0,
+        "order": "desc"
+      }
+    },
+    "metadata": {
+      "home_assistant_timezone": "Europe/Bucharest",
+      "timestamp_format": "ISO 8601 (Europe/Bucharest)",
+      "note": "History event times use Europe/Bucharest. When Core omits lc, last_changed falls back to last_updated; it may not be the actual state-change time with significant_changes_only or a window-start snapshot. Attributes, unknown fields and query bounds are unchanged. UTC is used if HA's timezone is unavailable."
+    }
+  },
+  "brief_history": {
+    "data": {
+      "success": true,
+      "source": "history",
+      "entities": [
+        {
+          "entity_id": "climate.noah_bedroom",
+          "period": {
+            "start": "2026-10-24T06:05:50+03:00",
+            "end": "2026-10-24T06:05:56+03:00"
+          },
+          "states": [
+            {
+              "state": "auto",
+              "attributes": {
+                "current_temperature": 21.8,
+                "temperature": 22,
+                "current_humidity": 58.41,
+                "hvac_action": "heating",
+                "zone_id": "noah_bedroom",
+                "support_mode": "BOTH",
+                "window_open": false,
+                "t_air": 21.75,
+                "t_floor": 19.68,
+                "rh": 58.41,
+                "dew_point": 13.2,
+                "t_set_heat": 22,
+                "t_set_cool": 24,
+                "system_mode": "HEAT",
+                "zone_mode": "AUTO",
+                "last_active_co_mode": "HEAT",
+                "floor_limit_state": "below_heat_min",
+                "actuator_open_s": 60,
+                "actuator_close_s": 60,
+                "floor_limits": {
+                  "cool_max": 24,
+                  "cool_min": 20,
+                  "heat_max": 28,
+                  "heat_min": 23
+                },
+                "coordinator_status": "scheduled",
+                "coordinator_phase": "running",
+                "coordinator_cycle_active": true,
+                "coordinator_cycle_length_s": 577,
+                "coordinator_packing_mode": "simultaneous",
+                "coordinator_scheduled": true,
+                "coordinator_running": false,
+                "coordinator_requested_fraction": 0.1667,
+                "coordinator_requested_t_on_s": 240,
+                "coordinator_scheduled_t_on_s": 240,
+                "coordinator_start_offset_s": 0,
+                "coordinator_arbitration_rank": 4,
+                "coordinator_blocked_by": null,
+                "coordinator_block_reasons": [],
+                "coordinator_aggregated_demand_ratio": 0.2678,
+                "plant_state": "running",
+                "plant_mode": "HEAT",
+                "friendly_name": "Noah Bedroom"
+              },
+              "last_updated": "2026-10-24T06:05:50+03:00",
+              "last_changed": "2026-10-24T06:05:50+03:00"
+            },
+            {
+              "state": "auto",
+              "attributes": {
+                "current_temperature": 21.8,
+                "temperature": 22,
+                "current_humidity": 58.43,
+                "hvac_action": "heating",
+                "zone_id": "noah_bedroom",
+                "support_mode": "BOTH",
+                "window_open": false,
+                "t_air": 21.77,
+                "t_floor": 19.68,
+                "rh": 58.43,
+                "dew_point": 13.3,
+                "t_set_heat": 22,
+                "t_set_cool": 24,
+                "system_mode": "HEAT",
+                "zone_mode": "AUTO",
+                "last_active_co_mode": "HEAT",
+                "floor_limit_state": "below_heat_min",
+                "actuator_open_s": 60,
+                "actuator_close_s": 60,
+                "floor_limits": {
+                  "cool_max": 24,
+                  "cool_min": 20,
+                  "heat_max": 28,
+                  "heat_min": 23
+                },
+                "coordinator_status": "scheduled",
+                "coordinator_phase": "running",
+                "coordinator_cycle_active": true,
+                "coordinator_cycle_length_s": 577,
+                "coordinator_packing_mode": "simultaneous",
+                "coordinator_scheduled": true,
+                "coordinator_running": false,
+                "coordinator_requested_fraction": 0.1667,
+                "coordinator_requested_t_on_s": 240,
+                "coordinator_scheduled_t_on_s": 240,
+                "coordinator_start_offset_s": 0,
+                "coordinator_arbitration_rank": 4,
+                "coordinator_blocked_by": null,
+                "coordinator_block_reasons": [],
+                "coordinator_aggregated_demand_ratio": 0.2678,
+                "plant_state": "running",
+                "plant_mode": "HEAT",
+                "friendly_name": "Noah Bedroom"
+              },
+              "last_updated": "2026-10-24T06:05:52.441380+03:00",
+              "last_changed": "2026-10-23T23:51:34.576738+03:00"
+            },
+            {
+              "state": "auto",
+              "attributes": {
+                "current_temperature": 21.8,
+                "temperature": 22,
+                "current_humidity": 58.43,
+                "hvac_action": "heating",
+                "zone_id": "noah_bedroom",
+                "support_mode": "BOTH",
+                "window_open": false,
+                "t_air": 21.77,
+                "t_floor": 19.68,
+                "rh": 58.43,
+                "dew_point": 13.3,
+                "t_set_heat": 22,
+                "t_set_cool": 24,
+                "system_mode": "HEAT",
+                "zone_mode": "AUTO",
+                "last_active_co_mode": "HEAT",
+                "floor_limit_state": "below_heat_min",
+                "actuator_open_s": 60,
+                "actuator_close_s": 60,
+                "floor_limits": {
+                  "cool_max": 24,
+                  "cool_min": 20,
+                  "heat_max": 28,
+                  "heat_min": 23
+                },
+                "coordinator_status": "idle",
+                "coordinator_phase": "stop",
+                "coordinator_cycle_active": false,
+                "coordinator_cycle_length_s": 575,
+                "coordinator_packing_mode": "simultaneous",
+                "coordinator_scheduled": false,
+                "coordinator_running": false,
+                "coordinator_requested_fraction": 0.1533,
+                "coordinator_requested_t_on_s": 240,
+                "coordinator_scheduled_t_on_s": 0,
+                "coordinator_start_offset_s": null,
+                "coordinator_arbitration_rank": null,
+                "coordinator_blocked_by": null,
+                "coordinator_block_reasons": [],
+                "coordinator_aggregated_demand_ratio": 0,
+                "plant_state": "running",
+                "plant_mode": "HEAT",
+                "friendly_name": "Noah Bedroom"
+              },
+              "last_updated": "2026-10-24T06:05:52.812972+03:00",
+              "last_changed": "2026-10-23T23:51:34.576738+03:00"
+            },
+            {
+              "state": "auto",
+              "attributes": {
+                "current_temperature": 21.8,
+                "temperature": 22,
+                "current_humidity": 58.43,
+                "hvac_action": "heating",
+                "zone_id": "noah_bedroom",
+                "support_mode": "BOTH",
+                "window_open": false,
+                "t_air": 21.77,
+                "t_floor": 19.68,
+                "rh": 58.43,
+                "dew_point": 13.3,
+                "t_set_heat": 22,
+                "t_set_cool": 24,
+                "system_mode": "HEAT",
+                "zone_mode": "AUTO",
+                "last_active_co_mode": "HEAT",
+                "floor_limit_state": "below_heat_min",
+                "actuator_open_s": 60,
+                "actuator_close_s": 60,
+                "floor_limits": {
+                  "cool_max": 24,
+                  "cool_min": 20,
+                  "heat_max": 28,
+                  "heat_min": 23
+                },
+                "coordinator_status": "running",
+                "coordinator_phase": "start",
+                "coordinator_cycle_active": true,
+                "coordinator_cycle_length_s": 575,
+                "coordinator_packing_mode": "simultaneous",
+                "coordinator_scheduled": true,
+                "coordinator_running": true,
+                "coordinator_requested_fraction": 0.1533,
+                "coordinator_requested_t_on_s": 240,
+                "coordinator_scheduled_t_on_s": 240,
+                "coordinator_start_offset_s": 0,
+                "coordinator_arbitration_rank": 5,
+                "coordinator_blocked_by": null,
+                "coordinator_block_reasons": [],
+                "coordinator_aggregated_demand_ratio": 0.2656,
+                "plant_state": "running",
+                "plant_mode": "HEAT",
+                "friendly_name": "Noah Bedroom"
+              },
+              "last_updated": "2026-10-24T06:05:52.823148+03:00",
+              "last_changed": "2026-10-23T23:51:34.576738+03:00"
+            },
+            {
+              "state": "auto",
+              "attributes": {
+                "current_temperature": 21.8,
+                "temperature": 22,
+                "current_humidity": 58.43,
+                "hvac_action": "heating",
+                "zone_id": "noah_bedroom",
+                "support_mode": "BOTH",
+                "window_open": false,
+                "t_air": 21.77,
+                "t_floor": 19.68,
+                "rh": 58.43,
+                "dew_point": 13.3,
+                "t_set_heat": 22,
+                "t_set_cool": 24,
+                "system_mode": "HEAT",
+                "zone_mode": "AUTO",
+                "last_active_co_mode": "HEAT",
+                "floor_limit_state": "below_heat_min",
+                "actuator_open_s": 60,
+                "actuator_close_s": 60,
+                "floor_limits": {
+                  "cool_max": 24,
+                  "cool_min": 20,
+                  "heat_max": 28,
+                  "heat_min": 23
+                },
+                "coordinator_status": "running",
+                "coordinator_phase": "running",
+                "coordinator_cycle_active": true,
+                "coordinator_cycle_length_s": 575,
+                "coordinator_packing_mode": "simultaneous",
+                "coordinator_scheduled": true,
+                "coordinator_running": true,
+                "coordinator_requested_fraction": 0,
+                "coordinator_requested_t_on_s": 0,
+                "coordinator_scheduled_t_on_s": 240,
+                "coordinator_start_offset_s": 0,
+                "coordinator_arbitration_rank": 5,
+                "coordinator_blocked_by": "zone_min_off",
+                "coordinator_block_reasons": [
+                  "zone_min_off"
+                ],
+                "coordinator_aggregated_demand_ratio": 0,
+                "plant_state": "running",
+                "plant_mode": "HEAT",
+                "friendly_name": "Noah Bedroom"
+              },
+              "last_updated": "2026-10-24T06:05:53.810518+03:00",
+              "last_changed": "2026-10-23T23:51:34.576738+03:00"
+            }
+          ],
+          "total_count": 5,
+          "offset": 0,
+          "limit": 15,
+          "count": 5,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "sensor.virtual_climate_diagnostics_blocked_zones",
+          "period": {
+            "start": "2026-10-24T06:05:50+03:00",
+            "end": "2026-10-24T06:05:56+03:00"
+          },
+          "states": [
+            {
+              "state": "0",
+              "attributes": {
+                "icon": "mdi:alert-circle-outline",
+                "friendly_name": "Virtual Climate Diagnostics Blocked zones"
+              },
+              "last_updated": "2026-10-24T06:05:50+03:00",
+              "last_changed": "2026-10-24T06:05:50+03:00"
+            },
+            {
+              "state": "10",
+              "attributes": {
+                "icon": "mdi:alert-circle-outline",
+                "friendly_name": "Virtual Climate Diagnostics Blocked zones"
+              },
+              "last_updated": "2026-10-24T06:05:53.806927+03:00",
+              "last_changed": "2026-10-24T06:05:53.806927+03:00"
+            }
+          ],
+          "total_count": 2,
+          "offset": 0,
+          "limit": 15,
+          "count": 2,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "sensor.virtual_climate_diagnostics_running_zones",
+          "period": {
+            "start": "2026-10-24T06:05:50+03:00",
+            "end": "2026-10-24T06:05:56+03:00"
+          },
+          "states": [
+            {
+              "state": "0",
+              "attributes": {
+                "icon": "mdi:play-circle-outline",
+                "friendly_name": "Virtual Climate Diagnostics Running zones"
+              },
+              "last_updated": "2026-10-24T06:05:50+03:00",
+              "last_changed": "2026-10-24T06:05:50+03:00"
+            },
+            {
+              "state": "6",
+              "attributes": {
+                "icon": "mdi:play-circle-outline",
+                "friendly_name": "Virtual Climate Diagnostics Running zones"
+              },
+              "last_updated": "2026-10-24T06:05:52.820476+03:00",
+              "last_changed": "2026-10-24T06:05:52.820476+03:00"
+            }
+          ],
+          "total_count": 2,
+          "offset": 0,
+          "limit": 15,
+          "count": 2,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "sensor.virtual_climate_diagnostics_plant_state",
+          "period": {
+            "start": "2026-10-24T06:05:50+03:00",
+            "end": "2026-10-24T06:05:56+03:00"
+          },
+          "states": [
+            {
+              "state": "running",
+              "attributes": {
+                "device_class": "enum",
+                "icon": "mdi:state-machine",
+                "friendly_name": "Virtual Climate Diagnostics Plant state"
+              },
+              "last_updated": "2026-10-24T06:05:50+03:00",
+              "last_changed": "2026-10-24T06:05:50+03:00"
+            }
+          ],
+          "total_count": 1,
+          "offset": 0,
+          "limit": 15,
+          "count": 1,
+          "has_more": false,
+          "next_offset": null
+        }
+      ],
+      "period": {
+        "start": "2026-10-24T06:05:50+03:00",
+        "end": "2026-10-24T06:05:56+03:00"
+      },
+      "query_params": {
+        "minimal_response": false,
+        "significant_changes_only": false,
+        "limit": 15,
+        "offset": 0,
+        "order": "asc"
+      }
+    },
+    "metadata": {
+      "home_assistant_timezone": "Europe/Bucharest",
+      "timestamp_format": "ISO 8601 (Europe/Bucharest)",
+      "note": "History event times use Europe/Bucharest. When Core omits lc, last_changed falls back to last_updated; it may not be the actual state-change time with significant_changes_only or a window-start snapshot. Attributes, unknown fields and query bounds are unchanged. UTC is used if HA's timezone is unavailable."
+    }
+  },
+  "wide_history": {
+    "data": {
+      "success": true,
+      "source": "history",
+      "entities": [
+        {
+          "entity_id": "switch.ufh_noah_bedroom",
+          "period": {
+            "start": "2026-10-24T00:00:00+03:00",
+            "end": "2026-10-24T07:45:00+03:00"
+          },
+          "states": [
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T00:00:00+03:00",
+              "last_changed": "2026-10-24T00:00:00+03:00"
+            },
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T06:05:52.969474+03:00",
+              "last_changed": "2026-10-24T06:05:52.969474+03:00"
+            },
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T06:05:53.407098+03:00",
+              "last_changed": "2026-10-24T06:05:53.407098+03:00"
+            },
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T07:42:39.250464+03:00",
+              "last_changed": "2026-10-24T07:42:39.250464+03:00"
+            }
+          ],
+          "total_count": 4,
+          "offset": 0,
+          "limit": 1000,
+          "count": 4,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "switch.ufh_hallway",
+          "period": {
+            "start": "2026-10-24T00:00:00+03:00",
+            "end": "2026-10-24T07:45:00+03:00"
+          },
+          "states": [
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T00:00:00+03:00",
+              "last_changed": "2026-10-24T00:00:00+03:00"
+            },
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T06:05:52.969873+03:00",
+              "last_changed": "2026-10-24T06:05:52.969873+03:00"
+            },
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T06:05:53.406855+03:00",
+              "last_changed": "2026-10-24T06:05:53.406855+03:00"
+            }
+          ],
+          "total_count": 3,
+          "offset": 0,
+          "limit": 1000,
+          "count": 3,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "switch.ufh_shared_bathroom",
+          "period": {
+            "start": "2026-10-24T00:00:00+03:00",
+            "end": "2026-10-24T07:45:00+03:00"
+          },
+          "states": [
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T00:00:00+03:00",
+              "last_changed": "2026-10-24T00:00:00+03:00"
+            }
+          ],
+          "total_count": 1,
+          "offset": 0,
+          "limit": 1000,
+          "count": 1,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "switch.ufh_master_bathroom",
+          "period": {
+            "start": "2026-10-24T00:00:00+03:00",
+            "end": "2026-10-24T07:45:00+03:00"
+          },
+          "states": [
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T00:00:00+03:00",
+              "last_changed": "2026-10-24T00:00:00+03:00"
+            },
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T03:20:49.697725+03:00",
+              "last_changed": "2026-10-24T03:20:49.697725+03:00"
+            },
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T03:20:50.066241+03:00",
+              "last_changed": "2026-10-24T03:20:50.066241+03:00"
+            },
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T06:05:52.969734+03:00",
+              "last_changed": "2026-10-24T06:05:52.969734+03:00"
+            },
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T06:05:53.407222+03:00",
+              "last_changed": "2026-10-24T06:05:53.407222+03:00"
+            },
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T06:15:19.666559+03:00",
+              "last_changed": "2026-10-24T06:15:19.666559+03:00"
+            }
+          ],
+          "total_count": 6,
+          "offset": 0,
+          "limit": 1000,
+          "count": 6,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "switch.ufh_eva_bedroom",
+          "period": {
+            "start": "2026-10-24T00:00:00+03:00",
+            "end": "2026-10-24T07:45:00+03:00"
+          },
+          "states": [
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T00:00:00+03:00",
+              "last_changed": "2026-10-24T00:00:00+03:00"
+            },
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T02:25:07.840713+03:00",
+              "last_changed": "2026-10-24T02:25:07.840713+03:00"
+            },
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T02:25:08.420432+03:00",
+              "last_changed": "2026-10-24T02:25:08.420432+03:00"
+            },
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T03:20:49.697579+03:00",
+              "last_changed": "2026-10-24T03:20:49.697579+03:00"
+            },
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T03:20:50.066570+03:00",
+              "last_changed": "2026-10-24T03:20:50.066570+03:00"
+            },
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T03:58:16.750375+03:00",
+              "last_changed": "2026-10-24T03:58:16.750375+03:00"
+            }
+          ],
+          "total_count": 6,
+          "offset": 0,
+          "limit": 1000,
+          "count": 6,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "switch.ufh_master_bedroom",
+          "period": {
+            "start": "2026-10-24T00:00:00+03:00",
+            "end": "2026-10-24T07:45:00+03:00"
+          },
+          "states": [
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T00:00:00+03:00",
+              "last_changed": "2026-10-24T00:00:00+03:00"
+            },
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T02:25:07.840451+03:00",
+              "last_changed": "2026-10-24T02:25:07.840451+03:00"
+            },
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T02:25:08.009634+03:00",
+              "last_changed": "2026-10-24T02:25:08.009634+03:00"
+            },
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T03:20:49.697309+03:00",
+              "last_changed": "2026-10-24T03:20:49.697309+03:00"
+            },
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T03:20:50.066455+03:00",
+              "last_changed": "2026-10-24T03:20:50.066455+03:00"
+            },
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T04:10:07.743387+03:00",
+              "last_changed": "2026-10-24T04:10:07.743387+03:00"
+            },
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T04:10:07.860601+03:00",
+              "last_changed": "2026-10-24T04:10:07.860601+03:00"
+            },
+            {
+              "state": "off",
+              "last_updated": "2026-10-24T05:05:37.014287+03:00",
+              "last_changed": "2026-10-24T05:05:37.014287+03:00"
+            }
+          ],
+          "total_count": 8,
+          "offset": 0,
+          "limit": 1000,
+          "count": 8,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "sensor.virtual_climate_diagnostics_plant_state",
+          "period": {
+            "start": "2026-10-24T00:00:00+03:00",
+            "end": "2026-10-24T07:45:00+03:00"
+          },
+          "states": [
+            {
+              "state": "running",
+              "last_updated": "2026-10-24T00:00:00+03:00",
+              "last_changed": "2026-10-24T00:00:00+03:00"
+            }
+          ],
+          "total_count": 1,
+          "offset": 0,
+          "limit": 1000,
+          "count": 1,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "sensor.virtual_climate_diagnostics_plant_mode",
+          "period": {
+            "start": "2026-10-24T00:00:00+03:00",
+            "end": "2026-10-24T07:45:00+03:00"
+          },
+          "states": [
+            {
+              "state": "HEAT",
+              "last_updated": "2026-10-24T00:00:00+03:00",
+              "last_changed": "2026-10-24T00:00:00+03:00"
+            }
+          ],
+          "total_count": 1,
+          "offset": 0,
+          "limit": 1000,
+          "count": 1,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "sensor.virtual_climate_diagnostics_system_mode",
+          "period": {
+            "start": "2026-10-24T00:00:00+03:00",
+            "end": "2026-10-24T07:45:00+03:00"
+          },
+          "states": [
+            {
+              "state": "HEAT",
+              "last_updated": "2026-10-24T00:00:00+03:00",
+              "last_changed": "2026-10-24T00:00:00+03:00"
+            }
+          ],
+          "total_count": 1,
+          "offset": 0,
+          "limit": 1000,
+          "count": 1,
+          "has_more": false,
+          "next_offset": null
+        },
+        {
+          "entity_id": "binary_sensor.cc_ufh2_status",
+          "period": {
+            "start": "2026-10-24T00:00:00+03:00",
+            "end": "2026-10-24T07:45:00+03:00"
+          },
+          "states": [
+            {
+              "state": "on",
+              "last_updated": "2026-10-24T00:00:00+03:00",
+              "last_changed": "2026-10-24T00:00:00+03:00"
+            }
+          ],
+          "total_count": 1,
+          "offset": 0,
+          "limit": 1000,
+          "count": 1,
+          "has_more": false,
+          "next_offset": null
+        }
+      ],
+      "period": {
+        "start": "2026-10-24T00:00:00+03:00",
+        "end": "2026-10-24T07:45:00+03:00"
+      },
+      "query_params": {
+        "minimal_response": true,
+        "significant_changes_only": true,
+        "limit": 1000,
+        "offset": 0,
+        "order": "asc"
+      }
+    },
+    "metadata": {
+      "home_assistant_timezone": "Europe/Bucharest",
+      "timestamp_format": "ISO 8601 (Europe/Bucharest)",
+      "note": "History event times use Europe/Bucharest. When Core omits lc, last_changed falls back to last_updated; it may not be the actual state-change time with significant_changes_only or a window-start snapshot. Attributes, unknown fields and query bounds are unchanged. UTC is used if HA's timezone is unavailable."
+    }
+  },
+  "system_logs": {
+    "success": true,
+    "source": "system",
+    "entries": [
+      {
+        "name": "homeassistant.helpers.frame",
+        "message": [
+          "Detected that custom integration 'virtual_climate' calls hass.async_create_task from a thread other than the event loop, which may cause Home Assistant to crash or data to corrupt. For more information, see https://developers.home-assistant.io/docs/asyncio_thread_safety/#hassasync_create_task at custom_components/virtual_climate/zone_manager.py, line 738: async_call_later(self.hass, delay, lambda *_ , zone_id=zid: self.hass.async_create_task(self._turn_off_zone(zone_id))). Please create a bug report at https://github.com/alex-elite/ha-virtual-climate/issues"
+        ],
+        "level": "WARNING",
+        "source": [
+          "helpers/frame.py",
+          348
+        ],
+        "timestamp": 1792816700.486528,
+        "exception": "",
+        "count": 262,
+        "first_occurred": 1792789232.7030597
+      },
+      {
+        "name": "homeassistant.helpers.entity",
+        "message": [
+          "Updating state for climate.eva_bedroom (<class 'custom_components.virtual_climate.climate.VirtualThermostat'>) took 0.983 seconds. Please create a bug report at https://github.com/alex-elite/ha-virtual-climate/issues",
+          "Updating state for climate.master_bedroom (<class 'custom_components.virtual_climate.climate.VirtualThermostat'>) took 1.050 seconds. Please create a bug report at https://github.com/alex-elite/ha-virtual-climate/issues"
+        ],
+        "level": "WARNING",
+        "source": [
+          "helpers/entity.py",
+          1271
+        ],
+        "timestamp": 1792816621.6172073,
+        "exception": "",
+        "count": 2,
+        "first_occurred": 1792803407.4882247
+      },
+      {
+        "name": "py.warnings",
+        "message": [
+          "/config/custom_components/virtual_climate/config_flow.py:244: RuntimeWarning: coroutine 'ZoneManager._turn_off_zone' was never awaited\n  merged_zone = dict(zone)\n"
+        ],
+        "level": "WARNING",
+        "source": [
+          "custom_components/virtual_climate/config_flow.py",
+          244
+        ],
+        "timestamp": 1792812026.758149,
+        "exception": "",
+        "count": 7,
+        "first_occurred": 1792789912.2012775
+      },
+      {
+        "name": "py.warnings",
+        "message": [
+          "/config/custom_components/virtual_climate/config_flow.py:230: RuntimeWarning: coroutine 'ZoneManager._turn_off_zone' was never awaited\n  override_zones = [dict(zone) for zone in (override_zones or [])]\n"
+        ],
+        "level": "WARNING",
+        "source": [
+          "custom_components/virtual_climate/config_flow.py",
+          230
+        ],
+        "timestamp": 1792811481.3605354,
+        "exception": "",
+        "count": 5,
+        "first_occurred": 1792793765.961044
+      },
+      {
+        "name": "py.warnings",
+        "message": [
+          "/config/custom_components/virtual_climate/config_flow.py:229: RuntimeWarning: coroutine 'ZoneManager._turn_off_zone' was never awaited\n  base_zones = [dict(zone) for zone in (base_zones or [])]\n"
+        ],
+        "level": "WARNING",
+        "source": [
+          "custom_components/virtual_climate/config_flow.py",
+          229
+        ],
+        "timestamp": 1792811396.989532,
+        "exception": "",
+        "count": 3,
+        "first_occurred": 1792794196.719381
+      },
+      {
+        "name": "py.warnings",
+        "message": [
+          "/config/custom_components/virtual_climate/config_flow.py:238: RuntimeWarning: coroutine 'ZoneManager._turn_off_zone' was never awaited\n  seen_ids: set[str] = set()\n"
+        ],
+        "level": "WARNING",
+        "source": [
+          "custom_components/virtual_climate/config_flow.py",
+          238
+        ],
+        "timestamp": 1792809151.3307674,
+        "exception": "",
+        "count": 1,
+        "first_occurred": 1792809151.3307674
+      }
+    ],
+    "total_entries": 6,
+    "returned_entries": 6,
+    "limit": 8,
+    "order": "newest",
+    "filters_applied": {
+      "search": "virtual_climate"
+    }
+  },
+  "climate_snapshot": {
+    "data": {
+      "success": true,
+      "count": 10,
+      "states": {
+        "climate.noah_bedroom": {
+          "entity_id": "climate.noah_bedroom",
+          "state": "auto",
+          "attributes": {
+            "hvac_modes": [
+              "auto",
+              "off"
+            ],
+            "min_temp": 7,
+            "max_temp": 35,
+            "current_temperature": 22,
+            "temperature": 22,
+            "current_humidity": 58.27,
+            "hvac_action": "heating",
+            "zone_id": "noah_bedroom",
+            "support_mode": "BOTH",
+            "window_open": false,
+            "t_air": 21.99,
+            "t_floor": 19.68,
+            "rh": 58.27,
+            "dew_point": 13.4,
+            "t_set_heat": 22,
+            "t_set_cool": 24,
+            "system_mode": "HEAT",
+            "zone_mode": "AUTO",
+            "last_active_co_mode": "HEAT",
+            "floor_limit_state": "below_heat_min",
+            "actuator_open_s": 60,
+            "actuator_close_s": 60,
+            "floor_limits": {
+              "cool_max": 24,
+              "cool_min": 20,
+              "heat_max": 28,
+              "heat_min": 23
+            },
+            "coordinator_status": "blocked",
+            "coordinator_phase": "running",
+            "coordinator_cycle_active": true,
+            "coordinator_cycle_length_s": 499,
+            "coordinator_packing_mode": "simultaneous",
+            "coordinator_scheduled": false,
+            "coordinator_running": false,
+            "coordinator_requested_fraction": 0,
+            "coordinator_requested_t_on_s": 0,
+            "coordinator_scheduled_t_on_s": 0,
+            "coordinator_start_offset_s": null,
+            "coordinator_arbitration_rank": null,
+            "coordinator_blocked_by": "zone_min_off",
+            "coordinator_block_reasons": [
+              "zone_min_off"
+            ],
+            "coordinator_aggregated_demand_ratio": 0,
+            "plant_state": "running",
+            "plant_mode": "HEAT",
+            "friendly_name": "Noah Bedroom",
+            "supported_features": 1
+          },
+          "last_changed": "2026-10-23T23:51:34.576738+03:00",
+          "last_reported": "2026-10-24T07:43:43.871812+03:00",
+          "last_updated": "2026-10-24T07:43:39.160608+03:00",
+          "context": {
+            "id": "01M5P3HE8R7F7BBPXSH6Y1CW8Y",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "climate.master_bedroom": {
+          "entity_id": "climate.master_bedroom",
+          "state": "auto",
+          "attributes": {
+            "hvac_modes": [
+              "auto",
+              "off"
+            ],
+            "min_temp": 7,
+            "max_temp": 35,
+            "current_temperature": 22.1,
+            "temperature": 22,
+            "current_humidity": 60.73,
+            "hvac_action": "idle",
+            "zone_id": "master_bedroom",
+            "support_mode": "BOTH",
+            "window_open": false,
+            "t_air": 22.15,
+            "t_floor": null,
+            "rh": 60.73,
+            "dew_point": 14.2,
+            "t_set_heat": 22,
+            "t_set_cool": 24,
+            "system_mode": "HEAT",
+            "zone_mode": "AUTO",
+            "last_active_co_mode": "HEAT",
+            "floor_limit_state": "no_floor_sensor",
+            "actuator_open_s": 60,
+            "actuator_close_s": 60,
+            "floor_limits": {
+              "cool_max": 24,
+              "cool_min": 20,
+              "heat_max": 25,
+              "heat_min": 22
+            },
+            "coordinator_status": "blocked",
+            "coordinator_phase": "running",
+            "coordinator_cycle_active": true,
+            "coordinator_cycle_length_s": 499,
+            "coordinator_packing_mode": "simultaneous",
+            "coordinator_scheduled": false,
+            "coordinator_running": false,
+            "coordinator_requested_fraction": 0,
+            "coordinator_requested_t_on_s": 0,
+            "coordinator_scheduled_t_on_s": 0,
+            "coordinator_start_offset_s": null,
+            "coordinator_arbitration_rank": null,
+            "coordinator_blocked_by": "zone_min_off",
+            "coordinator_block_reasons": [
+              "zone_min_off"
+            ],
+            "coordinator_aggregated_demand_ratio": 0,
+            "plant_state": "running",
+            "plant_mode": "HEAT",
+            "friendly_name": "Master Bedroom",
+            "supported_features": 1
+          },
+          "last_changed": "2026-10-23T23:51:34.574010+03:00",
+          "last_reported": "2026-10-24T07:43:43.870677+03:00",
+          "last_updated": "2026-10-24T07:43:39.158516+03:00",
+          "context": {
+            "id": "01M5P3HE8PCSM6PT34Y1MQR6KY",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "climate.eva_bedroom": {
+          "entity_id": "climate.eva_bedroom",
+          "state": "auto",
+          "attributes": {
+            "hvac_modes": [
+              "auto",
+              "off"
+            ],
+            "min_temp": 7,
+            "max_temp": 35,
+            "current_temperature": 22.2,
+            "temperature": 22,
+            "current_humidity": 57.64,
+            "hvac_action": "idle",
+            "zone_id": "eva_bedroom",
+            "support_mode": "BOTH",
+            "window_open": false,
+            "t_air": 22.25,
+            "t_floor": null,
+            "rh": 57.64,
+            "dew_point": 13.5,
+            "t_set_heat": 22,
+            "t_set_cool": 24,
+            "system_mode": "HEAT",
+            "zone_mode": "AUTO",
+            "last_active_co_mode": "HEAT",
+            "floor_limit_state": "no_floor_sensor",
+            "actuator_open_s": 60,
+            "actuator_close_s": 60,
+            "floor_limits": {
+              "cool_max": 24,
+              "cool_min": 20,
+              "heat_max": 28,
+              "heat_min": 23
+            },
+            "coordinator_status": "blocked",
+            "coordinator_phase": "running",
+            "coordinator_cycle_active": true,
+            "coordinator_cycle_length_s": 499,
+            "coordinator_packing_mode": "simultaneous",
+            "coordinator_scheduled": false,
+            "coordinator_running": false,
+            "coordinator_requested_fraction": 0,
+            "coordinator_requested_t_on_s": 0,
+            "coordinator_scheduled_t_on_s": 0,
+            "coordinator_start_offset_s": null,
+            "coordinator_arbitration_rank": null,
+            "coordinator_blocked_by": "zone_min_off",
+            "coordinator_block_reasons": [
+              "zone_min_off"
+            ],
+            "coordinator_aggregated_demand_ratio": 0,
+            "plant_state": "running",
+            "plant_mode": "HEAT",
+            "friendly_name": "Eva Bedroom",
+            "supported_features": 1
+          },
+          "last_changed": "2026-10-23T23:51:34.575505+03:00",
+          "last_reported": "2026-10-24T07:43:43.871228+03:00",
+          "last_updated": "2026-10-24T07:43:39.159537+03:00",
+          "context": {
+            "id": "01M5P3HE8QXW8BF5T4DTZF0SG7",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "climate.upstairs_hallway": {
+          "entity_id": "climate.upstairs_hallway",
+          "state": "auto",
+          "attributes": {
+            "hvac_modes": [
+              "auto",
+              "off"
+            ],
+            "min_temp": 7,
+            "max_temp": 35,
+            "current_temperature": 21.8,
+            "temperature": 22,
+            "current_humidity": 57.93,
+            "hvac_action": "heating",
+            "zone_id": "upstairs_hallway",
+            "support_mode": "BOTH",
+            "window_open": false,
+            "t_air": 21.76,
+            "t_floor": null,
+            "rh": 57.93,
+            "dew_point": 13.1,
+            "t_set_heat": 22,
+            "t_set_cool": 24,
+            "system_mode": "HEAT",
+            "zone_mode": "AUTO",
+            "last_active_co_mode": "HEAT",
+            "floor_limit_state": "no_floor_sensor",
+            "actuator_open_s": 60,
+            "actuator_close_s": 60,
+            "floor_limits": null,
+            "coordinator_status": "running",
+            "coordinator_phase": "running",
+            "coordinator_cycle_active": true,
+            "coordinator_cycle_length_s": 499,
+            "coordinator_packing_mode": "simultaneous",
+            "coordinator_scheduled": true,
+            "coordinator_running": true,
+            "coordinator_requested_fraction": 0,
+            "coordinator_requested_t_on_s": 0,
+            "coordinator_scheduled_t_on_s": 240,
+            "coordinator_start_offset_s": 0,
+            "coordinator_arbitration_rank": 3,
+            "coordinator_blocked_by": "zone_min_off",
+            "coordinator_block_reasons": [
+              "zone_min_off"
+            ],
+            "coordinator_aggregated_demand_ratio": 0,
+            "plant_state": "running",
+            "plant_mode": "HEAT",
+            "friendly_name": "Upstairs Hallway",
+            "supported_features": 1
+          },
+          "last_changed": "2026-10-23T23:51:34.582924+03:00",
+          "last_reported": "2026-10-24T07:43:43.876215+03:00",
+          "last_updated": "2026-10-24T07:43:43.876215+03:00",
+          "context": {
+            "id": "01M5P3HJW4RAXKTYMZG27MZK5R",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "climate.master_bathroom": {
+          "entity_id": "climate.master_bathroom",
+          "state": "auto",
+          "attributes": {
+            "hvac_modes": [
+              "auto",
+              "off"
+            ],
+            "min_temp": 7,
+            "max_temp": 35,
+            "current_temperature": 22.1,
+            "temperature": 22,
+            "current_humidity": 61.67,
+            "hvac_action": "idle",
+            "zone_id": "master_bathroom",
+            "support_mode": "HEAT",
+            "window_open": false,
+            "t_air": 22.15,
+            "t_floor": null,
+            "rh": 61.67,
+            "dew_point": 14.4,
+            "t_set_heat": 22,
+            "t_set_cool": 24,
+            "system_mode": "HEAT",
+            "zone_mode": "AUTO",
+            "last_active_co_mode": "HEAT",
+            "floor_limit_state": "no_floor_sensor",
+            "actuator_open_s": 60,
+            "actuator_close_s": 60,
+            "floor_limits": {
+              "cool_max": 24,
+              "cool_min": 20,
+              "heat_max": 28,
+              "heat_min": 24.5
+            },
+            "coordinator_status": "blocked",
+            "coordinator_phase": "running",
+            "coordinator_cycle_active": true,
+            "coordinator_cycle_length_s": 499,
+            "coordinator_packing_mode": "simultaneous",
+            "coordinator_scheduled": false,
+            "coordinator_running": false,
+            "coordinator_requested_fraction": 0,
+            "coordinator_requested_t_on_s": 0,
+            "coordinator_scheduled_t_on_s": 0,
+            "coordinator_start_offset_s": null,
+            "coordinator_arbitration_rank": null,
+            "coordinator_blocked_by": "zone_min_off",
+            "coordinator_block_reasons": [
+              "zone_min_off"
+            ],
+            "coordinator_aggregated_demand_ratio": 0,
+            "plant_state": "running",
+            "plant_mode": "HEAT",
+            "friendly_name": "Master Bathroom",
+            "supported_features": 1
+          },
+          "last_changed": "2026-10-23T23:51:34.579022+03:00",
+          "last_reported": "2026-10-24T07:43:43.872815+03:00",
+          "last_updated": "2026-10-24T07:43:39.164616+03:00",
+          "context": {
+            "id": "01M5P3HE8WA37R38KK82NFB668",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "climate.shared_bathroom": {
+          "entity_id": "climate.shared_bathroom",
+          "state": "auto",
+          "attributes": {
+            "hvac_modes": [
+              "auto",
+              "off"
+            ],
+            "min_temp": 7,
+            "max_temp": 35,
+            "current_temperature": 21.5,
+            "temperature": 22,
+            "current_humidity": 59.83,
+            "hvac_action": "heating",
+            "zone_id": "shared_bathroom",
+            "support_mode": "HEAT",
+            "window_open": false,
+            "t_air": 21.51,
+            "t_floor": null,
+            "rh": 59.83,
+            "dew_point": 13.4,
+            "t_set_heat": 22,
+            "t_set_cool": 24,
+            "system_mode": "HEAT",
+            "zone_mode": "AUTO",
+            "last_active_co_mode": "HEAT",
+            "floor_limit_state": "no_floor_sensor",
+            "actuator_open_s": 60,
+            "actuator_close_s": 60,
+            "floor_limits": {
+              "cool_max": 24,
+              "cool_min": 20,
+              "heat_max": 28,
+              "heat_min": 24.5
+            },
+            "coordinator_status": "running",
+            "coordinator_phase": "running",
+            "coordinator_cycle_active": true,
+            "coordinator_cycle_length_s": 499,
+            "coordinator_packing_mode": "simultaneous",
+            "coordinator_scheduled": true,
+            "coordinator_running": true,
+            "coordinator_requested_fraction": 0,
+            "coordinator_requested_t_on_s": 0,
+            "coordinator_scheduled_t_on_s": 240,
+            "coordinator_start_offset_s": 0,
+            "coordinator_arbitration_rank": 2,
+            "coordinator_blocked_by": "zone_min_off",
+            "coordinator_block_reasons": [
+              "zone_min_off"
+            ],
+            "coordinator_aggregated_demand_ratio": 0,
+            "plant_state": "running",
+            "plant_mode": "HEAT",
+            "friendly_name": "Shared Bathroom",
+            "supported_features": 1
+          },
+          "last_changed": "2026-10-23T23:51:34.580050+03:00",
+          "last_reported": "2026-10-24T07:43:43.873288+03:00",
+          "last_updated": "2026-10-24T07:43:43.873288+03:00",
+          "context": {
+            "id": "01M5P3HJW1058HXN0JMXQH7GCG",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "climate.kitchen": {
+          "entity_id": "climate.kitchen",
+          "state": "auto",
+          "attributes": {
+            "hvac_modes": [
+              "auto",
+              "off"
+            ],
+            "min_temp": 7,
+            "max_temp": 35,
+            "current_temperature": 21.9,
+            "temperature": 22,
+            "current_humidity": 52.78,
+            "hvac_action": "heating",
+            "zone_id": "kitchen",
+            "support_mode": "BOTH",
+            "window_open": false,
+            "t_air": 21.88,
+            "t_floor": null,
+            "rh": 52.78,
+            "dew_point": 11.8,
+            "t_set_heat": 22,
+            "t_set_cool": 24,
+            "system_mode": "HEAT",
+            "zone_mode": "AUTO",
+            "last_active_co_mode": "HEAT",
+            "floor_limit_state": "no_floor_sensor",
+            "actuator_open_s": 60,
+            "actuator_close_s": 60,
+            "floor_limits": {
+              "cool_max": 24,
+              "cool_min": 20,
+              "heat_max": 28,
+              "heat_min": 24.5
+            },
+            "coordinator_status": "running",
+            "coordinator_phase": "running",
+            "coordinator_cycle_active": true,
+            "coordinator_cycle_length_s": 499,
+            "coordinator_packing_mode": "simultaneous",
+            "coordinator_scheduled": true,
+            "coordinator_running": true,
+            "coordinator_requested_fraction": 0,
+            "coordinator_requested_t_on_s": 0,
+            "coordinator_scheduled_t_on_s": 240,
+            "coordinator_start_offset_s": 0,
+            "coordinator_arbitration_rank": 4,
+            "coordinator_blocked_by": "zone_min_off",
+            "coordinator_block_reasons": [
+              "zone_min_off"
+            ],
+            "coordinator_aggregated_demand_ratio": 0,
+            "plant_state": "running",
+            "plant_mode": "HEAT",
+            "friendly_name": "Kitchen",
+            "supported_features": 1
+          },
+          "last_changed": "2026-10-23T23:51:34.577900+03:00",
+          "last_reported": "2026-10-24T07:43:43.872326+03:00",
+          "last_updated": "2026-10-24T07:43:39.161531+03:00",
+          "context": {
+            "id": "01M5P3HE8ST3WC1RK1P8RDJFJA",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "climate.living_room": {
+          "entity_id": "climate.living_room",
+          "state": "auto",
+          "attributes": {
+            "hvac_modes": [
+              "auto",
+              "off"
+            ],
+            "min_temp": 7,
+            "max_temp": 35,
+            "current_temperature": null,
+            "temperature": 22,
+            "hvac_action": "idle",
+            "zone_id": "living_room",
+            "support_mode": "BOTH",
+            "window_open": false,
+            "t_air": null,
+            "t_floor": null,
+            "rh": null,
+            "dew_point": null,
+            "t_set_heat": 22,
+            "t_set_cool": 23,
+            "system_mode": "HEAT",
+            "zone_mode": "AUTO",
+            "last_active_co_mode": "HEAT",
+            "floor_limit_state": "no_floor_sensor",
+            "actuator_open_s": 60,
+            "actuator_close_s": 60,
+            "floor_limits": {
+              "cool_max": 24,
+              "cool_min": 20,
+              "heat_max": 28,
+              "heat_min": 24
+            },
+            "coordinator_status": "blocked",
+            "coordinator_phase": "running",
+            "coordinator_cycle_active": true,
+            "coordinator_cycle_length_s": 499,
+            "coordinator_packing_mode": "simultaneous",
+            "coordinator_scheduled": false,
+            "coordinator_running": false,
+            "coordinator_requested_fraction": 0,
+            "coordinator_requested_t_on_s": 0,
+            "coordinator_scheduled_t_on_s": 0,
+            "coordinator_start_offset_s": null,
+            "coordinator_arbitration_rank": null,
+            "coordinator_blocked_by": "zone_min_off",
+            "coordinator_block_reasons": [
+              "zone_min_off"
+            ],
+            "coordinator_aggregated_demand_ratio": 0,
+            "plant_state": "running",
+            "plant_mode": "HEAT",
+            "friendly_name": "Living room",
+            "supported_features": 1
+          },
+          "last_changed": "2026-10-23T23:51:34.572500+03:00",
+          "last_reported": "2026-10-24T07:43:43.870042+03:00",
+          "last_updated": "2026-10-24T07:43:39.157340+03:00",
+          "context": {
+            "id": "01M5P3HE8NP2R4653HP898WSK1",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "climate.wc": {
+          "entity_id": "climate.wc",
+          "state": "auto",
+          "attributes": {
+            "hvac_modes": [
+              "auto",
+              "off"
+            ],
+            "min_temp": 7,
+            "max_temp": 35,
+            "current_temperature": 22.8,
+            "temperature": 23.5,
+            "current_humidity": 48.65,
+            "hvac_action": "heating",
+            "zone_id": "wc",
+            "support_mode": "HEAT",
+            "window_open": false,
+            "t_air": 22.8,
+            "t_floor": null,
+            "rh": 48.65,
+            "dew_point": 11.4,
+            "t_set_heat": 23.5,
+            "t_set_cool": 24,
+            "system_mode": "HEAT",
+            "zone_mode": "AUTO",
+            "last_active_co_mode": "HEAT",
+            "floor_limit_state": "no_floor_sensor",
+            "actuator_open_s": 60,
+            "actuator_close_s": 60,
+            "floor_limits": {
+              "cool_max": 24,
+              "cool_min": 20,
+              "heat_max": 28,
+              "heat_min": 24.5
+            },
+            "coordinator_status": "running",
+            "coordinator_phase": "running",
+            "coordinator_cycle_active": true,
+            "coordinator_cycle_length_s": 499,
+            "coordinator_packing_mode": "simultaneous",
+            "coordinator_scheduled": true,
+            "coordinator_running": true,
+            "coordinator_requested_fraction": 0,
+            "coordinator_requested_t_on_s": 0,
+            "coordinator_scheduled_t_on_s": 240,
+            "coordinator_start_offset_s": 0,
+            "coordinator_arbitration_rank": 1,
+            "coordinator_blocked_by": "zone_min_off",
+            "coordinator_block_reasons": [
+              "zone_min_off"
+            ],
+            "coordinator_aggregated_demand_ratio": 0,
+            "plant_state": "running",
+            "plant_mode": "HEAT",
+            "friendly_name": "WC",
+            "supported_features": 1
+          },
+          "last_changed": "2026-10-23T23:51:34.581151+03:00",
+          "last_reported": "2026-10-24T07:43:43.874719+03:00",
+          "last_updated": "2026-10-24T07:43:43.874719+03:00",
+          "context": {
+            "id": "01M5P3HJW2C6DQ88RX0V6XK4RS",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "climate.entry_hallway": {
+          "entity_id": "climate.entry_hallway",
+          "state": "auto",
+          "attributes": {
+            "hvac_modes": [
+              "auto",
+              "off"
+            ],
+            "min_temp": 7,
+            "max_temp": 35,
+            "current_temperature": null,
+            "temperature": 22,
+            "hvac_action": "idle",
+            "zone_id": "entry_hallway",
+            "support_mode": "BOTH",
+            "window_open": false,
+            "t_air": null,
+            "t_floor": null,
+            "rh": null,
+            "dew_point": null,
+            "t_set_heat": 22,
+            "t_set_cool": 24,
+            "system_mode": "HEAT",
+            "zone_mode": "AUTO",
+            "last_active_co_mode": "HEAT",
+            "floor_limit_state": "no_floor_sensor",
+            "actuator_open_s": 60,
+            "actuator_close_s": 60,
+            "floor_limits": {
+              "cool_max": 24,
+              "cool_min": 20,
+              "heat_max": 28,
+              "heat_min": 24.5
+            },
+            "coordinator_status": "blocked",
+            "coordinator_phase": "running",
+            "coordinator_cycle_active": true,
+            "coordinator_cycle_length_s": 499,
+            "coordinator_packing_mode": "simultaneous",
+            "coordinator_scheduled": false,
+            "coordinator_running": false,
+            "coordinator_requested_fraction": 0,
+            "coordinator_requested_t_on_s": 0,
+            "coordinator_scheduled_t_on_s": 0,
+            "coordinator_start_offset_s": null,
+            "coordinator_arbitration_rank": null,
+            "coordinator_blocked_by": "zone_min_off",
+            "coordinator_block_reasons": [
+              "zone_min_off"
+            ],
+            "coordinator_aggregated_demand_ratio": 0,
+            "plant_state": "running",
+            "plant_mode": "HEAT",
+            "friendly_name": "Entry hallway",
+            "supported_features": 1
+          },
+          "last_changed": "2026-10-23T23:51:34.582180+03:00",
+          "last_reported": "2026-10-24T07:43:43.875728+03:00",
+          "last_updated": "2026-10-24T07:43:39.166899+03:00",
+          "context": {
+            "id": "01M5P3HE8Y62WQDCRWDX30CJXT",
+            "parent_id": null,
+            "user_id": null
+          }
+        }
+      }
+    },
+    "metadata": {
+      "home_assistant_timezone": "Europe/Bucharest",
+      "timestamp_format": "ISO 8601 (Europe/Bucharest)",
+      "note": "Per-record timestamp fields (last_changed, last_updated, last_reported, when, last_triggered) have been converted to Europe/Bucharest local time. Query-window boundary fields (period, start_time, end_time) remain in UTC."
+    }
+  },
+  "source_sensor_snapshot": {
+    "data": {
+      "success": true,
+      "count": 8,
+      "states": {
+        "sensor.livingroom_cb90_temperature": {
+          "entity_id": "sensor.livingroom_cb90_temperature",
+          "state": "unavailable",
+          "attributes": {
+            "state_class": "measurement",
+            "unit_of_measurement": "°C",
+            "device_class": "temperature",
+            "friendly_name": "BTHome sensor CB90 Temperature"
+          },
+          "last_changed": "2026-10-23T23:51:44.874812+03:00",
+          "last_reported": "2026-10-23T23:51:44.875320+03:00",
+          "last_updated": "2026-10-23T23:51:44.874812+03:00",
+          "context": {
+            "id": "01M5N8HBKA0F2S2F42EEN448EQ",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "sensor.entry_e228_temperature": {
+          "entity_id": "sensor.entry_e228_temperature",
+          "state": "unavailable",
+          "attributes": {
+            "state_class": "measurement",
+            "unit_of_measurement": "°C",
+            "device_class": "temperature",
+            "friendly_name": "ENTRY E228 Temperature"
+          },
+          "last_changed": "2026-10-23T23:51:44.868136+03:00",
+          "last_reported": "2026-10-23T23:51:44.869219+03:00",
+          "last_updated": "2026-10-23T23:51:44.868136+03:00",
+          "context": {
+            "id": "01M5N8HBK4N77AXFGF9G0Q86W3",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "sensor.livingroom_cb90_humidity": {
+          "entity_id": "sensor.livingroom_cb90_humidity",
+          "state": "unavailable",
+          "attributes": {
+            "state_class": "measurement",
+            "unit_of_measurement": "%",
+            "device_class": "humidity",
+            "friendly_name": "BTHome sensor CB90 Humidity"
+          },
+          "last_changed": "2026-10-23T23:51:44.875020+03:00",
+          "last_reported": "2026-10-23T23:51:44.875331+03:00",
+          "last_updated": "2026-10-23T23:51:44.875020+03:00",
+          "context": {
+            "id": "01M5N8HBKBKGX8JQ7CDMNEP61T",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "sensor.entry_e228_humidity": {
+          "entity_id": "sensor.entry_e228_humidity",
+          "state": "unavailable",
+          "attributes": {
+            "state_class": "measurement",
+            "unit_of_measurement": "%",
+            "device_class": "humidity",
+            "friendly_name": "ENTRY E228 Humidity"
+          },
+          "last_changed": "2026-10-23T23:51:44.868448+03:00",
+          "last_reported": "2026-10-23T23:51:44.869240+03:00",
+          "last_updated": "2026-10-23T23:51:44.868448+03:00",
+          "context": {
+            "id": "01M5N8HBK4VPK1XSXPX2CG9P64",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "sensor.noah_bedrom_th_123_2": {
+          "entity_id": "sensor.noah_bedrom_th_123_2",
+          "state": "19.68",
+          "attributes": {
+            "state_class": "measurement",
+            "heartbeat": 361736,
+            "node_id": 123,
+            "device": "mqtt",
+            "child_id": 2,
+            "description": "Floor Temperature",
+            "battery_level": 0,
+            "V_TEMP": "19.68",
+            "unit_of_measurement": "°C",
+            "device_class": "temperature",
+            "friendly_name": "Noah Bedrom Th 123 Floor Temperature"
+          },
+          "last_changed": "2026-10-23T23:51:44.062670+03:00",
+          "last_reported": "2026-10-23T23:51:44.062670+03:00",
+          "last_updated": "2026-10-23T23:51:44.062670+03:00",
+          "context": {
+            "id": "01M5N8HASY917M88DPZ98K4QFT",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "binary_sensor.cc_ufh2_status": {
+          "entity_id": "binary_sensor.cc_ufh2_status",
+          "state": "on",
+          "attributes": {
+            "device_class": "connectivity",
+            "friendly_name": "Cc-Ufh2 cc-ufh2 Status"
+          },
+          "last_changed": "2026-10-23T23:51:35.530540+03:00",
+          "last_reported": "2026-10-23T23:51:35.530540+03:00",
+          "last_updated": "2026-10-23T23:51:35.530540+03:00",
+          "context": {
+            "id": "01M5N8H2FAVS5VACVP8ZQ1133N",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "sensor.cc_ufh2_uptime": {
+          "entity_id": "sensor.cc_ufh2_uptime",
+          "state": "2658768.75",
+          "attributes": {
+            "state_class": "total_increasing",
+            "unit_of_measurement": "s",
+            "device_class": "duration",
+            "icon": "mdi:timer-outline",
+            "friendly_name": "Cc-Ufh2 cc-ufh2 Uptime"
+          },
+          "last_changed": "2026-10-24T07:43:47.297029+03:00",
+          "last_reported": "2026-10-24T07:43:47.297029+03:00",
+          "last_updated": "2026-10-24T07:43:47.297029+03:00",
+          "context": {
+            "id": "01M5P3HP71KRXSHTM6BHNGG2RD",
+            "parent_id": null,
+            "user_id": null
+          }
+        },
+        "sensor.wifi_signal_sensor_2": {
+          "entity_id": "sensor.wifi_signal_sensor_2",
+          "state": "-61.0",
+          "attributes": {
+            "state_class": "measurement",
+            "unit_of_measurement": "dBm",
+            "device_class": "signal_strength",
+            "friendly_name": "Cc-Ufh2 cc-ufh2 WiFi Signal"
+          },
+          "last_changed": "2026-10-24T07:43:47.297169+03:00",
+          "last_reported": "2026-10-24T07:43:47.297169+03:00",
+          "last_updated": "2026-10-24T07:43:47.297169+03:00",
+          "context": {
+            "id": "01M5P3HP71SDZS6ZDMXGS0G0TG",
+            "parent_id": null,
+            "user_id": null
+          }
+        }
+      }
+    },
+    "metadata": {
+      "home_assistant_timezone": "Europe/Bucharest",
+      "timestamp_format": "ISO 8601 (Europe/Bucharest)",
+      "note": "Per-record timestamp fields (last_changed, last_updated, last_reported, when, last_triggered) have been converted to Europe/Bucharest local time. Query-window boundary fields (period, start_time, end_time) remain in UTC."
+    }
+  },
+  "configured_zone_timing": {
+    "zone_min_on_s": 180,
+    "zone_min_off_s": 180,
+    "open_s": 60,
+    "close_s": 60
+  },
+  "source_revision": "92d35cc",
+  "caveat": "The local source matches the file/line/snippet in production errors; a full remote source hash comparison was not performed. History window-start entries are snapshots, not proven transition times. plant_state is integration-reported, not an independent physical source measurement."
+}

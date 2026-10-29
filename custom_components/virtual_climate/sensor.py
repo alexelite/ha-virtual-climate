@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription
-from homeassistant.const import EntityCategory, UnitOfTime
+from homeassistant.const import EntityCategory, UnitOfTime, UnitOfTemperature
 from homeassistant.core import callback
 from homeassistant.helpers.entity import DeviceInfo
 
@@ -116,6 +116,30 @@ SENSOR_DESCRIPTIONS: tuple[VirtualClimateSensorDescription, ...] = (
     ),
 )
 
+SENSOR_DESCRIPTIONS += tuple(
+    VirtualClimateSensorDescription(
+        key=key, translation_key=key, name=name, value_key=key,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        # Deltas must not receive the absolute-temperature °C -> °F offset.
+        device_class=SensorDeviceClass.TEMPERATURE if temperature is True else None,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS if temperature else None,
+    )
+    for key, name, temperature in (
+        ("supply_target", "Supply target", True),
+        ("supply_curve_target", "Supply curve target", True),
+        ("supply_learned_correction", "Supply learned correction", "delta"),
+        ("supply_probe_adjustment", "Supply trial adjustment", "delta"),
+        ("supply_boost", "Supply boost", "delta"),
+        ("supply_outdoor", "Outdoor temperature", True),
+        ("supply_actual", "Actual supply temperature", True),
+        ("supply_return", "Return temperature", True),
+        ("supply_delta_t", "Supply return difference", "delta"),
+        ("supply_strategy", "Supply strategy", False),
+        ("supply_learning_status", "Supply learning status", False),
+        ("supply_limiting_zone", "Supply limiting zone", False),
+    )
+)
+
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     manager = hass.data[DOMAIN][entry.entry_id][DATA_KEY_MANAGER]
@@ -127,6 +151,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
 
 class VirtualClimateGlobalSensor(SensorEntity):
     _attr_has_entity_name = True
+    _attr_should_poll = False
 
     def __init__(self, entry, manager, description: VirtualClimateSensorDescription) -> None:
         self.entry = entry
@@ -158,3 +183,19 @@ class VirtualClimateGlobalSensor(SensorEntity):
     def _read_value(self) -> Any:
         diagnostics = self.manager.get_global_diagnostics()
         return diagnostics.get(self.entity_description.value_key)
+
+    @property
+    def extra_state_attributes(self):
+        if self.entity_description.value_key == "supply_learning_status":
+            diagnostics = self.manager.get_global_diagnostics()
+            return {key: diagnostics.get(key) for key in (
+                "supply_points", "supply_probe", "supply_faults", "supply_events",
+                "supply_zone_trends", "supply_command_error", "supply_last_write",
+                "supply_target_limited", "supply_outside_curve",
+            )}
+        if self.entity_description.value_key != "running_zones":
+            return None
+        diagnostics = self.manager.get_global_diagnostics()
+        return {key: diagnostics.get(key, 0) for key in (
+            "scheduled_running_zones", "actuator_mismatches", "unavailable_actuators",
+        )}

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import math
 from homeassistant.core import HomeAssistant, State
 from .const import CONF_GLOBAL_CO_MODE_ENTITY
 
@@ -19,7 +20,8 @@ def get_state_float(hass: HomeAssistant, entity_id: str | None):
     if not st or st.state in ("unknown", "unavailable", None):
         return None
     try:
-        return float(st.state)
+        value = float(st.state)
+        return value if math.isfinite(value) else None
     except Exception:
         return None
 

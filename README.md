@@ -27,7 +27,8 @@ custom_components/virtual_climate/
 ├── config_flow.py
 ├── const.py
 ├── helpers.py
-├── hydronics.py
+├── supply_control.py
+├── supply_regulator.py
 ├── manifest.json
 ├── services.yaml
 ├── zone_manager.py
@@ -211,6 +212,21 @@ Plant stop:
 - keep the circulation pump active for a configurable post-run time
 - optionally respect a global minimum off time before restart
 
+The source starts only after an actuator reports `on` and its configured
+`open_s` has elapsed. Configured pump/source delays and minimum off time also
+apply. During normal shutdown, already-open eligible zones stay open through
+the source's minimum run time and pump post-run, then close. Window, floor,
+humidity and manual-OFF protections take precedence: if the last valid path
+is lost, source and pump stop without waiting for normal shutdown delays.
+
+During a planned transfer between zones, the previous valid circulation path
+stays open until a replacement reports `on` and its `open_s` has elapsed.
+This also applies across cycle boundaries. Open commands are submitted before
+close commands. A replacement has its opening time plus 30 seconds to become
+ready; otherwise the source shuts down normally using the existing valid path,
+including minimum run time and pump post-run. A safety block or actual loss
+of the last open path still causes an immediate protective stop.
+
 Global `OFF`:
 
 - stop the active source after `minimum_run_time_seconds`
@@ -239,6 +255,25 @@ The MVP uses fixed values:
 
 This keeps heavy regulation logic inside ESPHome and allows the plant to remain
 more autonomous when Home Assistant is unavailable.
+
+### Weather compensation
+
+Heating can use a configurable multipoint weather curve, optional learned
+corrections and a separate recovery boost. Cooling currently uses a constant
+target. Existing entries keep their fixed strategy until explicitly configured.
+The target is refreshed during operation, not only at source startup.
+
+Open `Options -> Supply temperature control`, or import `global.supply_control`.
+See [configuration, diagnostics and calibration](docs/supply-control.md) for a
+complete example and the experimental timing defaults. Learning is off by default;
+its initial thresholds need calibration and validation in the real installation.
+
+The terminology and decisions are recorded in:
+
+- [Domain glossary](GLOSSARY.md)
+- [Supply target calculation, local regulation and monitoring](docs/adr/0001-supply-target-and-local-regulation.md)
+- [Per-mode strategies and function requirements](docs/adr/0002-supply-strategies-and-capability-requirements.md)
+- [Transparent learning and temporary correction](docs/adr/0003-transparent-learning-and-temporary-correction.md)
 
 ### Changeover semantics in the MVP
 
@@ -276,12 +311,22 @@ into actuator timing and global plant requests.
   - the effective cycle length is dynamically chosen between
     `t_cycle_min` and `t_cycle_max`
   - stronger aggregated demand results in a longer cycle
+  - the duration stays fixed until that cycle ends
+  - the one-second coordinator tick reconciles actuator states; there are no
+    per-zone delayed callbacks that can outlive a cycle
+  - adjacent full-cycle slots remain on across a cycle boundary
+  - actual `on`/`off` state transitions determine minimum on/off timing;
+    actuator opening/closing times are added to these minimums
+  - staggered offsets may overlap to preserve minimum on time; a zone waiting
+    for restart is deferred when a full minimum pulse cannot fit in the cycle
 - `arbitration between zones`
   - zones are ranked by requested demand fraction
   - this rank is exposed for diagnostics
 - `demand aggregation`
   - the coordinator computes an aggregated demand ratio and publishes it for
     global plant logic
+  - restart lockout affects scheduling, while thermal demand remains visible
+  - zero is published only when there is no valid thermal demand (or global OFF)
 - `RH / dew point protections`
   - cooling demand is derated near the RH alert threshold
   - cooling is blocked on RH fault
@@ -294,6 +339,32 @@ into actuator timing and global plant requests.
 
 Each climate entity now exposes coordinator-oriented attributes that help
 explain decisions in Home Assistant:
+
+Climate temperature, humidity and numeric coordinator diagnostics are sampled
+at 60-second intervals to reduce state/history volume. Changes to setpoints,
+operating modes, actuator state and protection status bypass this interval,
+as do sensor loss and recovery when detected at the next evaluation. Room
+measurements, window contacts, protection conditions and thermal demand are
+evaluated together every 60 seconds. Slot boundaries, valve opening times and
+plant delays execute at their own deadlines; there is no one-second planning
+loop. Explicit setpoint/mode commands can request an earlier evaluation.
+
+Each zone has **Smooth room temperature (3 minutes)** in its options, enabled
+by default (`temperature_filter_enabled` in zone JSON or `update_zone`). It
+applies a time-based EMA to room air temperature for both climate display and
+demand, and for the room observations used by supply compensation. Its time
+constant is 180 seconds; weights use actual elapsed time and never the count
+of sensor messages. First readings initialize directly; invalid readings clear
+the filter, as do source changes, enabling/disabling, and gaps over 5 minutes.
+Dedicated sensor entities retain their raw values and reporting frequency.
+`t_air_raw` is available in live climate attributes but excluded from Recorder.
+Floor measurements and dew-point calculations continue to use measured data.
+
+Zone status and schedule diagnostics are passed directly in memory instead of
+emitting `virtual_climate/zone_status` and `virtual_climate/zone_schedule` bus
+events. The existing `virtual_climate/hydronics_demand` event remains available
+once per cycle. Unchanged diagnostics do not notify entities again. Existing
+history is unaffected; these changes reduce future records.
 
 - `coordinator_status`
 - `coordinator_phase`
@@ -309,10 +380,23 @@ explain decisions in Home Assistant:
 - `coordinator_aggregated_demand_ratio`
 - `plant_state`
 - `plant_mode`
+- `coordinator_scheduled_running`
+- `actuator_state`
+- `actuator_commanded_state`
+- `actuator_mismatch`
+- `plant_flow_hold`
+- `plant_flow_hold_reason`
 
 This is intended to make troubleshooting much easier when a zone has demand
 but is not scheduled, is blocked by humidity / dew point / floor safety, or is
 waiting behind other zones in staggered mode.
+
+`coordinator_running` and `hvac_action` use the reported actuator switch state.
+`coordinator_scheduled_running` describes the planned interval. Switch `on`
+confirms the electrical output; it does not measure valve position or water
+flow. `plant_flow_hold` explains a valve held open for circulation;
+`plant_flow_hold_reason` distinguishes `handover` from `stopping`.
+`coordinator_phase` describes the coordinator independently of `plant_state`.
 
 ### Global diagnostics entities
 
@@ -332,9 +416,72 @@ dashboarding, history, and automation:
 - `sensor.*_total_zones`
 - `sensor.*_cycle_length_s`
 
+The running-zones sensor also exposes `scheduled_running_zones`,
+`actuator_mismatches` and `unavailable_actuators` as attributes.
+
+Optional floor and window selectors can be cleared in zone options. An empty
+selector is saved explicitly as `null` and remains empty after reload. Zones
+without a configured floor sensor report `no_floor_sensor`; their floor limits
+do not participate in control.
+
 ## Development notes
 
 The `dev/` folder contains helper scripts for local syncing and testing workflows.
+
+Run the regression suite with Python 3.10 or newer:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-test.txt
+.venv/bin/python -m unittest discover -s tests -v
+```
+
+Tests execute production coordinator, options-flow and climate logic with
+controlled time and mocked HA services/state storage. Schema validation uses
+real Voluptuous. They cover slot timing, cycle continuity, restart lockout,
+source/pump sequencing, reported actuator states and clearing optional fields.
+They also cover delayed zone handover, valve opening time, failed replacement,
+loss of the old path and a two-hour plant simulation with delayed feedback.
+Live ESPHome feedback and full HA integration loading require verification on
+the running installation. Python-code updates require a HA Core restart;
+`dev/sync.sh` performs this unless passed `--no-restart`.
+
+### Deploy over SSH
+
+The SSH alias `ha` must reach a host with Python 3, rsync, Docker, the HA CLI
+and access to the running `homeassistant` container and its configuration.
+Use the same test environment as above:
+
+```bash
+bash dev/sync.sh --dry-run --host ha --test-python .venv/bin/python
+bash dev/sync.sh --host ha --test-python .venv/bin/python
+```
+
+The script packages an immutable component snapshot, runs regression tests,
+backs up the installed code and this integration's persisted configuration,
+then uploads to a separate staging directory. SHA-256 hashes, Python/JSON
+syntax and imports in the actual HA Python environment must pass before the
+live directory is replaced. It checks HA configuration, restarts Core and
+waits for a new container process with a responding API. Check integration
+loading, actuator feedback and logs through HA after deployment; API readiness
+alone does not establish that every integration loaded successfully.
+
+Backups are retained under `<config>/virtual_climate_backups/<backup-id>/`.
+The integration configuration snapshot is private reference material; restoring
+code never overwrites HA's internal `.storage`. A failed configuration check
+or restart restores the previous component code automatically. Deployment
+metadata is also saved locally in ignored `local/deployments/`.
+
+To restore code from a deployment's backup (with another backup and restart):
+
+```bash
+bash dev/sync.sh --host ha --rollback BACKUP_ID
+```
+
+`--config-root PATH` overrides configuration-directory detection.
+`--no-restart` leaves an installation pending a Core restart; currently loaded
+Python code continues to run until then. `--dry-run` runs tests and shows a
+read-only rsync comparison without creating remote backups or changing settings.
 
 ## License
 

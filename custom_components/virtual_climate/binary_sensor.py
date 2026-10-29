@@ -29,6 +29,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
 
 class VirtualClimateGlobalBinarySensor(BinarySensorEntity):
     _attr_has_entity_name = True
+    _attr_should_poll = False
 
     def __init__(self, entry, manager, description: BinarySensorEntityDescription) -> None:
         self.entry = entry

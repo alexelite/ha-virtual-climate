@@ -49,7 +49,8 @@
           "menu_options": {
             "zones_json": "Import din JSON",
             "zone_wizard": "Adaugă o zonă (asistent)",
-            "finish": "Finalizează configurarea"
+            "finish": "Finalizează configurarea",
+            "supply_control": "Controlul temperaturii de tur"
           }
         },
         "zones_json": {
@@ -66,6 +67,7 @@
             "id": "ID Zonă",
             "name": "Numele zonei",
             "sensor_air": "Senzor temperatură aer",
+            "temperature_filter_enabled": "Netezire temperatură cameră (3 minute)",
             "sensor_floor": "Senzor temperatură podea (opțional)",
             "sensor_rh": "Senzor umiditate",
             "switch_actuator": "Actuator zonă (switch/grup)",
@@ -81,12 +83,32 @@
         "finish": {
           "title": "Finalizează configurarea",
           "description": "Creați integrarea cu zonele configurate."
+        },
+        "supply_control": {
+          "title": "Controlul temperaturii de tur",
+          "description": "Configurează curba de tur și boostul independent. Numărul valorilor supply_points stabilește numărul punctelor exterioare echidistante (minimum două). Învățarea este dezactivată implicit. Modificarea unui punct resetează învățarea sa; schimbarea intervalului exterior sau numărului punctelor resetează toată învățarea. Timpii inițiali necesită calibrare. {reason}",
+          "data": {
+            "heating_strategy": "Strategie de tur pentru încălzire",
+            "cooling_strategy": "Strategie de tur pentru răcire",
+            "outdoor_sensor": "Senzor de temperatură exterioară",
+            "supply_sensor": "Senzor de tur (opțional)",
+            "return_sensor": "Senzor de retur (opțional)",
+            "heating_min": "Tur minim la încălzire (°C)",
+            "heating_max": "Tur maxim la încălzire (°C)",
+            "cooling_min": "Tur minim la răcire (°C)",
+            "cooling_max": "Tur maxim la răcire (°C)",
+            "learning_mode": "Învățare",
+            "boost_enabled": "Activează boostul de recuperare",
+            "curve": "Punctele curbei și intervalul exterior",
+            "tuning": "Parametri de observație și ajustare"
+          }
         }
       },
       "error": {
         "invalid_config_json": "JSON configurație invalid. Furnizați un obiect complet de configurare sau un array ne-gol de zone.",
         "invalid_zones_json": "JSON zone invalid. Furnizați un array ne-gol de obiecte zonă.",
-        "invalid_zone": "Valori zonă invalide. Verificați câmpurile necesare și formatele JSON."
+        "invalid_zone": "Valori zonă invalide. Verificați câmpurile necesare și formatele JSON.",
+        "invalid_supply_control": "Parametri de tur nevalizi. Verifică senzorul, curba și limitele."
       }
     },
     "options": {
@@ -99,7 +121,8 @@
             "zones_pick": "Editează Zone",
             "import_json_replace": "Import JSON (replace)",
             "export_json": "Export JSON",
-            "finish": "Finalizează"
+            "finish": "Finalizează",
+            "supply_control": "Controlul temperaturii de tur"
           }
         },
         "import_json_replace": {
@@ -156,6 +179,7 @@
           "data": {
             "support_mode": "Moduri suportate",
             "sensor_air": "Senzor temperatură aer",
+            "temperature_filter_enabled": "Netezire temperatură cameră (3 minute)",
             "sensor_rh": "Senzor umiditate relativă (RH)",
             "switch_actuator": "Actuator zonă (switch/grup)",
             "sensor_floor": "Senzor temperatură podea (opțional)",
@@ -173,6 +197,25 @@
         "finish": {
           "title": "Opțiuni Actualizate",
           "description": "Configurația a fost salvată cu succes."
+        },
+        "supply_control": {
+          "title": "Controlul temperaturii de tur",
+          "description": "Configurează curba de tur și boostul independent. Numărul valorilor supply_points stabilește numărul punctelor exterioare echidistante (minimum două). Învățarea este dezactivată implicit. Modificarea unui punct resetează învățarea sa; schimbarea intervalului exterior sau numărului punctelor resetează toată învățarea. Timpii inițiali necesită calibrare. {reason}",
+          "data": {
+            "heating_strategy": "Strategie de tur pentru încălzire",
+            "cooling_strategy": "Strategie de tur pentru răcire",
+            "outdoor_sensor": "Senzor de temperatură exterioară",
+            "supply_sensor": "Senzor de tur (opțional)",
+            "return_sensor": "Senzor de retur (opțional)",
+            "heating_min": "Tur minim la încălzire (°C)",
+            "heating_max": "Tur maxim la încălzire (°C)",
+            "cooling_min": "Tur minim la răcire (°C)",
+            "cooling_max": "Tur maxim la răcire (°C)",
+            "learning_mode": "Învățare",
+            "boost_enabled": "Activează boostul de recuperare",
+            "curve": "Punctele curbei și intervalul exterior",
+            "tuning": "Parametri de observație și ajustare"
+          }
         }
       },
       "error": {
@@ -180,7 +223,8 @@
         "no_zones": "Nu s-au găsit zone. Vă rugăm să adăugați zone mai întâi.",
         "invalid_floor_limits": "Limite podea invalide. Minimul trebuie să fie mai mic decât maximul pentru fiecare mod.",
         "invalid_number": "Format număr invalid. Vă rugăm să introduceți valori numerice valide.",
-        "zone_not_found": "Zona nu a fost găsită."
+        "zone_not_found": "Zona nu a fost găsită.",
+        "invalid_supply_control": "Parametri de tur nevalizi. Verifică senzorul, curba și limitele."
       }
     },
     "services": {
@@ -216,6 +260,10 @@
             "name": "Senzor podea",
             "description": "Entitatea senzorului de temperatură a podelei"
           },
+          "temperature_filter_enabled": {
+            "name": "Netezire temperatură cameră (3 minute)",
+            "description": "Activează filtrul EMA bazat pe timp pentru temperatura camerei; evaluare la 60 de secunde."
+          },
           "window_switch": {
             "name": "Senzor fereastră",
             "description": "Entitatea senzorului de contact al ferestrei"
@@ -223,6 +271,15 @@
           "support_mode": {
             "name": "Mod suport",
             "description": "Modurile HVAC suportate"
+          }
+        }
+      },
+      "reset_supply_learning": {
+        "name": "Resetează învățarea turului",
+        "description": "Resetează corecțiile și experiența; păstrează curba de bază configurată.",
+        "fields": {
+          "entry_id": {
+            "name": "ID intrare de configurare"
           }
         }
       }
@@ -261,11 +318,62 @@
         },
         "cycle_length_s": {
           "name": "Durata ciclului"
+        },
+        "supply_target": {
+          "name": "Țintă de tur"
+        },
+        "supply_curve_target": {
+          "name": "Ținta curbei de bază"
+        },
+        "supply_learned_correction": {
+          "name": "Corecție de tur învățată"
+        },
+        "supply_boost": {
+          "name": "Boost de recuperare"
+        },
+        "supply_outdoor": {
+          "name": "Temperatură exterioară"
+        },
+        "supply_actual": {
+          "name": "Temperatură efectivă de tur"
+        },
+        "supply_return": {
+          "name": "Temperatură retur"
+        },
+        "supply_delta_t": {
+          "name": "Diferență tur–retur"
+        },
+        "supply_strategy": {
+          "name": "Strategie de tur"
+        },
+        "supply_learning_status": {
+          "name": "Starea învățării"
+        },
+        "supply_limiting_zone": {
+          "name": "Zona care determină turul"
+        },
+        "supply_probe_adjustment": {
+          "name": "Ajustare de tur în probă"
         }
       },
       "binary_sensor": {
         "cycle_active": {
           "name": "Ciclu activ"
+        }
+      }
+    },
+    "selector": {
+      "supply_strategy": {
+        "options": {
+          "constant": "Temperatură constantă",
+          "weather_compensated": "Compensare climatică"
+        }
+      },
+      "supply_learning": {
+        "options": {
+          "off": "Doar curba de bază",
+          "learn": "Învață și aplică corecțiile",
+          "frozen": "Păstrează corecțiile, suspendă învățarea"
         }
       }
     }

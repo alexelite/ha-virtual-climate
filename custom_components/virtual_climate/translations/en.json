@@ -49,7 +49,8 @@
           "menu_options": {
             "zones_json": "Import from JSON",
             "zone_wizard": "Add a zone (wizard)",
-            "finish": "Finish setup"
+            "finish": "Finish setup",
+            "supply_control": "Supply temperature control"
           }
         },
         "zones_json": {
@@ -66,6 +67,7 @@
             "id": "Zone ID",
             "name": "Zone name",
             "sensor_air": "Air temperature sensor",
+            "temperature_filter_enabled": "Smooth room temperature (3 minutes)",
             "sensor_floor": "Floor temperature sensor (optional)",
             "sensor_rh": "Humidity sensor",
             "switch_actuator": "Zone actuator (switch/group)",
@@ -81,12 +83,32 @@
         "finish": {
           "title": "Finish setup",
           "description": "Create the integration with the configured zones."
+        },
+        "supply_control": {
+          "title": "Supply temperature control",
+          "description": "Configure the supply curve and independent recovery boost. The number of supply_points determines the number of evenly spaced outdoor points (minimum two). Learning is off by default. Changing a base point resets its learning; changing the outdoor interval or point count resets all learning. Advanced timing defaults need calibration. {reason}",
+          "data": {
+            "heating_strategy": "Heating supply strategy",
+            "cooling_strategy": "Cooling supply strategy",
+            "outdoor_sensor": "Outdoor temperature sensor",
+            "supply_sensor": "Supply temperature sensor (optional)",
+            "return_sensor": "Return temperature sensor (optional)",
+            "heating_min": "Minimum heating supply (°C)",
+            "heating_max": "Maximum heating supply (°C)",
+            "cooling_min": "Minimum cooling supply (°C)",
+            "cooling_max": "Maximum cooling supply (°C)",
+            "learning_mode": "Learning",
+            "boost_enabled": "Enable recovery boost",
+            "curve": "Curve points and outdoor interval",
+            "tuning": "Observation and adjustment settings"
+          }
         }
       },
       "error": {
         "invalid_config_json": "Invalid configuration JSON. Provide a full config object or a non-empty zone array.",
         "invalid_zones_json": "Invalid zones JSON. Provide a non-empty array of zone objects.",
-        "invalid_zone": "Invalid zone values. Check required fields and JSON formats."
+        "invalid_zone": "Invalid zone values. Check required fields and JSON formats.",
+        "invalid_supply_control": "Invalid supply control settings. Check the sensor, curve and limits."
       }
     },
     "options": {
@@ -99,7 +121,8 @@
             "zones_pick": "Edit Zones",
             "import_json_replace": "Import JSON (replace)",
             "export_json": "Export JSON",
-            "finish": "Finish"
+            "finish": "Finish",
+            "supply_control": "Supply temperature control"
           }
         },
         "import_json_replace": {
@@ -156,6 +179,7 @@
           "data": {
             "support_mode": "Supported modes",
             "sensor_air": "Air temperature sensor",
+            "temperature_filter_enabled": "Smooth room temperature (3 minutes)",
             "sensor_rh": "Relative humidity sensor (RH)",
             "switch_actuator": "Zone actuator (switch/group)",
             "sensor_floor": "Floor temperature sensor (optional)",
@@ -173,6 +197,25 @@
         "finish": {
           "title": "Options Updated",
           "description": "Configuration has been saved successfully."
+        },
+        "supply_control": {
+          "title": "Supply temperature control",
+          "description": "Configure the supply curve and independent recovery boost. The number of supply_points determines the number of evenly spaced outdoor points (minimum two). Learning is off by default. Changing a base point resets its learning; changing the outdoor interval or point count resets all learning. Advanced timing defaults need calibration. {reason}",
+          "data": {
+            "heating_strategy": "Heating supply strategy",
+            "cooling_strategy": "Cooling supply strategy",
+            "outdoor_sensor": "Outdoor temperature sensor",
+            "supply_sensor": "Supply temperature sensor (optional)",
+            "return_sensor": "Return temperature sensor (optional)",
+            "heating_min": "Minimum heating supply (°C)",
+            "heating_max": "Maximum heating supply (°C)",
+            "cooling_min": "Minimum cooling supply (°C)",
+            "cooling_max": "Maximum cooling supply (°C)",
+            "learning_mode": "Learning",
+            "boost_enabled": "Enable recovery boost",
+            "curve": "Curve points and outdoor interval",
+            "tuning": "Observation and adjustment settings"
+          }
         }
       },
       "error": {
@@ -180,7 +223,8 @@
         "no_zones": "No zones found. Please add zones first.",
         "invalid_floor_limits": "Invalid floor limits. Minimum must be less than maximum for each mode.",
         "invalid_number": "Invalid number format. Please enter valid numeric values.",
-        "zone_not_found": "Zone not found."
+        "zone_not_found": "Zone not found.",
+        "invalid_supply_control": "Invalid supply control settings. Check the sensor, curve and limits."
       }
     },
     "services": {
@@ -216,6 +260,10 @@
             "name": "Floor sensor",
             "description": "Floor temperature sensor entity"
           },
+          "temperature_filter_enabled": {
+            "name": "Smooth room temperature (3 minutes)",
+            "description": "Enable the time-based EMA filter for room temperature; sampled every 60 seconds."
+          },
           "window_switch": {
             "name": "Window sensor",
             "description": "Window contact sensor entity"
@@ -223,6 +271,15 @@
           "support_mode": {
             "name": "Support mode",
             "description": "Supported HVAC modes"
+          }
+        }
+      },
+      "reset_supply_learning": {
+        "name": "Reset supply learning",
+        "description": "Reset learned corrections and experience; keep the configured base curve.",
+        "fields": {
+          "entry_id": {
+            "name": "Configuration entry ID"
           }
         }
       }
@@ -261,6 +318,42 @@
         },
         "cycle_length_s": {
           "name": "Cycle length"
+        },
+        "supply_target": {
+          "name": "Supply target"
+        },
+        "supply_curve_target": {
+          "name": "Supply curve target"
+        },
+        "supply_learned_correction": {
+          "name": "Learned supply correction"
+        },
+        "supply_boost": {
+          "name": "Recovery boost"
+        },
+        "supply_outdoor": {
+          "name": "Outdoor temperature"
+        },
+        "supply_actual": {
+          "name": "Actual supply temperature"
+        },
+        "supply_return": {
+          "name": "Return temperature"
+        },
+        "supply_delta_t": {
+          "name": "Supply–return difference"
+        },
+        "supply_strategy": {
+          "name": "Supply strategy"
+        },
+        "supply_learning_status": {
+          "name": "Learning status"
+        },
+        "supply_limiting_zone": {
+          "name": "Zone determining supply target"
+        },
+        "supply_probe_adjustment": {
+          "name": "Supply trial adjustment"
         }
       },
       "binary_sensor": {
@@ -268,6 +361,20 @@
           "name": "Cycle active"
         }
       }
+    },
+    "selector": {
+      "supply_strategy": {
+        "options": {
+          "constant": "Constant temperature",
+          "weather_compensated": "Weather compensation"
+        }
+      },
+      "supply_learning": {
+        "options": {
+          "off": "Base curve only",
+          "learn": "Learn and apply corrections",
+          "frozen": "Keep corrections, pause learning"
+        }
+      }
     }
   }
-  

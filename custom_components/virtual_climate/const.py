@@ -4,6 +4,7 @@ PLATFORMS = ["climate", "sensor", "binary_sensor"]
 
 DATA_KEY_MANAGER = f"{DOMAIN}_manager"
 DATA_KEY_ENTRIES = f"{DOMAIN}_entries"
+THERMAL_UPDATE_SECONDS = 60
 
 # Global options keys (stored on the config entry)
 CONF_GLOBAL_CO_MODE_ENTITY = "global_co_mode_entity"  # e.g. input_boolean / select
@@ -34,6 +35,7 @@ CONF_ZONES = "zones"
 ZK_ID = "id"
 ZK_NAME = "name"
 ZK_SENSOR_AIR = "sensor_air"
+ZK_TEMPERATURE_FILTER = "temperature_filter_enabled"
 ZK_SENSOR_FLOOR = "sensor_floor"
 ZK_SENSOR_RH = "sensor_rh"
 ZK_SWITCH_ACTUATOR = "switch_actuator"
@@ -45,9 +47,7 @@ ZK_ZONE_MIN_ON = "zone_min_on_s"
 ZK_ZONE_MIN_OFF = "zone_min_off_s"
 ZK_WINDOW_SWITCH = "window_switch"
 
-# Bus event names (internal pub/sub)
-EVT_ZONE_STATUS = f"{DOMAIN}/zone_status"
-EVT_ZONE_SCHEDULE = f"{DOMAIN}/zone_schedule"
+# Public cycle notification. High-frequency zone telemetry stays in memory.
 EVT_HYDRONICS_DEMAND = f"{DOMAIN}/hydronics_demand"
 
 # Internal event payload keys

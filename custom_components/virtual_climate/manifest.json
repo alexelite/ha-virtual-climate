@@ -1,10 +1,11 @@
 {
   "domain": "virtual_climate",
   "name": "Virtual Climate",
-  "version": "0.1.0",
+  "version": "0.1.1b2",
   "documentation": "https://github.com/alex-elite/ha-virtual-climate",
   "issue_tracker": "https://github.com/alex-elite/ha-virtual-climate/issues",
   "requirements": [],
+  "dependencies": ["persistent_notification"],
   "codeowners": ["@alex-elite"],
   "iot_class": "local_push",
   "config_flow": true

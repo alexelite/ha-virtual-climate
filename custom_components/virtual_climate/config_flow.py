@@ -7,6 +7,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers.selector import selector
 from homeassistant.core import callback
+from .supply_control import finite, normalize_supply_config
 
 DOMAIN = "virtual_climate"
 
@@ -33,11 +34,13 @@ CONF_MINIMUM_RUN_TIME_SECONDS = "minimum_run_time_seconds"
 CONF_PUMP_POST_RUN_SECONDS = "pump_post_run_seconds"
 CONF_MINIMUM_OFF_TIME_SECONDS = "minimum_off_time_seconds"
 CONF_ZONES = "zones"
+CONF_SUPPLY_CONTROL = "supply_control"
 
 # Zone dict keys
 ZK_ID = "id"
 ZK_NAME = "name"
 ZK_SENSOR_AIR = "sensor_air"
+ZK_TEMPERATURE_FILTER = "temperature_filter_enabled"
 ZK_SENSOR_FLOOR = "sensor_floor"
 ZK_SENSOR_RH = "sensor_rh"
 ZK_SWITCH_ACT = "switch_actuator"
@@ -77,6 +80,7 @@ DEFAULTS = {
 }
 
 GLOBAL_CONFIG_KEYS = (
+    CONF_SUPPLY_CONTROL,
     CONF_GLOBAL_CO_MODE_ENTITY,
     CONF_PACKING_MODE,
     CONF_T_CYCLE_SECONDS,
@@ -103,7 +107,10 @@ GLOBAL_CONFIG_KEYS = (
 
 def _optional_entity_field(key: str, domains: list[str], default: Any = ...):
     """Build an optional entity selector field that can remain unset."""
-    schema_key = vol.Optional(key) if default in (..., None, "") else vol.Optional(key, default=default)
+    # A default is injected again when a user clears an optional selector.
+    # Suggested values prefill the UI while allowing an omitted key to clear it.
+    description = {} if default in (..., None, "") else {"suggested_value": default}
+    schema_key = vol.Optional(key, description=description)
     return schema_key, selector({"entity": {"domain": domains}})
 
 
@@ -115,6 +122,9 @@ def _validate_zone_id_unique(zones: List[Dict[str, Any]], new_id: str) -> None:
 def _coerce_zone_defaults(z: Dict[str, Any]) -> Dict[str, Any]:
     """Fill defaults for optional zone fields and coerce numeric subfields."""
     z.setdefault(ZK_SUPPORT_MODE, "BOTH")
+    z.setdefault(ZK_TEMPERATURE_FILTER, True)
+    if not isinstance(z[ZK_TEMPERATURE_FILTER], bool):
+        raise ValueError("temperature_filter_enabled must be a boolean")
     z.setdefault(ZK_OPEN_S, DEFAULTS[ZK_OPEN_S])
     z.setdefault(ZK_CLOSE_S, DEFAULTS[ZK_CLOSE_S])
     z.setdefault(ZK_ZONE_MIN_ON, DEFAULTS[ZK_ZONE_MIN_ON])
@@ -161,8 +171,59 @@ def _normalize_global_config(config: Dict[str, Any]) -> Dict[str, Any]:
         normalized[field] = int(normalized[field])
     for field in float_fields:
         normalized[field] = float(normalized[field])
+        if finite(normalized[field]) is None:
+            raise ValueError(f"{field} must be finite")
+    if CONF_SUPPLY_CONTROL in normalized:
+        normalized[CONF_SUPPLY_CONTROL] = normalize_supply_config(normalized[CONF_SUPPLY_CONTROL])
 
     return normalized
+
+
+SUPPLY_BASIC_KEYS = ("heating_strategy", "cooling_strategy", "outdoor_sensor", "supply_sensor", "return_sensor",
+                     "heating_min", "heating_max", "cooling_min", "cooling_max", "learning_mode", "boost_enabled")
+SUPPLY_CURVE_KEYS = ("outdoor_min", "outdoor_max", "supply_points")
+
+
+def _supply_schema(config, user_input=None):
+    config = normalize_supply_config(config)
+    if user_input is not None:
+        for key in SUPPLY_BASIC_KEYS:
+            if key in user_input or key.endswith("_sensor"):
+                config[key] = user_input.get(key)
+    fields = {}
+    for key in SUPPLY_BASIC_KEYS:
+        if key.endswith("_sensor"):
+            schema_key, field = _optional_entity_field(key, ["sensor"], config[key])
+        else:
+            schema_key = vol.Required(key, default=config[key])
+            if key == "heating_strategy":
+                field = selector({"select": {"options": ["constant", "weather_compensated"], "translation_key": "supply_strategy"}})
+            elif key == "cooling_strategy":
+                field = selector({"select": {"options": ["constant"], "translation_key": "supply_strategy"}})
+            elif key == "learning_mode":
+                field = selector({"select": {"options": ["off", "learn", "frozen"], "translation_key": "supply_learning"}})
+            elif key == "boost_enabled":
+                field = selector({"boolean": {}})
+            else:
+                field = selector({"number": {"min": 0, "max": 90, "step": 0.5, "mode": "box"}})
+        fields[schema_key] = field
+    curve = {key: config[key] for key in SUPPLY_CURVE_KEYS}
+    tuning = {key: config[key] for key in config if key not in SUPPLY_BASIC_KEYS + SUPPLY_CURVE_KEYS}
+    fields[vol.Required("curve", default=user_input.get("curve", curve) if user_input is not None else curve)] = selector({"object": {}})
+    fields[vol.Required("tuning", default=user_input.get("tuning", tuning) if user_input is not None else tuning)] = selector({"object": {}})
+    return vol.Schema(fields)
+
+
+def _parse_supply_form(user_input):
+    config = {key: user_input.get(key) for key in SUPPLY_BASIC_KEYS}
+    curve, tuning = user_input.get("curve", {}), user_input.get("tuning", {})
+    if not isinstance(curve, dict) or set(curve) - set(SUPPLY_CURVE_KEYS):
+        raise ValueError("Invalid curve fields")
+    if not isinstance(tuning, dict) or set(tuning) & set(SUPPLY_BASIC_KEYS + SUPPLY_CURVE_KEYS):
+        raise ValueError("Invalid tuning fields")
+    config.update(curve)
+    config.update(tuning)
+    return normalize_supply_config(config)
 
 
 def _parse_import_payload_value(parsed: Any) -> tuple[Dict[str, Any] | None, List[Dict[str, Any]]]:
@@ -378,11 +439,23 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is None:
             return self.async_show_menu(
                 step_id="choose_method",
-                menu_options=["zones_json", "zone_wizard", "finish"]
+                menu_options=["zones_json", "zone_wizard", "supply_control", "finish"]
             )
         # No direct POST expected here; clicking a menu item routes to that step id.
 
     # ---------- Path A: Zones-only JSON import ----------
+    async def async_step_supply_control(self, user_input=None):
+        errors, reason = {}, ""
+        if user_input is not None:
+            try:
+                self._global[CONF_SUPPLY_CONTROL] = _parse_supply_form(user_input)
+                return await self.async_step_choose_method()
+            except (ValueError, TypeError) as error:
+                errors, reason = {"base": "invalid_supply_control"}, str(error)
+        return self.async_show_form(step_id="supply_control",
+                                    data_schema=_supply_schema(self._global.get(CONF_SUPPLY_CONTROL), user_input),
+                                    errors=errors, description_placeholders={"reason": reason})
+
     async def async_step_zones_json(self, user_input=None):
         if user_input is None:
             return self.async_show_form(
@@ -422,6 +495,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required(ZK_ID): selector({"text": {}}),
                     vol.Required(ZK_NAME): selector({"text": {}}),
                     vol.Required(ZK_SENSOR_AIR): selector({"entity": {"domain": "sensor"}}),
+                    vol.Optional(ZK_TEMPERATURE_FILTER, default=True): selector({"boolean": {}}),
                     vol.Optional(ZK_SENSOR_FLOOR): selector({"entity": {"domain": "sensor"}}),
                     vol.Required(ZK_SENSOR_RH): selector({"entity": {"domain": "sensor"}}),
                     vol.Required(ZK_SWITCH_ACT): selector({"entity": {"domain": ["switch", "group"]}}),
@@ -448,6 +522,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ZK_ID: zid,
                 ZK_NAME: str(user_input[ZK_NAME]).strip(),
                 ZK_SENSOR_AIR: user_input[ZK_SENSOR_AIR],
+                ZK_TEMPERATURE_FILTER: user_input.get(ZK_TEMPERATURE_FILTER, True),
                 ZK_SENSOR_FLOOR: user_input.get(ZK_SENSOR_FLOOR) or None,
                 ZK_SENSOR_RH: user_input[ZK_SENSOR_RH],
                 ZK_SWITCH_ACT: user_input[ZK_SWITCH_ACT],
@@ -477,6 +552,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required(ZK_ID): selector({"text": {}}),
                     vol.Required(ZK_NAME): selector({"text": {}}),
                     vol.Required(ZK_SENSOR_AIR): selector({"entity": {"domain": "sensor"}}),
+                    vol.Optional(ZK_TEMPERATURE_FILTER, default=True): selector({"boolean": {}}),
                     vol.Optional(ZK_SENSOR_FLOOR): selector({"entity": {"domain": "sensor"}}),
                     vol.Required(ZK_SENSOR_RH): selector({"entity": {"domain": "sensor"}}),
                     vol.Required(ZK_SWITCH_ACT): selector({"entity": {"domain": ["switch", "group"]}}),
@@ -543,6 +619,7 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
         defaults = {
             ZK_SUPPORT_MODE: selected_zone.get(ZK_SUPPORT_MODE, "BOTH"),
             ZK_SENSOR_AIR: selected_zone.get(ZK_SENSOR_AIR),
+            ZK_TEMPERATURE_FILTER: selected_zone.get(ZK_TEMPERATURE_FILTER, True),
             ZK_SENSOR_RH: selected_zone.get(ZK_SENSOR_RH),
             ZK_SWITCH_ACT: selected_zone.get(ZK_SWITCH_ACT),
             ZK_OPEN_S: selected_zone.get(ZK_OPEN_S, DEFAULTS[ZK_OPEN_S]),
@@ -578,6 +655,7 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
             defaults[ZK_WINDOW_SWITCH],
         )
         schema: Dict[Any, Any] = {
+            vol.Optional(ZK_TEMPERATURE_FILTER, default=defaults[ZK_TEMPERATURE_FILTER]): selector({"boolean": {}}),
             vol.Optional(ZK_SUPPORT_MODE, default=defaults[ZK_SUPPORT_MODE]): selector({
                 "select": {"options": ["HEAT", "COOL", "BOTH"]}
             }),
@@ -624,9 +702,23 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
         if user_input is None:
             return self.async_show_menu(
                 step_id="init",
-                menu_options=["global_options", "zones_pick", "import_json_replace", "export_json", "finish"]
+                menu_options=["global_options", "supply_control", "zones_pick", "import_json_replace", "export_json", "finish"]
             )
         return await getattr(self, f"async_step_{user_input}")()
+
+    async def async_step_supply_control(self, user_input=None):
+        errors, reason = {}, ""
+        if user_input is not None:
+            try:
+                config = _parse_supply_form(user_input)
+                options = dict(self._config_entry.options)
+                options[CONF_SUPPLY_CONTROL] = config
+                return self.async_create_entry(title="", data=options)
+            except (ValueError, TypeError) as error:
+                errors, reason = {"base": "invalid_supply_control"}, str(error)
+        return self.async_show_form(step_id="supply_control",
+                                    data_schema=_supply_schema(self.current_config.get(CONF_SUPPLY_CONTROL), user_input),
+                                    errors=errors, description_placeholders={"reason": reason})
 
     async def async_step_import_json_replace(self, user_input=None):
         """Replace the entire configuration from imported JSON."""
@@ -885,6 +977,7 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
             zone_update = {
                 ZK_SUPPORT_MODE: user_input.get(ZK_SUPPORT_MODE, "BOTH"),
                 ZK_SENSOR_AIR: user_input[ZK_SENSOR_AIR],
+                ZK_TEMPERATURE_FILTER: user_input.get(ZK_TEMPERATURE_FILTER, selected_zone.get(ZK_TEMPERATURE_FILTER, True)),
                 ZK_SENSOR_RH: user_input[ZK_SENSOR_RH],
                 ZK_SWITCH_ACT: user_input[ZK_SWITCH_ACT],
                 ZK_OPEN_S: int(user_input.get(ZK_OPEN_S, 60)),
