@@ -187,13 +187,24 @@ SUPPLY_BASIC_KEYS = ("heating_strategy", "cooling_strategy", "outdoor_sensor", "
 SUPPLY_CURVE_KEYS = ("outdoor_min", "outdoor_max", "supply_points")
 
 
-def _supply_schema(config, user_input=None):
+def _supply_schema(config, user_input=None, global_config=None):
     config = normalize_supply_config(config)
     if user_input is not None:
         for key in SUPPLY_BASIC_KEYS:
             if key in user_input or key.endswith("_sensor"):
                 config[key] = user_input.get(key)
     fields = {}
+    current = dict(global_config or {})
+    if user_input is not None:
+        current.update(user_input)
+    key, field = _optional_entity_field(CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY,
+                                        ["number", "input_number"],
+                                        current.get(CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY))
+    fields[key] = field
+    for key, low, high in ((CONF_HEATING_SUPPLY_TARGET, 10, 60),
+                           (CONF_COOLING_SUPPLY_TARGET, 5, 30)):
+        fields[vol.Required(key, default=current.get(key, DEFAULTS[key]))] = selector({
+            "number": {"min": low, "max": high, "step": 0.5, "mode": "box"}})
     for key in SUPPLY_BASIC_KEYS:
         if key.endswith("_sensor"):
             schema_key, field = _optional_entity_field(key, ["sensor"], config[key])
@@ -227,6 +238,18 @@ def _parse_supply_form(user_input):
     config.update(curve)
     config.update(tuning)
     return normalize_supply_config(config)
+
+
+def _supply_output_options(user_input, current):
+    """Keep persisted keys stable while editing them in the supply form."""
+    result = {CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY: user_input.get(CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY)}
+    for key in (CONF_HEATING_SUPPLY_TARGET, CONF_COOLING_SUPPLY_TARGET):
+        value = finite(user_input.get(key, current.get(key, DEFAULTS[key])))
+        low, high = (10, 60) if key == CONF_HEATING_SUPPLY_TARGET else (5, 30)
+        if value is None or not low <= value <= high:
+            raise ValueError(f"Invalid {key}")
+        result[key] = value
+    return result
 
 
 def _parse_import_payload_value(parsed: Any) -> tuple[Dict[str, Any] | None, List[Dict[str, Any]]]:
@@ -405,14 +428,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         _optional_entity_field(CONF_CHANGEOVER_ENTITY, ["switch", "input_boolean"])[1],
                     _optional_entity_field(CONF_CIRCULATION_PUMP_ENTITY, ["switch", "input_boolean"])[0]:
                         _optional_entity_field(CONF_CIRCULATION_PUMP_ENTITY, ["switch", "input_boolean"])[1],
-                    _optional_entity_field(CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY, ["number", "input_number"])[0]:
-                        _optional_entity_field(CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY, ["number", "input_number"])[1],
-                    vol.Optional(CONF_HEATING_SUPPLY_TARGET, default=DEFAULTS[CONF_HEATING_SUPPLY_TARGET]): selector({
-                        "number": {"min": 10, "max": 60, "step": 0.5, "mode": "box"}
-                    }),
-                    vol.Optional(CONF_COOLING_SUPPLY_TARGET, default=DEFAULTS[CONF_COOLING_SUPPLY_TARGET]): selector({
-                        "number": {"min": 5, "max": 30, "step": 0.5, "mode": "box"}
-                    }),
                     vol.Optional(CONF_PUMP_START_DELAY_SECONDS, default=DEFAULTS[CONF_PUMP_START_DELAY_SECONDS]): selector({
                         "number": {"min": 0, "max": 600, "step": 1, "mode": "box"}
                     }),
@@ -451,12 +466,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors, reason = {}, ""
         if user_input is not None:
             try:
-                self._global[CONF_SUPPLY_CONTROL] = _parse_supply_form(user_input)
+                config = _parse_supply_form(user_input)
+                outputs = _supply_output_options(user_input, self._global)
+                self._global.update(outputs)
+                self._global[CONF_SUPPLY_CONTROL] = config
                 return await self.async_step_choose_method()
             except (ValueError, TypeError) as error:
                 errors, reason = {"base": "invalid_supply_control"}, str(error)
         return self.async_show_form(step_id="supply_control",
-                                    data_schema=_supply_schema(self._global.get(CONF_SUPPLY_CONTROL), user_input),
+                                    data_schema=_supply_schema(self._global.get(CONF_SUPPLY_CONTROL), user_input, self._global),
                                     errors=errors, description_placeholders={"reason": reason})
 
     async def async_step_zones_json(self, user_input=None):
@@ -715,12 +733,13 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
             try:
                 config = _parse_supply_form(user_input)
                 options = dict(self._config_entry.options)
+                options.update(_supply_output_options(user_input, self.current_config))
                 options[CONF_SUPPLY_CONTROL] = config
                 return self.async_create_entry(title="", data=options)
             except (ValueError, TypeError) as error:
                 errors, reason = {"base": "invalid_supply_control"}, str(error)
         return self.async_show_form(step_id="supply_control",
-                                    data_schema=_supply_schema(self.current_config.get(CONF_SUPPLY_CONTROL), user_input),
+                                    data_schema=_supply_schema(self.current_config.get(CONF_SUPPLY_CONTROL), user_input, self.current_config),
                                     errors=errors, description_placeholders={"reason": reason})
 
     async def async_step_import_json_replace(self, user_input=None):
@@ -787,9 +806,6 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
                 CONF_COOLING_SOURCE_ENTITY: self.current_config.get(CONF_COOLING_SOURCE_ENTITY),
                 CONF_CHANGEOVER_ENTITY: self.current_config.get(CONF_CHANGEOVER_ENTITY),
                 CONF_CIRCULATION_PUMP_ENTITY: self.current_config.get(CONF_CIRCULATION_PUMP_ENTITY),
-                CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY: self.current_config.get(CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY),
-                CONF_HEATING_SUPPLY_TARGET: self.current_config.get(CONF_HEATING_SUPPLY_TARGET, DEFAULTS[CONF_HEATING_SUPPLY_TARGET]),
-                CONF_COOLING_SUPPLY_TARGET: self.current_config.get(CONF_COOLING_SUPPLY_TARGET, DEFAULTS[CONF_COOLING_SUPPLY_TARGET]),
                 CONF_PUMP_START_DELAY_SECONDS: self.current_config.get(CONF_PUMP_START_DELAY_SECONDS, DEFAULTS[CONF_PUMP_START_DELAY_SECONDS]),
                 CONF_HEATING_SOURCE_START_DELAY_SECONDS: self.current_config.get(CONF_HEATING_SOURCE_START_DELAY_SECONDS, DEFAULTS[CONF_HEATING_SOURCE_START_DELAY_SECONDS]),
                 CONF_COOLING_SOURCE_START_DELAY_SECONDS: self.current_config.get(CONF_COOLING_SOURCE_START_DELAY_SECONDS, DEFAULTS[CONF_COOLING_SOURCE_START_DELAY_SECONDS]),
@@ -836,14 +852,6 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
                         _optional_entity_field(CONF_CHANGEOVER_ENTITY, ["switch", "input_boolean"], current_global[CONF_CHANGEOVER_ENTITY])[1],
                     _optional_entity_field(CONF_CIRCULATION_PUMP_ENTITY, ["switch", "input_boolean"], current_global[CONF_CIRCULATION_PUMP_ENTITY])[0]:
                         _optional_entity_field(CONF_CIRCULATION_PUMP_ENTITY, ["switch", "input_boolean"], current_global[CONF_CIRCULATION_PUMP_ENTITY])[1],
-                    _optional_entity_field(CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY, ["number", "input_number"], current_global[CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY])[0]:
-                        _optional_entity_field(CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY, ["number", "input_number"], current_global[CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY])[1],
-                    vol.Optional(CONF_HEATING_SUPPLY_TARGET, default=current_global[CONF_HEATING_SUPPLY_TARGET]): selector({
-                        "number": {"min": 10, "max": 60, "step": 0.5, "mode": "box"}
-                    }),
-                    vol.Optional(CONF_COOLING_SUPPLY_TARGET, default=current_global[CONF_COOLING_SUPPLY_TARGET]): selector({
-                        "number": {"min": 5, "max": 30, "step": 0.5, "mode": "box"}
-                    }),
                     vol.Optional(CONF_PUMP_START_DELAY_SECONDS, default=current_global[CONF_PUMP_START_DELAY_SECONDS]): selector({
                         "number": {"min": 0, "max": 600, "step": 1, "mode": "box"}
                     }),
@@ -881,9 +889,6 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
             CONF_COOLING_SOURCE_ENTITY: user_input.get(CONF_COOLING_SOURCE_ENTITY),
             CONF_CHANGEOVER_ENTITY: user_input.get(CONF_CHANGEOVER_ENTITY),
             CONF_CIRCULATION_PUMP_ENTITY: user_input.get(CONF_CIRCULATION_PUMP_ENTITY),
-            CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY: user_input.get(CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY),
-            CONF_HEATING_SUPPLY_TARGET: user_input[CONF_HEATING_SUPPLY_TARGET],
-            CONF_COOLING_SUPPLY_TARGET: user_input[CONF_COOLING_SUPPLY_TARGET],
             CONF_PUMP_START_DELAY_SECONDS: user_input[CONF_PUMP_START_DELAY_SECONDS],
             CONF_HEATING_SOURCE_START_DELAY_SECONDS: user_input[CONF_HEATING_SOURCE_START_DELAY_SECONDS],
             CONF_COOLING_SOURCE_START_DELAY_SECONDS: user_input[CONF_COOLING_SOURCE_START_DELAY_SECONDS],

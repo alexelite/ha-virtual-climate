@@ -4,6 +4,15 @@ Implementarea inițială acoperă încălzirea. Configurațiile existente păstr
 
 ## Configurare
 
+Țintele constante de încălzire și răcire și entitatea care primește ținta se
+editează în **Controlul temperaturii de tur**, atât la configurarea inițială,
+cât și în opțiunile integrării. **Setări Globale** păstrează modul instalației,
+sursele, pompa, temporizările și coordonarea zonelor. Ținta constantă de
+încălzire este și rezerva compensării climatice când exteriorul nu este valid.
+Mutarea câmpurilor în interfață păstrează valorile existente și cheile JSON
+`global.heating_supply_target`, `global.cooling_supply_target` și
+`global.target_supply_temperature_entity`; nu este necesară o migrare.
+
 În opțiunile integrării există pasul **Controlul temperaturii de tur**. Același pas este disponibil în configurarea manuală inițială. Strategia, senzorii, limitele, învățarea și boostul au câmpuri dedicate. Obiectul `curve` conține intervalul exterior și lista temperaturilor de tur; numărul valorilor din listă stabilește numărul punctelor echidistante, între 2 și 50. Obiectul `tuning` expune parametrii de observație și ajustare.
 
 Modificarea unui punct de bază resetează corecția și experiența acelui punct. Schimbarea numărului de puncte sau a intervalului exterior resetează toată învățarea. Formularul explică acest efect înainte de salvare.

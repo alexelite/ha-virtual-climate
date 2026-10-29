@@ -25,9 +25,6 @@
             "cooling_source_entity": "Switch sursă răcire",
             "changeover_entity": "Switch changeover (CO)",
             "circulation_pump_entity": "Switch pompă circulație",
-            "target_supply_temperature_entity": "Entitate țintă temperatură tur",
-            "heating_supply_target": "Țintă tur încălzire (°C)",
-            "cooling_supply_target": "Țintă tur răcire (°C)",
             "pump_start_delay_seconds": "Întârziere pornire pompă (s)",
             "heating_source_start_delay_seconds": "Întârziere pornire sursă încălzire (s)",
             "cooling_source_start_delay_seconds": "Întârziere pornire sursă răcire (s)",
@@ -100,7 +97,10 @@
             "learning_mode": "Învățare",
             "boost_enabled": "Activează boostul de recuperare",
             "curve": "Punctele curbei și intervalul exterior",
-            "tuning": "Parametri de observație și ajustare"
+            "tuning": "Parametri de observație și ajustare",
+            "target_supply_temperature_entity": "Entitate țintă temperatură tur",
+            "heating_supply_target": "Țintă constantă încălzire / rezervă climatică (°C)",
+            "cooling_supply_target": "Țintă constantă răcire (°C)"
           }
         }
       },
@@ -149,9 +149,6 @@
             "cooling_source_entity": "Switch sursă răcire",
             "changeover_entity": "Switch changeover (CO)",
             "circulation_pump_entity": "Switch pompă circulație",
-            "target_supply_temperature_entity": "Entitate țintă temperatură tur",
-            "heating_supply_target": "Țintă tur încălzire (°C)",
-            "cooling_supply_target": "Țintă tur răcire (°C)",
             "pump_start_delay_seconds": "Întârziere pornire pompă (s)",
             "heating_source_start_delay_seconds": "Întârziere pornire sursă încălzire (s)",
             "cooling_source_start_delay_seconds": "Întârziere pornire sursă răcire (s)",
@@ -215,7 +212,10 @@
             "learning_mode": "Învățare",
             "boost_enabled": "Activează boostul de recuperare",
             "curve": "Punctele curbei și intervalul exterior",
-            "tuning": "Parametri de observație și ajustare"
+            "tuning": "Parametri de observație și ajustare",
+            "target_supply_temperature_entity": "Entitate țintă temperatură tur",
+            "heating_supply_target": "Țintă constantă încălzire / rezervă climatică (°C)",
+            "cooling_supply_target": "Țintă constantă răcire (°C)"
           }
         }
       },

@@ -240,11 +240,12 @@ Global `OFF`:
 - `minimum_run_time_seconds`
 - `pump_post_run_seconds`
 - `minimum_off_time_seconds`
-- `heating_supply_target`
-- `cooling_supply_target`
 
 These settings are now part of the integration model and are intended to be
-configured from the global settings step / options flow.
+configured from the global settings step / options flow. Constant heating and
+cooling targets and the target supply entity are configured in
+`Supply temperature control`, together with strategies, sensors and limits.
+The heating constant target also serves as the weather-compensation fallback.
 
 ### Supply target strategy
 
