@@ -84,6 +84,7 @@ class ZoneManager:
         self._plant_session = 0
         self._plant_start_task: Optional[asyncio.Task] = None
         self._plant_stop_task: Optional[asyncio.Task] = None
+        self._plant_stop_reason: str | None = None
         self._global_diag: Dict[str, Any] = {}
         self._listeners: list[Callable[[], None]] = []
         self.supply = SupplyRegulator(hass, entry.entry_id)
@@ -722,7 +723,9 @@ class ZoneManager:
         if self._plant_state == "off":
             return
         if self._plant_stop_task and not self._plant_stop_task.done():
-            if reason != "no_flow":
+            # Escalate an orderly stop once, but let an emergency stop finish.
+            # Output feedback may arrive while its blocking service is pending.
+            if reason != "no_flow" or self._plant_stop_reason == "no_flow":
                 return
             self._cancel_task(self._plant_stop_task)
 
@@ -737,6 +740,7 @@ class ZoneManager:
         if not self._plant_hold_zones:
             reason = "no_flow"
         self._plant_state = "stopping"
+        self._plant_stop_reason = reason
         self._plant_stop_task = self.hass.async_create_task(
             self._async_stop_plant(reason)
         )

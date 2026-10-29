@@ -5,6 +5,35 @@ from support import coordinator, zone
 
 
 class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
+    async def test_startup_recovery_finishes_with_delayed_service_feedback(self):
+        m, h, c = self.make(config={
+            'heating_source_entity': 'switch.source', 'circulation_pump_entity': 'switch.pump',
+            'instance_temperature_fallback': True,
+        }, zones=[zone(delta=1.5), zone('missing', t_air=None, delta_air=None, control_setpoint=22)])
+        h.states.set('switch.source', 'on', c.now - 1000)
+        h.states.set('switch.pump', 'on', c.now - 1000)
+        original = h.services.async_call
+
+        async def delayed_call(*args, **kwargs):
+            await original(*args, **kwargs)
+            # ESPHome feedback arrives before HA's blocking call completes.
+            await asyncio.sleep(0)
+            await asyncio.sleep(0)
+
+        h.services.async_call = delayed_call
+        try:
+            await m.async_start()
+            for _ in range(100):
+                await asyncio.sleep(0)
+            self.assertNotEqual(m._plant_state, 'stopping')
+            self.assertLess(len(h.calls), 20)
+            await self.tick(m, h, c, 180)
+            await self.tick(m, h, c, 60)
+            self.assertEqual(h.states.get('switch.source').state, 'on')
+        finally:
+            m._stopped = True
+            m._started = False
+
     async def test_fallback_follows_real_source_and_cannot_keep_it_running(self):
         m, h, c = self.make(config={
             'instance_temperature_fallback': True, 'heating_source_entity': 'switch.boiler',

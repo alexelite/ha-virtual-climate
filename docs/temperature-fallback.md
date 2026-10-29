@@ -48,3 +48,17 @@ nu confirmă debitul sau livrarea căldurii.
 
 Această funcție este destinată perioadei până la repararea senzorului.
 Mediana celorlalte camere poate supraîncălzi sau subîncălzi camera defectă.
+
+## Salvarea opțiunilor și reîncărcarea
+
+Salvarea opțiunilor reîncarcă instanța. În acest interval integrarea oprește
+ieșirile, apoi reia cererea validă, respectând timpul minim de repaus și
+întârzierile pompei/sursei. Fallbackul nu elimină aceste temporizări.
+
+Feedbackul ESPHome poate ajunge înainte de încheierea apelului de comandă HA.
+Oprirea de urgență `no_flow` aflată în curs trebuie lăsată să se termine;
+feedbackul repetat nu trebuie să o anuleze și să o relanseze. O oprire normală
+poate fi escaladată o singură dată la `no_flow` dacă se pierde circulația.
+Regresia este verificată în testul
+`test_startup_recovery_finishes_with_delayed_service_feedback`, care simulează
+feedbackul înainte de finalizarea apelurilor și verifică reluarea sursei.
