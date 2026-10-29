@@ -143,6 +143,7 @@
           "title": "Setări Globale",
           "description": "Configurați parametrii globali de coordonare.",
           "data": {
+            "instance_temperature_fallback": "Încălzire cu temperatura de avarie a instanței (numai cât cer căldură zonele măsurate)",
             "global_co_mode_entity": "Helper mod global (HEAT/COOL/OFF)",
             "heating_source_entity": "Switch sursă încălzire",
             "cooling_source_entity": "Switch sursă răcire",

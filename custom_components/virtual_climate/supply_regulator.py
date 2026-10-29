@@ -132,7 +132,8 @@ class SupplyRegulator:
             supply=self._temperature(config["supply_sensor"], now),
             return_temperature=self._temperature(config["return_sensor"], now),
             delivered_target=self._last_write[1] if self._last_write and self._last_write[0] == (mode, entity) else None,
-            monitoring_ok=self.command_error is None)
+            monitoring_ok=self.command_error is None,
+            fallback_active=any(z.get("temperature_source") == "instance_fallback" for z in zones.values()))
         self.diagnostics["supply_command_error"] = self.command_error
         self.diagnostics["supply_last_write"] = self._last_write[1] if self._last_write else None
         await self._notify()

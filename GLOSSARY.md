@@ -4,6 +4,14 @@ Controlul încălzirii și răcirii radiante pe zone, cu o temperatură de tur c
 
 ## Language
 
+**Temperatură de avarie**:
+Referință termică estimată din camerele măsurate ale aceleiași instalații,
+folosită temporar pentru o zonă fără măsurare proprie.
+
+**Încălzire oportunistă**:
+Încălzirea unei zone numai în perioadele solicitate de alte zone, fără ca
+zona respectivă să emită propria cerere de funcționare a sursei.
+
 **Compensare climatică**:
 Ajustarea temperaturii țintă de tur în funcție de necesarul termic, ținând cont atât de temperatura exterioară, cât și de starea termică interioară.
 

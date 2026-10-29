@@ -344,7 +344,7 @@ class ZoneManager:
         self._last_system_mode = system_mode
         inputs = (self._options, {
             zid: {key: z.get(key) for key in (
-                "delta_air", "t_air", "t_air_raw", "t_floor", "rh", "dew_point", "manual_off",
+                "delta_air", "control_setpoint", "temperature_sampled_at", "t_air", "t_air_raw", "t_floor", "rh", "dew_point", "manual_off",
                 "eligible_window", "support_mode", "actuator", "limits")}
             for zid, z in self._zones.items()})
         replan = thermal_due or inputs != self._last_control_inputs
@@ -383,7 +383,9 @@ class ZoneManager:
                 self._slots = {}
 
         # Stop the source before closing its last normal circulation path.
-        planned_flow = any(self._zone_slot_is_running(zid) and zid in (plan or {}) for zid in self._slots)
+        plant_plan = {zid: w for zid, w in (plan or {}).items()
+                      if self._zones[zid].get("temperature_source") == "measured"}
+        planned_flow = any(self._zone_slot_is_running(zid) for zid in plant_plan)
         if not planned_flow:
             await self._request_plant_stop("no_demand")
         await self._reconcile_zones(plan or {})
@@ -395,7 +397,7 @@ class ZoneManager:
         if self._plant_state in ("running", "stopping") and not self._flow_zones(require_open=True):
             await self._request_plant_stop("no_flow")
         elif plan and planned_flow and self._flow_zones():
-            await self._request_plant_start(system_mode, plan)
+            await self._request_plant_start(system_mode, plant_plan)
         elif self._plant_state == "starting" and not self._flow_zones():
             await self._request_plant_stop("no_flow")
         self._publish_zone_diagnostics(plan or {}, system_mode, "running" if self._cycle_active else "idle",
@@ -421,6 +423,20 @@ class ZoneManager:
         wants: Dict[str, Dict[str, float]] = {}
         any_demand = False
         cycle_length = self._cycle_length
+
+        # Sampled primary values only: never feed an estimate back into the pool.
+        donors = {}
+        for z in zones:
+            value = z.get("t_air")
+            sampled = z.get("temperature_sampled_at")
+            fresh = sampled is None or 0 <= time.time() - sampled <= 120
+            if (isinstance(value, (int, float)) and not isinstance(value, bool)
+                    and float("-inf") < value < float("inf") and fresh
+                    and z.get("support_mode", "BOTH") in ("HEAT", "BOTH")):
+                donors.setdefault(z.get("air_sensor_entity_id") or z["zone_id"], value)
+        values = sorted(donors.values())
+        middle = len(values) // 2
+        reference = ((values[middle] + values[~middle]) / 2) if values else None
 
         # Compute p_i basic from delta (COOL: negative delta means too hot)
         for z in zones:
@@ -452,6 +468,17 @@ class ZoneManager:
 
             t_air = z.get("t_air")
             delta = z.get("delta_air")  # target - t_air
+            sampled = z.get("temperature_sampled_at")
+            if sampled is not None and not 0 <= time.time() - sampled <= 120:
+                t_air = delta = None
+            z["temperature_source"] = "measured" if t_air is not None and delta is not None else "unavailable"
+            z["fallback_donor_count"] = len(values)
+            if (t_air is None or delta is None) and co_mode == "HEAT" and self._options.get("instance_temperature_fallback", False) and reference is not None:
+                target = z.get("control_setpoint")
+                if target is not None:
+                    t_air, delta = reference, target - reference
+                    z["temperature_source"] = "instance_fallback"
+            z["control_temperature"] = t_air
             rh = z.get("rh")
             t_floor = z.get("t_floor")
             t_dew = z.get("dew_point")
@@ -536,6 +563,8 @@ class ZoneManager:
             z["coordinator_status"] = "candidate"
             wants[zid] = {"p": p, "t_on": t_on}
 
+        if not any(self._zones[zid].get("temperature_source") == "measured" for zid in wants):
+            return None
         return wants if any_demand else None
 
     def _compute_cycle_length(self, zones: List[Dict[str, Any]]) -> int:
@@ -549,7 +578,8 @@ class ZoneManager:
         if min_cycle == max_cycle:
             return max(1, min_cycle)
 
-        supported = [z for z in zones if not self._hard_blocked(z["zone_id"])]
+        supported = [z for z in zones if not self._hard_blocked(z["zone_id"])
+                     and z.get("temperature_source") == "measured"]
         if not supported:
             return max(min_cycle, min(max_cycle, base_cycle))
 
@@ -750,6 +780,9 @@ class ZoneManager:
             if not self._flow_zones():
                 await self._request_plant_stop("no_flow")
                 return
+            if not self._measured_slot_active():
+                await self._request_plant_stop("no_demand")
+                return
             await self._set_switch_state(self._options.get(CONF_CIRCULATION_PUMP_ENTITY), True)
 
             additional_source_delay = max(0, source_delay - pump_delay, self._flow_open_delay())
@@ -762,6 +795,9 @@ class ZoneManager:
                 return
 
             # Conditions may have changed during valve opening / source delays.
+            if not self._measured_slot_active():
+                await self._request_plant_stop("no_demand")
+                return
             await self._set_target_supply_for_mode(mode)
             source_entity = self._source_entity_for_mode(mode)
             if mode == "HEAT":
@@ -835,6 +871,18 @@ class ZoneManager:
             self.async_request_evaluation()
 
     def _build_slots(self, wants: Dict[str, Dict[str, float]]) -> Dict[str, Dict[str, float]]:
+        # Followers cannot shift the measured zones' staggered slots.
+        measured = {zid: w for zid, w in wants.items()
+                    if self._zones[zid].get("temperature_source") != "instance_fallback"}
+        followers = {zid: w for zid, w in wants.items() if zid not in measured}
+        if followers:
+            slots = self._build_slots(measured)
+            for zid, w in followers.items():
+                start = max(0, self._restart_at(zid) - self._cycle_start)
+                duration = min(max(w["p"] * self._cycle_length, self._minimum_on(zid)), self._cycle_length - start)
+                if duration >= self._minimum_on(zid):
+                    slots[zid] = {"start_off": start, "t_on": duration, "rank": len(slots) + 1}
+            return slots
         ordered = sorted(wants.items(), key=lambda item: (-item[1]["p"], item[0]))
         slots: Dict[str, Dict[str, float]] = {}
         spacing = self._cycle_length / max(1, len(ordered)) if self._packing == "staggered" else 0
@@ -885,6 +933,10 @@ class ZoneManager:
             payload = {
                 EVENT_ENTRY_ID: self.entry.entry_id,
                 "zone_id": zid,
+                "temperature_source": z.get("temperature_source", "unavailable"),
+                "control_temperature": z.get("control_temperature"),
+                "fallback_donor_count": z.get("fallback_donor_count", 0),
+                "fallback_limited_by_plant_demand": z.get("temperature_source") == "instance_fallback" and not self._measured_slot_active(),
                 "system_mode": system_mode,
                 "active_co_mode": z.get("active_co_mode", z.get("co_mode")),
                 "cycle_active": self._cycle_active,
@@ -982,9 +1034,14 @@ class ZoneManager:
         if self._plant_state == "off":
             self._cycle_mode = None
 
-    @staticmethod
-    def _demand_ratio(wants):
+    def _demand_ratio(self, wants):
+        wants = {zid: w for zid, w in wants.items()
+                 if self._zones[zid].get("temperature_source") != "instance_fallback"}
         return sum(w["p"] for w in wants.values()) / len(wants) if wants else 0.0
+
+    def _measured_slot_active(self):
+        return any(self._zone_slot_is_running(zid) and z.get("temperature_source") == "measured"
+                   and not self._hard_blocked(zid) for zid, z in self._zones.items())
 
     def _actuator_state(self, zid: str) -> bool | None:
         entity = (self._zones.get(zid, {}).get("actuator") or {}).get("entity_id")
@@ -1052,6 +1109,9 @@ class ZoneManager:
         )
         desired = set()
         for zid in self._zones:
+            if (self._zones[zid].get("temperature_source") == "instance_fallback"
+                    and (not self._measured_slot_active() or self._plant_state != "running")):
+                continue
             if self._hard_blocked(zid):
                 self._slots.pop(zid, None)
                 self._plant_hold_zones.discard(zid)
@@ -1112,7 +1172,8 @@ class ZoneManager:
 
     def _flow_zones(self, require_open=False):
         return [zid for zid in self._desired_on
-                if self._actuator_state(zid) is True and not self._hard_blocked(zid)
+                if self._zones[zid].get("temperature_source") != "instance_fallback"
+                and self._actuator_state(zid) is True and not self._hard_blocked(zid)
                 and (not require_open or self._zone_is_open(zid))]
 
     def _flow_open_delay(self):

@@ -143,6 +143,7 @@
           "title": "Global Settings",
           "description": "Configure global coordination parameters.",
           "data": {
+            "instance_temperature_fallback": "Heat zones with missing sensors using the instance median (only while measured zones request heat)",
             "global_co_mode_entity": "Global mode helper (HEAT/COOL/OFF)",
             "heating_source_entity": "Heating source switch",
             "cooling_source_entity": "Cooling source switch",

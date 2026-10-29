@@ -80,6 +80,7 @@ DEFAULTS = {
 }
 
 GLOBAL_CONFIG_KEYS = (
+    "instance_temperature_fallback",
     CONF_SUPPLY_CONTROL,
     CONF_GLOBAL_CO_MODE_ENTITY,
     CONF_PACKING_MODE,
@@ -145,6 +146,8 @@ def _normalize_global_config(config: Dict[str, Any]) -> Dict[str, Any]:
     """Normalize and validate global configuration values."""
     normalized = {key: DEFAULTS[key] for key in DEFAULTS if key in GLOBAL_CONFIG_KEYS}
     normalized.update({key: config.get(key) for key in GLOBAL_CONFIG_KEYS if key in config})
+    if not isinstance(normalized.get("instance_temperature_fallback", False), bool):
+        raise ValueError("instance_temperature_fallback must be boolean")
     if not normalized.get(CONF_GLOBAL_CO_MODE_ENTITY):
         raise ValueError(f"Missing required field '{CONF_GLOBAL_CO_MODE_ENTITY}'")
 
@@ -797,6 +800,7 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
             return self.async_show_form(
                 step_id="global_options",
                 data_schema=vol.Schema({
+                    vol.Optional("instance_temperature_fallback", default=self.current_config.get("instance_temperature_fallback", False)): selector({"boolean": {}}),
                     vol.Required(CONF_GLOBAL_CO_MODE_ENTITY, default=current_global[CONF_GLOBAL_CO_MODE_ENTITY]): selector({
                         "entity": {
                             "multiple": False,
@@ -864,6 +868,7 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
         # Save global options
         options = self._config_entry.options.copy()
         options.update({
+            "instance_temperature_fallback": user_input.get("instance_temperature_fallback", False),
             CONF_GLOBAL_CO_MODE_ENTITY: user_input[CONF_GLOBAL_CO_MODE_ENTITY],
             CONF_PACKING_MODE: user_input[CONF_PACKING_MODE],
             CONF_T_CYCLE_SECONDS: user_input[CONF_T_CYCLE_SECONDS],

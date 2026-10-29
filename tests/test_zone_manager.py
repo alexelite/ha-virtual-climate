@@ -5,6 +5,98 @@ from support import coordinator, zone
 
 
 class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
+    async def test_fallback_follows_real_source_and_cannot_keep_it_running(self):
+        m, h, c = self.make(config={
+            'instance_temperature_fallback': True, 'heating_source_entity': 'switch.boiler',
+            'heating_source_start_delay_seconds': 0, 'minimum_off_time_seconds': 0,
+            'minimum_run_time_seconds': 0, 'pump_post_run_seconds': 0}, zones=[
+                zone('real', delta=0.6, actuator={'entity_id': 'switch.real', 'open_s': 0}),
+                zone('missing', t_air=None, delta_air=None, control_setpoint=30)])
+        h.states.set('switch.boiler', 'off', c.now - 1000)
+        await self.tick(m, h, c)
+        await self.tick(m, h, c)
+        self.assertEqual(h.states.get('switch.boiler').state, 'on')
+        self.assertEqual(h.states.get('switch.missing').state, 'on')
+        await self.tick(m, h, c, 240)
+        self.assertEqual(h.states.get('switch.boiler').state, 'off')
+
+    async def test_fallback_median_deduplicates_sources_and_rejects_old_samples(self):
+        m, h, c = self.make(config={'instance_temperature_fallback': True}, zones=[
+            zone('a', t_air=18, delta_air=4, air_sensor_entity_id='sensor.a'),
+            zone('duplicate', t_air=18, delta_air=4, air_sensor_entity_id='sensor.a'),
+            zone('b', t_air=22, delta_air=0),
+            zone('outlier', t_air=35, delta_air=-13),
+            zone('old', t_air=10, delta_air=12, temperature_sampled_at=0),
+            zone('missing', t_air=None, delta_air=None, control_setpoint=23)])
+        await self.tick(m, h, c)
+        self.assertEqual(m._zones['missing']['control_temperature'], 22)
+        self.assertEqual(m._zones['missing']['fallback_donor_count'], 3)
+
+    async def test_fallback_requires_opt_in_and_never_cools_with_estimates(self):
+        for config in ({}, {'instance_temperature_fallback': True, 'test_mode': 'COOL'}):
+            m, h, c = self.make(config=config, zones=[zone('real', delta=-1.5),
+                zone('missing', t_air=None, delta_air=None, control_setpoint=15)])
+            await self.tick(m, h, c)
+            self.assertEqual(m._zones['missing']['temperature_source'], 'unavailable')
+            self.assertEqual(h.states.get('switch.missing').state, 'off')
+
+    async def test_fallback_keeps_measurement_missing_and_uses_setpoint(self):
+        m, h, c = self.make(config={'instance_temperature_fallback': True}, zones=[
+            zone('real', delta=1.5),
+            zone('missing', t_air=None, delta_air=None, control_setpoint=22)])
+        await self.tick(m, h, c)
+        z = m._zones['missing']
+        self.assertIsNone(z['t_air'])
+        self.assertEqual(z['temperature_source'], 'instance_fallback')
+        self.assertEqual(z['control_temperature'], 20.5)
+        # Followers join only after the plant has actually entered running.
+        self.assertEqual(h.states.get('switch.missing').state, 'off')
+        m._plant_state = 'running'
+        m._plant_mode = 'HEAT'
+        await self.tick(m, h, c)
+        self.assertEqual(h.states.get('switch.missing').state, 'on')
+        z['control_setpoint'] = 19
+        m._plan_cycle()
+        self.assertEqual(z['requested_p'], 0)
+        z.update(t_air=21, delta_air=1)
+        m._plan_cycle()
+        self.assertEqual(z['temperature_source'], 'measured')
+
+    async def test_fallback_alone_cannot_start_source(self):
+        m, h, c = self.make(config={'instance_temperature_fallback': True}, zones=[
+            zone('real', delta=0),
+            zone('missing', t_air=None, delta_air=None, control_setpoint=30)])
+        await self.tick(m, h, c)
+        self.assertEqual(m._plant_state, 'off')
+        self.assertFalse(m._slots)
+        self.assertEqual(h.states.get('switch.missing').state, 'off')
+
+    async def test_fallback_does_not_extend_measured_window(self):
+        m, h, c = self.make(config={'instance_temperature_fallback': True}, zones=[
+            zone('real', delta=0.6),
+            zone('missing', t_air=None, delta_air=None, control_setpoint=30)])
+        await self.tick(m, h, c)
+        await self.tick(m, h, c, 240)
+        self.assertNotEqual(m._plant_state, 'running')
+        self.assertEqual(m.get_global_diagnostics()['aggregated_demand_ratio'], 0.4)
+
+    async def test_fallback_disabled_without_donors_or_in_cooling(self):
+        for config in ({}, {'instance_temperature_fallback': True},
+                       {'instance_temperature_fallback': True, 'test_mode': 'COOL'}):
+            m, h, c = self.make(config=config, zones=[
+                zone('missing', t_air=None, delta_air=None, control_setpoint=30)])
+            await self.tick(m, h, c)
+            self.assertFalse(m._slots)
+            self.assertEqual(h.states.get('switch.missing').state, 'off')
+
+    async def test_fallback_staggering_does_not_shift_measured_slots(self):
+        m, h, c = self.make(config={'instance_temperature_fallback': True, 'packing_mode': 'staggered'}, zones=[
+            zone('real', delta=0.6),
+            zone('missing', t_air=None, delta_air=None, control_setpoint=30)])
+        await self.tick(m, h, c)
+        self.assertEqual(m._slots['real']['start_off'], 0)
+        self.assertEqual(m._slots['real']['t_on'], 240)
+
     def setUp(self):
         self.instances = []
 

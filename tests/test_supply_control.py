@@ -28,6 +28,15 @@ def update(controller, now, deficit=0.1, **kwargs):
 
 
 class SupplyPolicyTests(unittest.TestCase):
+    def test_fallback_suspends_trials_without_disabling_measured_boost(self):
+        c = supply.SupplyController(config(learning_mode='learn'))
+        for now in range(0, 301, 30):
+            result = update(c, now, deficit=2, fallback_active=True)
+        self.assertEqual(result['supply_learning_status'], 'instance_temperature_fallback')
+        self.assertGreater(result['supply_boost'], 0)
+        self.assertIsNone(c.probe)
+        self.assertEqual(sum(c.experience), 0)
+
     def test_curve_points_interpolation_extrapolation_and_final_bounds(self):
         c = supply.SupplyController(config())
         for outdoor, expected in ((0, 32), (-15, 40), (15, 24), (-30, 45), (30, 20), (3.75, 30)):

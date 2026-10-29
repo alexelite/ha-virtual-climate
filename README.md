@@ -264,6 +264,8 @@ target. Existing entries keep their fixed strategy until explicitly configured.
 The target is refreshed during operation, not only at source startup.
 
 Open `Options -> Supply temperature control`, or import `global.supply_control`.
+See [temperature fallback](docs/temperature-fallback.md) for optional heating of zones with missing room sensors.
+
 See [configuration, diagnostics and calibration](docs/supply-control.md) for a
 complete example and the experimental timing defaults. Learning is off by default;
 its initial thresholds need calibration and validation in the real installation.

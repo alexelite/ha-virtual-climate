@@ -289,7 +289,7 @@ class SupplyController:
 
     def update(self, now, mode, fixed_target, outdoor, zones, *, controlled=False,
                running=False, output_ok=True, supply=None, return_temperature=None,
-               delivered_target=None, monitoring_ok=True):
+               delivered_target=None, monitoring_ok=True, fallback_active=False):
         """Evaluate one sample. Missing/gapped observations never accrue time."""
         c = self.config
         weather = mode == "HEAT" and c["heating_strategy"] == "weather_compensated"
@@ -377,6 +377,8 @@ class SupplyController:
             reason = "command_error"
         elif self._faults:
             reason = "suspected_fault"
+        elif fallback_active:
+            reason = "instance_temperature_fallback"
         elif not valid_zones:
             reason = "zone_data_unavailable"
         elif not running:
