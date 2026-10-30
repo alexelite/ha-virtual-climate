@@ -50,3 +50,23 @@ Comanda prin care integrarea solicită funcționarea instalației. Emiterea cere
 
 **Reglaj local al turului**:
 Reglajul efectuat de dispozitivul instalației pentru a aduce temperatura efectivă de tur în jurul țintei primite.
+
+**Aport cu efect întârziat**:
+Indicator al influenței termice care urmează activării actuatorului după o
+întârziere și persistă după închiderea sa. Nu reprezintă energie măsurată.
+
+**Cerere de menținere**:
+Fracțiunea de timp de încălzire necesară compensării pierderilor unei zone
+în apropierea setpointului de cameră.
+
+**Sold al impulsurilor**:
+Diferența limitată dintre timpul de activare solicitat și timpul efectiv
+raportat de actuator, inclusiv prelungirile de circulație.
+
+**Învățare observațională a zonei**:
+Estimarea răspunsului termic al unei camere din temperatura proprie și
+activarea raportată a actuatorului, inclusiv cu o sursă independentă.
+
+**Poziție stabilă memorată**:
+Poziție estimată a vanei care a menținut turul în banda țintei cu circulație
+și fără corecții recente; reutilizabilă numai într-o pauză compatibilă.

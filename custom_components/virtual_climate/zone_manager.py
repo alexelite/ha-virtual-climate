@@ -27,6 +27,7 @@ from .const import (
 from .config_flow import get_current_config
 from .helpers import co_mode_from_entity
 from .supply_regulator import SupplyRegulator
+from .thermal_regulator import ThermalRegulator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -88,6 +89,7 @@ class ZoneManager:
         self._global_diag: Dict[str, Any] = {}
         self._listeners: list[Callable[[], None]] = []
         self.supply = SupplyRegulator(hass, entry.entry_id)
+        self.thermal = ThermalRegulator(hass, entry.entry_id)
 
     def _zone_slot_is_running(self, zid: str, now_ts: float | None = None) -> bool:
         """Return whether a scheduled zone is within its active slot right now."""
@@ -107,6 +109,7 @@ class ZoneManager:
         self._stopped = False
         self._started = True
         await self.supply.async_start(self._options)
+        await self.thermal.async_start(self._options)
         observed = {z.get("switch_actuator") for z in self._options.get("zones", [])}
         observed.update(self._options.get(key) for key in (
             CONF_GLOBAL_CO_MODE_ENTITY, CONF_HEATING_SOURCE_ENTITY,
@@ -161,6 +164,7 @@ class ZoneManager:
         self._plant_state = "off"
         self._plant_mode = None
         await self.supply.async_stop()
+        await self.thermal.async_save(force=True)
         self._refresh_global_diagnostics(system_mode=co_mode_from_entity(self.hass, self._options), phase="stopped")
         _LOGGER.info("ZoneManager stopped")
 
@@ -353,7 +357,13 @@ class ZoneManager:
             self._last_control_inputs = deepcopy(inputs)
         self._observe_actuators()
         await self._recover_plant_outputs()
+        previous_strategy = self.thermal.strategy
+        self.thermal.configure(self._options)
+        if previous_strategy != self.thermal.strategy and "adaptive" in (previous_strategy, self.thermal.strategy):
+            self._cycle_active = False
+            self._slots = {}
         if system_mode == "OFF":
+            self._apply_thermal_plan({}, system_mode)
             if replan:
                 await self._update_supply(system_mode, force=thermal_due)
             self._cached_wants = None
@@ -364,6 +374,7 @@ class ZoneManager:
 
         if ((self._cycle_mode and self._cycle_mode != system_mode) or
                 (self._plant_mode and self._plant_mode != system_mode and self._plant_state != "off")):
+            self._apply_thermal_plan({}, system_mode)
             self._cached_wants = None
             self._last_control_inputs = None
             if replan:
@@ -375,13 +386,18 @@ class ZoneManager:
 
         if replan:
             self._cached_wants = self._plan_cycle()
-        plan = self._cached_wants
+        plan = self._apply_thermal_plan(self._cached_wants, system_mode)
         if not self._cycle_active or time.time() - self._cycle_start >= self._cycle_length:
             if plan and self._plant_state != "stopping":
                 await self._start_cycle(plan)
             else:
                 self._cycle_active = False
                 self._slots = {}
+
+        self._refresh_thermal_slots(plan, system_mode)
+        if thermal_due and self.thermal.strategy != "legacy":
+            await self.thermal.async_learn()
+            await self.thermal.async_save()
 
         # Stop the source before closing its last normal circulation path.
         plant_plan = {zid: w for zid, w in (plan or {}).items()
@@ -403,6 +419,51 @@ class ZoneManager:
             await self._request_plant_stop("no_flow")
         self._publish_zone_diagnostics(plan or {}, system_mode, "running" if self._cycle_active else "idle",
                                        sampled=thermal_due)
+
+    def _apply_thermal_plan(self, legacy_plan, mode):
+        plan = dict(legacy_plan or {})
+        if self.thermal.strategy == "legacy":
+            return plan or None
+        now = time.time()
+        supply_config = self._options.get("supply_control", {})
+        supply = self.supply._temperature(supply_config.get("supply_sensor"), now)
+        reference = self.supply.diagnostics.get("supply_target", self._options.get(CONF_HEATING_SUPPLY_TARGET))
+        for zid, zone in self._zones.items():
+            zone["on_for_seconds"] = max(0., now - self._zone_last_on_at.get(zid, now)) if self._actuator_state(zid) else 0.
+            zone["restart_wait_seconds"] = max(0., self._restart_at(zid) - now,
+                self._plant_stopped_at + float(self._options.get(CONF_MINIMUM_OFF_TIME_SECONDS, 180)) - now if self._plant_state == "off" and self._plant_control_enabled() else 0.)
+            zone["commanded_on"] = zid in self._desired_on
+            faults = self.supply.diagnostics.get("supply_faults", [])
+            zone["thermal_response_suspect"] = bool(faults)
+            reasons = set(zone.get("last_block_reasons", [])) - {"no_demand", "zone_min_off", "cycle_capacity"}
+            decision = self.thermal.update(self._options, zid, zone, now, self._actuator_state(zid),
+                plan.get(zid, {}).get("p", 0.), bool(reasons), supply, reference, mode)
+            if decision is None or self.thermal.strategy != "adaptive" or mode != "HEAT":
+                continue
+            if zone.get("temperature_source") != "measured":
+                continue
+            if decision["pulse_on"]:
+                plan[zid] = dict(p=decision["proposal"], t_on=decision["pulse_seconds"], adaptive=True)
+                zone["last_block_reasons"] = []
+                zone["requested_p"] = decision["proposal"]
+                zone["requested_t_on"] = decision["pulse_seconds"]
+            else:
+                plan.pop(zid, None)
+                zone["requested_p"] = decision["proposal"]
+        return plan or None
+
+    def _refresh_thermal_slots(self, plan, mode):
+        if self.thermal.strategy != "adaptive" or mode != "HEAT":
+            return
+        for zid in self.thermal.zones:
+            if self._zones.get(zid, {}).get("temperature_source") != "measured":
+                continue
+            want = (plan or {}).get(zid, {})
+            if want.get("adaptive"):
+                self._slots[zid] = dict(start_off=time.time() - self._cycle_start,
+                                        t_on=want["t_on"], rank=1)
+            else:
+                self._slots.pop(zid, None)
 
     def _plan_cycle(self) -> Optional[Dict[str, Dict[str, float]]]:
         """Compute t_on per zone with RH/dew protection and return slot map or None."""
@@ -895,7 +956,7 @@ class ZoneManager:
             # Staggering is a preference; never shorten a pulse below its minimum.
             preferred_start = min(index * spacing, max(0, self._cycle_length - minimum_on))
             start_off = max(preferred_start, self._restart_at(zid) - self._cycle_start, 0)
-            t_on = min(max(w["p"] * self._cycle_length, minimum_on), self._cycle_length - start_off)
+            t_on = min(max(w["t_on"] if w.get("adaptive") else w["p"] * self._cycle_length, minimum_on), self._cycle_length - start_off)
             z = self._zones[zid]
             z["requested_t_on"] = round(max(w["p"] * self._cycle_length, minimum_on), 1)
             if t_on < minimum_on or t_on <= 0:
@@ -937,6 +998,7 @@ class ZoneManager:
             payload = {
                 EVENT_ENTRY_ID: self.entry.entry_id,
                 "zone_id": zid,
+                "thermal_control": self.thermal.diagnostics.get(zid, {"strategy": "legacy"}),
                 "temperature_source": z.get("temperature_source", "unavailable"),
                 "control_temperature": z.get("control_temperature"),
                 "fallback_donor_count": z.get("fallback_donor_count", 0),

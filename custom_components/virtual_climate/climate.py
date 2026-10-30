@@ -334,6 +334,7 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
             "actuator_open_s": z.get(ZK_OPEN_S),
             "actuator_close_s": z.get(ZK_CLOSE_S),
             "floor_limits": z.get(ZK_FLOOR_LIMITS),
+            "thermal_control": coordinator.get("thermal_control", {"strategy": "legacy"}),
             "coordinator_status": coordinator.get("coordinator_status"),
             "temperature_source": coordinator.get("temperature_source", "unavailable"),
             "control_temperature": coordinator.get("control_temperature"),

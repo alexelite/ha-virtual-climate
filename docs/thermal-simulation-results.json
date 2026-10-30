@@ -1,0 +1,272 @@
+{
+  "maintenance_delay_30": {
+    "legacy": {
+      "weighted_deficit": 2.33111,
+      "severe_overshoot": 0.0,
+      "maximum_excess": -0.0,
+      "starts": 360,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "initial_pi": {
+      "weighted_deficit": 16.52981,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.375,
+      "starts": 89,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "after_learning": {
+      "weighted_deficit": 15.69839,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.5081,
+      "starts": 93,
+      "model_eligible": true,
+      "predictive_minutes": 5321
+    },
+    "maintenance_acceptance": false
+  },
+  "maintenance_delay_60": {
+    "legacy": {
+      "weighted_deficit": 20.6936,
+      "severe_overshoot": 0.0,
+      "maximum_excess": -0.0,
+      "starts": 360,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "initial_pi": {
+      "weighted_deficit": 29.17825,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.4888,
+      "starts": 80,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "after_learning": {
+      "weighted_deficit": 24.53524,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.5185,
+      "starts": 85,
+      "model_eligible": true,
+      "predictive_minutes": 5287
+    },
+    "maintenance_acceptance": false
+  },
+  "maintenance_independent_no_supply": {
+    "legacy": {
+      "weighted_deficit": 9.22628,
+      "severe_overshoot": 0.0,
+      "maximum_excess": -0.0,
+      "starts": 360,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "initial_pi": {
+      "weighted_deficit": 21.47491,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.3662,
+      "starts": 84,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "after_learning": {
+      "weighted_deficit": 19.53537,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.3543,
+      "starts": 94,
+      "model_eligible": true,
+      "predictive_minutes": 5175
+    },
+    "maintenance_acceptance": false
+  },
+  "maintenance_modulating_oscillating_supply": {
+    "legacy": {
+      "weighted_deficit": 70.18555,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.0295,
+      "starts": 356,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "initial_pi": {
+      "weighted_deficit": 23.33962,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.4498,
+      "starts": 88,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "after_learning": {
+      "weighted_deficit": 21.57611,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.3616,
+      "starts": 82,
+      "model_eligible": true,
+      "predictive_minutes": 5175
+    },
+    "maintenance_acceptance": true
+  },
+  "maintenance_radiator": {
+    "legacy": {
+      "weighted_deficit": 0.29872,
+      "severe_overshoot": 0.0,
+      "maximum_excess": -0.0002,
+      "starts": 360,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "initial_pi": {
+      "weighted_deficit": 3.82958,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.2425,
+      "starts": 104,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "after_learning": {
+      "weighted_deficit": 3.19249,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.3145,
+      "starts": 68,
+      "model_eligible": true,
+      "predictive_minutes": 5605
+    },
+    "maintenance_acceptance": false
+  },
+  "low_load_initial_pi": {
+    "legacy": {
+      "weighted_deficit": 0.0,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.3179,
+      "starts": 127,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "initial_pi": {
+      "weighted_deficit": 3.02826,
+      "severe_overshoot": 0.02849,
+      "maximum_excess": 0.6926,
+      "starts": 92,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "after_learning": {
+      "weighted_deficit": 3.09067,
+      "severe_overshoot": 0.01585,
+      "maximum_excess": 0.66,
+      "starts": 92,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "maintenance_acceptance": false
+  },
+  "recovery": {
+    "legacy": {
+      "weighted_deficit": 116.11923,
+      "severe_overshoot": 0.0,
+      "maximum_excess": -0.757,
+      "starts": 321,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "initial_pi": {
+      "weighted_deficit": 72.14209,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.4042,
+      "starts": 81,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "after_learning": {
+      "weighted_deficit": 69.76807,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.3541,
+      "starts": 90,
+      "model_eligible": true,
+      "predictive_minutes": 5175
+    },
+    "maintenance_acceptance": null
+  },
+  "setpoint_decrease": {
+    "legacy": {
+      "weighted_deficit": 107.7571,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.5731,
+      "starts": 306,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "initial_pi": {
+      "weighted_deficit": 133.16394,
+      "severe_overshoot": 0.79579,
+      "maximum_excess": 1.183,
+      "starts": 66,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "after_learning": {
+      "weighted_deficit": 21.68924,
+      "severe_overshoot": 1.42172,
+      "maximum_excess": 1.3113,
+      "starts": 83,
+      "model_eligible": true,
+      "predictive_minutes": 5175
+    },
+    "maintenance_acceptance": null
+  },
+  "external_heat": {
+    "legacy": {
+      "weighted_deficit": 37.75003,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.2578,
+      "starts": 344,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "initial_pi": {
+      "weighted_deficit": 37.16551,
+      "severe_overshoot": 0.06161,
+      "maximum_excess": 0.7732,
+      "starts": 83,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "after_learning": {
+      "weighted_deficit": 17.31932,
+      "severe_overshoot": 0.10263,
+      "maximum_excess": 0.8065,
+      "starts": 98,
+      "model_eligible": true,
+      "predictive_minutes": 5175
+    },
+    "maintenance_acceptance": null
+  },
+  "sensor_gap_restart_window": {
+    "legacy": {
+      "weighted_deficit": 162.86493,
+      "severe_overshoot": 0.0,
+      "maximum_excess": -0.0,
+      "starts": 247,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "initial_pi": {
+      "weighted_deficit": 54.78537,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.4922,
+      "starts": 52,
+      "model_eligible": false,
+      "predictive_minutes": 0
+    },
+    "after_learning": {
+      "weighted_deficit": 44.43137,
+      "severe_overshoot": 0.0,
+      "maximum_excess": 0.3541,
+      "starts": 57,
+      "model_eligible": true,
+      "predictive_minutes": 4095
+    },
+    "maintenance_acceptance": null
+  }
+}

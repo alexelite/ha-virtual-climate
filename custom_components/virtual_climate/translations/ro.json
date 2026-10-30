@@ -47,7 +47,8 @@
             "zones_json": "Import din JSON",
             "zone_wizard": "Adaugă o zonă (asistent)",
             "finish": "Finalizează configurarea",
-            "supply_control": "Controlul temperaturii de tur"
+            "supply_control": "Controlul temperaturii de tur",
+            "thermal_control": "Control termic cu memorie"
           }
         },
         "zones_json": {
@@ -102,13 +103,22 @@
             "heating_supply_target": "Țintă constantă încălzire / rezervă climatică (°C)",
             "cooling_supply_target": "Țintă constantă răcire (°C)"
           }
+        },
+        "thermal_control": {
+          "title": "Control termic cu memorie",
+          "description": "Legacy păstrează controlul existent. Observe calculează propuneri fără comenzi suplimentare. Adaptive necesită activare explicită. Parametrii avansați sunt descriși în docs/adaptive-control.md.",
+          "data": {
+            "heating_control_strategy": "Strategie de încălzire",
+            "thermal_parameters": "Parametri avansați (obiect JSON)"
+          }
         }
       },
       "error": {
         "invalid_config_json": "JSON configurație invalid. Furnizați un obiect complet de configurare sau un array ne-gol de zone.",
         "invalid_zones_json": "JSON zone invalid. Furnizați un array ne-gol de obiecte zonă.",
         "invalid_zone": "Valori zonă invalide. Verificați câmpurile necesare și formatele JSON.",
-        "invalid_supply_control": "Parametri de tur nevalizi. Verifică senzorul, curba și limitele."
+        "invalid_supply_control": "Parametri de tur nevalizi. Verifică senzorul, curba și limitele.",
+        "invalid_thermal_control": "Parametri termici invalizi"
       }
     },
     "options": {
@@ -122,7 +132,8 @@
             "import_json_replace": "Import JSON (replace)",
             "export_json": "Export JSON",
             "finish": "Finalizează",
-            "supply_control": "Controlul temperaturii de tur"
+            "supply_control": "Controlul temperaturii de tur",
+            "thermal_control": "Control termic cu memorie"
           }
         },
         "import_json_replace": {
@@ -189,7 +200,9 @@
             "open_s": "Timp deschidere actuator (s)",
             "close_s": "Timp închidere actuator (s)",
             "zone_min_on_s": "Timp minim ON zonă (s)",
-            "zone_min_off_s": "Timp minim OFF zonă (s)"
+            "zone_min_off_s": "Timp minim OFF zonă (s)",
+            "thermal_profile": "Profil termic",
+            "thermal_parameters": "Parametri termici avansați"
           }
         },
         "finish": {
@@ -217,6 +230,14 @@
             "heating_supply_target": "Țintă constantă încălzire / rezervă climatică (°C)",
             "cooling_supply_target": "Țintă constantă răcire (°C)"
           }
+        },
+        "thermal_control": {
+          "title": "Control termic cu memorie",
+          "description": "Legacy păstrează controlul existent. Observe calculează propuneri fără comenzi suplimentare. Adaptive necesită activare explicită. Parametrii avansați sunt descriși în docs/adaptive-control.md.",
+          "data": {
+            "heating_control_strategy": "Strategie de încălzire",
+            "thermal_parameters": "Parametri avansați (obiect JSON)"
+          }
         }
       },
       "error": {
@@ -225,7 +246,8 @@
         "invalid_floor_limits": "Limite podea invalide. Minimul trebuie să fie mai mic decât maximul pentru fiecare mod.",
         "invalid_number": "Format număr invalid. Vă rugăm să introduceți valori numerice valide.",
         "zone_not_found": "Zona nu a fost găsită.",
-        "invalid_supply_control": "Parametri de tur nevalizi. Verifică senzorul, curba și limitele."
+        "invalid_supply_control": "Parametri de tur nevalizi. Verifică senzorul, curba și limitele.",
+        "invalid_thermal_control": "Parametri termici invalizi"
       }
     },
     "services": {

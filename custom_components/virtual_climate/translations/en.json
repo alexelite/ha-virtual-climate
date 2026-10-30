@@ -47,7 +47,8 @@
             "zones_json": "Import from JSON",
             "zone_wizard": "Add a zone (wizard)",
             "finish": "Finish setup",
-            "supply_control": "Supply temperature control"
+            "supply_control": "Supply temperature control",
+            "thermal_control": "Heating control with thermal memory"
           }
         },
         "zones_json": {
@@ -102,13 +103,22 @@
             "heating_supply_target": "Constant heating target / weather fallback (°C)",
             "cooling_supply_target": "Constant cooling target (°C)"
           }
+        },
+        "thermal_control": {
+          "title": "Heating control with thermal memory",
+          "description": "Legacy preserves existing control. Observe calculates proposals without extra commands. Adaptive requires explicit activation. Advanced parameters are documented in docs/adaptive-control.md.",
+          "data": {
+            "heating_control_strategy": "Heating strategy",
+            "thermal_parameters": "Advanced parameters (JSON object)"
+          }
         }
       },
       "error": {
         "invalid_config_json": "Invalid configuration JSON. Provide a full config object or a non-empty zone array.",
         "invalid_zones_json": "Invalid zones JSON. Provide a non-empty array of zone objects.",
         "invalid_zone": "Invalid zone values. Check required fields and JSON formats.",
-        "invalid_supply_control": "Invalid supply control settings. Check the sensor, curve and limits."
+        "invalid_supply_control": "Invalid supply control settings. Check the sensor, curve and limits.",
+        "invalid_thermal_control": "Invalid thermal parameters"
       }
     },
     "options": {
@@ -122,7 +132,8 @@
             "import_json_replace": "Import JSON (replace)",
             "export_json": "Export JSON",
             "finish": "Finish",
-            "supply_control": "Supply temperature control"
+            "supply_control": "Supply temperature control",
+            "thermal_control": "Heating control with thermal memory"
           }
         },
         "import_json_replace": {
@@ -189,7 +200,9 @@
             "open_s": "Actuator open time (s)",
             "close_s": "Actuator close time (s)",
             "zone_min_on_s": "Zone min ON time (s)",
-            "zone_min_off_s": "Zone min OFF time (s)"
+            "zone_min_off_s": "Zone min OFF time (s)",
+            "thermal_profile": "Thermal profile",
+            "thermal_parameters": "Advanced thermal parameters"
           }
         },
         "finish": {
@@ -217,6 +230,14 @@
             "heating_supply_target": "Constant heating target / weather fallback (°C)",
             "cooling_supply_target": "Constant cooling target (°C)"
           }
+        },
+        "thermal_control": {
+          "title": "Heating control with thermal memory",
+          "description": "Legacy preserves existing control. Observe calculates proposals without extra commands. Adaptive requires explicit activation. Advanced parameters are documented in docs/adaptive-control.md.",
+          "data": {
+            "heating_control_strategy": "Heating strategy",
+            "thermal_parameters": "Advanced parameters (JSON object)"
+          }
         }
       },
       "error": {
@@ -225,7 +246,8 @@
         "invalid_floor_limits": "Invalid floor limits. Minimum must be less than maximum for each mode.",
         "invalid_number": "Invalid number format. Please enter valid numeric values.",
         "zone_not_found": "Zone not found.",
-        "invalid_supply_control": "Invalid supply control settings. Check the sensor, curve and limits."
+        "invalid_supply_control": "Invalid supply control settings. Check the sensor, curve and limits.",
+        "invalid_thermal_control": "Invalid thermal parameters"
       }
     },
     "services": {

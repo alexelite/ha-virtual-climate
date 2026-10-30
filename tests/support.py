@@ -17,6 +17,10 @@ _filter_spec = importlib.util.spec_from_file_location('virtual_climate_filter', 
 filter_module = importlib.util.module_from_spec(_filter_spec)
 _filter_spec.loader.exec_module(filter_module)
 
+_thermal_spec = importlib.util.spec_from_file_location('virtual_climate_thermal', ROOT / 'custom_components/virtual_climate/thermal_control.py')
+thermal_module = importlib.util.module_from_spec(_thermal_spec)
+_thermal_spec.loader.exec_module(thermal_module)
+
 
 class MemoryStore:
     def __init__(self, hass, version, key):
@@ -169,6 +173,9 @@ class FakeHass:
             cancel()
         return remove
 
+    async def async_add_executor_job(self, target, *args):
+        return await asyncio.to_thread(target, *args)
+
     async def dispatch_due(self):
         for timer in list(self.timers):
             if timer[2] or timer[0] > self.clock.now:
@@ -214,6 +221,10 @@ def coordinator(config=None, zones=None):
                         finite=supply_module.finite, normalize_supply_config=supply_module.normalize_supply_config)
     load_source('supply_regulator.py', regulator_ns)
     namespace['SupplyRegulator'] = regulator_ns['SupplyRegulator']
+    thermal_ns = dict(__name__='test_thermal_regulator', logging=logging, time=clock, Store=MemoryStore,
+                      STRATEGIES=thermal_module.STRATEGIES, ThermalZone=thermal_module.ThermalZone)
+    load_source('thermal_regulator.py', thermal_ns)
+    namespace['ThermalRegulator'] = thermal_ns['ThermalRegulator']
     load_source('zone_manager.py', namespace)
     options = dict(namespace['DEFAULTS'], t_cycle_min=600, t_cycle_max=600)
     options.update(config or {})
@@ -240,6 +251,7 @@ def options_flow():
     namespace = dict(__name__='test_config_flow', vol=vol, callback=callback,
                      SUPPLY_DEFAULTS=supply_module.SUPPLY_DEFAULTS, finite=supply_module.finite,
                      normalize_supply_config=supply_module.normalize_supply_config,
+                     STRATEGIES=thermal_module.STRATEGIES, normalize_thermal=thermal_module.normalize,
                      config_entries=SimpleNamespace(OptionsFlow=FakeOptionsFlow),
                      selector=lambda config: lambda value: value)
     return load_source('config_flow.py', namespace, skip_classes=('ConfigFlow',))

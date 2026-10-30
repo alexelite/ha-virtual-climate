@@ -8,6 +8,7 @@ from homeassistant import config_entries
 from homeassistant.helpers.selector import selector
 from homeassistant.core import callback
 from .supply_control import finite, normalize_supply_config
+from .thermal_control import STRATEGIES, normalize as normalize_thermal
 
 DOMAIN = "virtual_climate"
 
@@ -80,6 +81,8 @@ DEFAULTS = {
 }
 
 GLOBAL_CONFIG_KEYS = (
+    "heating_control_strategy",
+    "thermal_parameters",
     "instance_temperature_fallback",
     CONF_SUPPLY_CONTROL,
     CONF_GLOBAL_CO_MODE_ENTITY,
@@ -122,6 +125,10 @@ def _validate_zone_id_unique(zones: List[Dict[str, Any]], new_id: str) -> None:
 
 def _coerce_zone_defaults(z: Dict[str, Any]) -> Dict[str, Any]:
     """Fill defaults for optional zone fields and coerce numeric subfields."""
+    z.setdefault("thermal_profile", "underfloor")
+    parameters = z.get("thermal_parameters", {})
+    normalize_thermal(parameters, z["thermal_profile"])
+    z["thermal_parameters"] = dict(parameters or {})
     z.setdefault(ZK_SUPPORT_MODE, "BOTH")
     z.setdefault(ZK_TEMPERATURE_FILTER, True)
     if not isinstance(z[ZK_TEMPERATURE_FILTER], bool):
@@ -176,6 +183,11 @@ def _normalize_global_config(config: Dict[str, Any]) -> Dict[str, Any]:
         normalized[field] = float(normalized[field])
         if finite(normalized[field]) is None:
             raise ValueError(f"{field} must be finite")
+    strategy = normalized.setdefault("heating_control_strategy", "legacy")
+    if strategy not in STRATEGIES:
+        raise ValueError("Unknown heating control strategy")
+    if "thermal_parameters" in normalized:
+        normalize_thermal(normalized["thermal_parameters"])
     if CONF_SUPPLY_CONTROL in normalized:
         normalized[CONF_SUPPLY_CONTROL] = normalize_supply_config(normalized[CONF_SUPPLY_CONTROL])
 
@@ -457,11 +469,30 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is None:
             return self.async_show_menu(
                 step_id="choose_method",
-                menu_options=["zones_json", "zone_wizard", "supply_control", "finish"]
+                menu_options=["zones_json", "zone_wizard", "thermal_control", "supply_control", "finish"]
             )
         # No direct POST expected here; clicking a menu item routes to that step id.
 
     # ---------- Path A: Zones-only JSON import ----------
+    async def async_step_thermal_control(self, user_input=None):
+        current = self._global
+        errors = {}
+        if user_input is not None:
+            try:
+                strategy = user_input.get("heating_control_strategy", "legacy")
+                if strategy not in STRATEGIES:
+                    raise ValueError("Unknown strategy")
+                normalize_thermal(user_input.get("thermal_parameters", {}))
+                self._global.update(user_input)
+                return await self.async_step_choose_method()
+            except (ValueError, TypeError):
+                errors = {"base": "invalid_thermal_control"}
+        return self.async_show_form(step_id="thermal_control", errors=errors, data_schema=vol.Schema({
+            vol.Required("heating_control_strategy", default=current.get("heating_control_strategy", "legacy")):
+                selector({"select": {"options": list(STRATEGIES)}}),
+            vol.Optional("thermal_parameters", default=current.get("thermal_parameters", {})): selector({"object": {}}),
+        }))
+
     async def async_step_supply_control(self, user_input=None):
         errors, reason = {}, ""
         if user_input is not None:
@@ -638,6 +669,8 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
         """Build normalized defaults for the zone edit form."""
         floor_limits = selected_zone.get(ZK_FLOOR_LIMITS) or {}
         defaults = {
+            "thermal_profile": selected_zone.get("thermal_profile", "underfloor"),
+            "thermal_parameters": selected_zone.get("thermal_parameters", {}),
             ZK_SUPPORT_MODE: selected_zone.get(ZK_SUPPORT_MODE, "BOTH"),
             ZK_SENSOR_AIR: selected_zone.get(ZK_SENSOR_AIR),
             ZK_TEMPERATURE_FILTER: selected_zone.get(ZK_TEMPERATURE_FILTER, True),
@@ -676,6 +709,8 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
             defaults[ZK_WINDOW_SWITCH],
         )
         schema: Dict[Any, Any] = {
+            vol.Optional("thermal_profile", default=defaults["thermal_profile"]): selector({"select": {"options": ["underfloor", "radiator"]}}),
+            vol.Optional("thermal_parameters", default=defaults["thermal_parameters"]): selector({"object": {}}),
             vol.Optional(ZK_TEMPERATURE_FILTER, default=defaults[ZK_TEMPERATURE_FILTER]): selector({"boolean": {}}),
             vol.Optional(ZK_SUPPORT_MODE, default=defaults[ZK_SUPPORT_MODE]): selector({
                 "select": {"options": ["HEAT", "COOL", "BOTH"]}
@@ -723,9 +758,29 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
         if user_input is None:
             return self.async_show_menu(
                 step_id="init",
-                menu_options=["global_options", "supply_control", "zones_pick", "import_json_replace", "export_json", "finish"]
+                menu_options=["global_options", "thermal_control", "supply_control", "zones_pick", "import_json_replace", "export_json", "finish"]
             )
         return await getattr(self, f"async_step_{user_input}")()
+
+    async def async_step_thermal_control(self, user_input=None):
+        current = self.current_config
+        errors = {}
+        if user_input is not None:
+            try:
+                strategy = user_input.get("heating_control_strategy", "legacy")
+                if strategy not in STRATEGIES:
+                    raise ValueError("Unknown strategy")
+                normalize_thermal(user_input.get("thermal_parameters", {}))
+                options = dict(self._config_entry.options)
+                options.update(user_input)
+                return self.async_create_entry(title="", data=options)
+            except (ValueError, TypeError):
+                errors = {"base": "invalid_thermal_control"}
+        return self.async_show_form(step_id="thermal_control", errors=errors, data_schema=vol.Schema({
+            vol.Required("heating_control_strategy", default=current.get("heating_control_strategy", "legacy")):
+                selector({"select": {"options": list(STRATEGIES)}}),
+            vol.Optional("thermal_parameters", default=current.get("thermal_parameters", {})): selector({"object": {}}),
+        }))
 
     async def async_step_supply_control(self, user_input=None):
         errors, reason = {}, ""
@@ -984,7 +1039,10 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
                 )
             
             # Prepare zone update
+            normalize_thermal(user_input.get("thermal_parameters", {}), user_input.get("thermal_profile", "underfloor"))
             zone_update = {
+                "thermal_profile": user_input.get("thermal_profile", "underfloor"),
+                "thermal_parameters": user_input.get("thermal_parameters", {}),
                 ZK_SUPPORT_MODE: user_input.get(ZK_SUPPORT_MODE, "BOTH"),
                 ZK_SENSOR_AIR: user_input[ZK_SENSOR_AIR],
                 ZK_TEMPERATURE_FILTER: user_input.get(ZK_TEMPERATURE_FILTER, selected_zone.get(ZK_TEMPERATURE_FILTER, True)),

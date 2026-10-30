@@ -489,3 +489,10 @@ read-only rsync comparison without creating remote backups or changing settings.
 ## License
 
 MIT
+
+### Control termic cu memorie (experimental)
+
+Strategiile opționale `observe` și `adaptive`, modelul termic întârziat și
+soldul impulsurilor sunt descrise în [ghid](docs/adaptive-control.md).
+Configurațiile existente rămân `legacy`. [Pachetul ESPHome și exemplul module1](esphome/README.md)
+se livrează fără instalare automată; acceptarea pentru activare live este încă deschisă.
