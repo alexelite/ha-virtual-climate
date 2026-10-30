@@ -1,17 +1,15 @@
-# Control termic adaptat instalațiilor lente și reglaj local ESPHome
+# Control termic adaptat instalațiilor lente
 
 ## 1. Obiectiv și introducere
 
-Implementăm un control care urmărește menținerea confortului prin aport termic distribuit în timp, ținând cont de întârzierea răspunsului și de încălzirea deja trimisă către instalație. Reglajul local urmărește apropierea temperaturii medii de tur de țintă în perioade cu circulație, acceptând oscilații moderate.
+Implementăm un control care urmărește menținerea confortului prin aport termic distribuit în timp, ținând cont de întârzierea răspunsului și de încălzirea deja trimisă către instalație.
 
 Decizii confirmate:
 
-- Vana de amestec și `sensor.ntc_temperature` aparțin exclusiv pardoselii.
 - Prima versiune schimbă încălzirea; răcirea păstrează strategia existentă.
 - Obiectiv inițial configurabil de confort: −0,2/+0,3°C; deficitul persistent primește o penalizare mai mare.
 - Sunt suficienți senzorii existenți. Turul este opțional și trebuie asociat circuitului corect.
-- ESPHome închide vana la oprirea pompei și revine controlat la ultima poziție stabilă validă.
-- Livrabil ESPHome: pachet reutilizabil în repository și exemplu pentru `module1`, fără instalare automată pe dispozitiv.
+- Reglajul local al turului și implementarea controllerului dispozitivului sunt în afara acestui repository; integrarea folosește numai entitățile configurate prin contractul instalației.
 
 Introducem trei moduri pe fiecare intrare Virtual Climate: `legacy`, `observe`, `adaptive`. Configurațiile existente rămân `legacy`. În `observe`, algoritmul nou calculează propuneri și învață din comenzile reale, fără să le modifice. Trecerea în `adaptive` este explicită; revenirea la `legacy` este disponibilă.
 
@@ -85,50 +83,7 @@ Excludem intervențiile manuale, senzorii invalizi, avariile suspectate și schi
 
 Învățarea zonelor rămâne distinctă de corecțiile curbei de tur. Sursele independente pot beneficia de modelul observațional al zonelor; învățarea curbei sursei păstrează cerințele existente.
 
-## 3. Specificația pachetului ESPHome
-
-Pachetul primește identificatorii pompei, modului, controlului manual, țintei și actuatorului. Exemplul `module1` păstrează identificatorii entităților existente.
-
-### Măsurare și reglaj calm
-
-- ADC cu interval explicit de 5 s.
-- Temperatură brută disponibilă pentru diagnostic; temperatură de control cu mediană pe trei valori și EMA cu constantă de 30 s.
-- Eliminarea cuantilei actuale din calea de control.
-- Evaluarea regulatorului la 30 s; corecții normale numai după minimum 90 s de la ultima mișcare terminată.
-- Decizia folosește media temperaturii din ultimele 120 s de circulație și tendința din aceeași fereastră.
-- Bandă inițială ±2°C. Corecție de un punct procentual pentru abatere persistentă peste 2°C și două puncte peste 5°C.
-- Se amână deschiderea dacă temperatura urcă deja spre bandă cu minimum 0,2°C/min; regulă simetrică pentru închidere.
-- Parametrii sunt configurabili. Nu se introduce integrală sau PID în prima versiune.
-
-Temperaturile din pauza pompei nu intră în media utilizată pentru reglaj.
-
-### Secvența vanei
-
-Stări explicite: `idle_closed`, `prepositioning`, `settling`, `regulating`, `manual`, `fault`; calibrarea la pornirea dispozitivului rămâne distinctă.
-
-O poziție devine memorabilă după minimum cinci minute cu circulație, temperatură medie în banda țintei și fără corecții în ultimele două minute. Memorăm poziția, ținta și momentul.
-
-La oprirea pompei se închide vana. La repornire:
-
-- Poziția memorată se reutilizează numai în același mod, după o pauză de maximum 30 min și pentru o țintă diferită cu maximum 1°C.
-- Revenirea are limita inițială de 30 puncte procentuale/minut.
-- Fără poziție validă, pornirea folosește 10%, configurabil.
-- Corecțiile normale încep după încheierea poziționării și minimum 120 s de măsurători cu circulație.
-- Orice temperatură proaspătă peste limita superioară întrerupe revenirea.
-
-La o temperatură peste țintă cu 8°C timp de 15 s, vana închide aportul cald, fără să oprească automat pompa. Limita absolută a circuitului este un parametru obligatoriu, stabilit din instalație înainte de instalare. Reluarea necesită temperatură validă sub pragul de declanșare cu cel puțin 2°C timp de 120 s.
-
-Lipsa unei temperaturi valide timp de 30 s închide aportul cald și intră în `fault`. Intrarea în răcire, control manual sau calibrare invalidează reutilizarea poziției de încălzire.
-
-### Coordonarea comenzilor
-
-- Sincronizarea releului comun se execută după publicarea noilor stări ale cererilor, printr-un singur arbitru OR cu interblocarea răcirii.
-- Diagnosticul numește explicit starea software a releului.
-- Exercițiul anti-blocare și reglajul normal au acces exclusiv la actuator; exercițiul se abandonează la cerere reală.
-- Protecția existentă la pierderea conexiunii HA se păstrează.
-- Poziția memorată pentru pauze rămâne în RAM; după reboot se calibrează și se pornește conservator.
-
-## 4. Configurare, persistență și diagnostic
+## 3. Configurare, persistență și diagnostic
 
 Adăugăm configurarea strategiei pe intrare, profilul pe zonă și un bloc avansat de parametri. Importul/exportul păstrează configurațiile vechi; lipsa blocului nou înseamnă `legacy`.
 
@@ -136,9 +91,9 @@ Modelul validat și experiența se salvează separat pe intrare și zonă. La re
 
 Diagnosticul expune cererea de menținere, corecția de confort, aportul întârziat estimat, predicția, încrederea, soldul impulsurilor și motivul deciziei. În `observe`, arată separat propunerea și comanda reală. Nu prezintă rezultate contrafactuale drept confort obținut.
 
-Actualizăm glosarul și ADR-urile pentru controlul cu memorie și învățarea observațională a zonelor. Specificația ESPHome se documentează împreună cu pachetul și cu exemplul de integrare.
+Actualizăm glosarul și ADR-urile pentru controlul cu memorie și învățarea observațională a zonelor. Interfața cu instalația este documentată separat în contractul regulatorului local.
 
-## 5. Validare și activare
+## 4. Validare și activare
 
 Testele deterministe și simulările folosesc instalații cu efect vizibil după 30–60 min, persistență îndelungată și sursă modulantă sau independentă.
 
@@ -148,11 +103,8 @@ Scenarii obligatorii:
 - sursă lentă, temperatură de tur oscilantă și lipsa senzorului de tur;
 - impulsuri mici, durate minime, postcirculație și mai multe zone;
 - goluri de date, restart, comandă manuală, blocaje și revenire la `legacy`;
-- vană cu poziție memorată validă/expirată, schimbare de mod, depășire de tur și senzor invalid;
-- oprirea ambelor cereri de gaz și exclusivitatea exercițiilor anti-blocare.
+- schimbare de mod, senzori invalizi și stări software contradictorii ale entităților instalației.
 
 Acceptarea cere respectarea protecțiilor, lipsa acumulărilor nelimitate și lipsa comenzilor suplimentare în `observe`. Pe simulările de menținere, noul control trebuie să reducă deficitul ponderat fără să crească depășirile severe sau pornirile față de strategia existentă; se publică rezultatele pe fiecare scenariu.
 
-Pachetul ESPHome trebuie validat și compilat pentru configurația `module1`. Testele software verifică temporizările, fără a pretinde validarea fizică a reglajului.
-
-Ordinea de activare: observare → verificarea releului și instalarea controlată a ESPHome → reconstruirea observațiilor → activare adaptivă pe pardoseală → evaluare minimum șapte zile → extindere la radiatoare. Trecerea între etape este explicită. Limita absolută de tur și parametrii fizici ai actuatorului se verifică înainte de instalarea firmware-ului.
+Ordinea de activare: observare → verificarea entităților care satisfac contractul instalației → reconstruirea observațiilor → activare adaptivă pe pardoseală → evaluare minimum șapte zile → extindere la radiatoare. Trecerea între etape este explicită.

@@ -66,7 +66,3 @@ raportat de actuator, inclusiv prelungirile de circulație.
 **Învățare observațională a zonei**:
 Estimarea răspunsului termic al unei camere din temperatura proprie și
 activarea raportată a actuatorului, inclusiv cu o sursă independentă.
-
-**Poziție stabilă memorată**:
-Poziție estimată a vanei care a menținut turul în banda țintei cu circulație
-și fără corecții recente; reutilizabilă numai într-o pauză compatibilă.

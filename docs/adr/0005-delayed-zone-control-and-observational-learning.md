@@ -22,7 +22,10 @@ se folosește control proporțional cu integrală lentă. Modelul persistă sepa
 pe intrare și zonă; soldul impulsurilor și istoricul activ se reconstruiesc
 la restart. Protecțiile au prioritate față de orice propunere.
 
-Vana pardoselii aparține exclusiv regulatorului ESPHome local. Poziția stabilă
-memorată există numai în RAM; după reboot calibrarea precede orice reglaj.
-[Specificația aprobată](../adaptive-control-plan.md) și
-[ghidul implementării](../adaptive-control.md) descriu parametrii și validarea.
+Reglajul local al turului și implementarea hardware rămân în afara integrării.
+Virtual Climate comunică prin entități Home Assistant selectate explicit și nu
+depinde de structura firmware-ului sau de o anumită platformă de dispozitiv.
+[Contractul regulatorului local](../local-supply-regulator-contract.md),
+[specificația aprobată](../adaptive-control-plan.md) și
+[ghidul implementării](../adaptive-control.md) descriu seam-ul, parametrii și
+validarea.

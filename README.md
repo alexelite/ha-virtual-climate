@@ -176,11 +176,11 @@ The agreed MVP for global plant control is:
 - `circulation_pump_entity` as a `switch`
 - optional `changeover_entity`
 - `target_supply_temperature_entity` as a `number`
-- supply control strategy based on fixed target values written to ESPHome
+- supply control strategy based on fixed target values written to a local regulator
 
-For the MVP, Home Assistant will command a target supply temperature and
-ESPHome will perform the local mixing / regulation logic. Direct mixing valve
-control from Home Assistant is intentionally out of scope for this first phase.
+For the MVP, Home Assistant will command a target supply temperature and the
+configured local regulator will perform the mixing / regulation logic. Direct
+mixing valve control from Home Assistant is intentionally out of scope.
 
 ### Supported topology models
 
@@ -254,8 +254,8 @@ The MVP uses fixed values:
 - in `HEAT`, write `heating_supply_target` to the target supply entity
 - in `COOL`, write `cooling_supply_target` to the target supply entity
 
-This keeps heavy regulation logic inside ESPHome and allows the plant to remain
-more autonomous when Home Assistant is unavailable.
+This keeps device regulation outside the integration and allows the plant to
+remain more autonomous when Home Assistant is unavailable.
 
 ### Weather compensation
 
@@ -445,7 +445,7 @@ real Voluptuous. They cover slot timing, cycle continuity, restart lockout,
 source/pump sequencing, reported actuator states and clearing optional fields.
 They also cover delayed zone handover, valve opening time, failed replacement,
 loss of the old path and a two-hour plant simulation with delayed feedback.
-Live ESPHome feedback and full HA integration loading require verification on
+Live device feedback and full HA integration loading require verification on
 the running installation. Python-code updates require a HA Core restart;
 `dev/sync.sh` performs this unless passed `--no-restart`.
 
@@ -494,5 +494,6 @@ MIT
 
 Strategiile opționale `observe` și `adaptive`, modelul termic întârziat și
 soldul impulsurilor sunt descrise în [ghid](docs/adaptive-control.md).
-Configurațiile existente rămân `legacy`. [Pachetul ESPHome și exemplul module1](esphome/README.md)
-se livrează fără instalare automată; acceptarea pentru activare live este încă deschisă.
+Configurațiile existente rămân `legacy`. Integrarea comunică cu regulatorul
+local prin [contractul instalației](docs/local-supply-regulator-contract.md) și
+nu include firmware sau implementarea controllerului dispozitivului.

@@ -25,4 +25,4 @@ Legacy poate avea deficit aproape nul prin prelungirea impulsurilor mici la dura
 
 Protecțiile, contabilizarea limitată, persistența și lipsa comenzilor suplimentare în observe sunt verificate separat prin teste deterministe. Criteriile de confort pentru activare live nu sunt încă demonstrate pe toate cazurile. Penalizările 0.02/0.01 sunt explicite, dar nu sunt considerate calibrate pentru activare live.
 
-Reproducere: `.venv/bin/python simulations/thermal_acceptance.py`. Datele sunt sintetice și nu reprezintă confort obținut în instalație. Compilarea ESP32 rămâne neverificată; firmware-ul nu a fost instalat.
+Reproducere: `.venv/bin/python simulations/thermal_acceptance.py`. Datele sunt sintetice și nu reprezintă confort obținut în instalație.

@@ -55,7 +55,7 @@ Salvarea opțiunilor reîncarcă instanța. În acest interval integrarea opreș
 ieșirile, apoi reia cererea validă, respectând timpul minim de repaus și
 întârzierile pompei/sursei. Fallbackul nu elimină aceste temporizări.
 
-Feedbackul ESPHome poate ajunge înainte de încheierea apelului de comandă HA.
+Feedbackul dispozitivului poate ajunge înainte de încheierea apelului de comandă HA.
 Oprirea de urgență `no_flow` aflată în curs trebuie lăsată să se termine;
 feedbackul repetat nu trebuie să o anuleze și să o relanseze. O oprire normală
 poate fi escaladată o singură dată la `no_flow` dacă se pierde circulația.

@@ -13,6 +13,3 @@ env/
 .idea/
 .vscode/
 local/
-
-# Generated firmware builds
-esphome/**/.esphome/

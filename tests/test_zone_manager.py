@@ -16,7 +16,7 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
 
         async def delayed_call(*args, **kwargs):
             await original(*args, **kwargs)
-            # ESPHome feedback arrives before HA's blocking call completes.
+            # Device feedback arrives before HA's blocking call completes.
             await asyncio.sleep(0)
             await asyncio.sleep(0)
 

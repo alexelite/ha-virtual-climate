@@ -2,10 +2,10 @@
 
 Implementarea urmărește [planul aprobat](adaptive-control-plan.md), urmărit în
 [issue #1](https://github.com/alexelite/ha-virtual-climate/issues/1).
-Este o implementare experimentală: nu a fost instalată în HA sau pe ESP32.
+Este o implementare experimentală: nu a fost instalată în HA.
 Configurațiile existente rămân `legacy`. Acceptarea completă pentru activare
-live rămâne deschisă: sunt necesare calibrarea și acceptarea scenariilor de menținere (inclusiv sarcina mică),
-compilarea firmware-ului și verificarea parametrilor fizici.
+live rămâne deschisă: sunt necesare calibrarea și acceptarea scenariilor de
+menținere, inclusiv sarcina mică.
 
 ## Configurare
 
@@ -58,8 +58,9 @@ Valorile sunt ipoteze inițiale, nu parametri fizici măsurați. Câștigul și
 pierderea sunt rate locale în °C/oră. Pierderea este constantă în fereastra
 modelului; modelul nu pretinde că estimează energia livrată sau anvelopa clădirii.
 Senzorul opțional `supply_control.supply_sensor` trebuie să aparțină circuitului
-intrării. NTC/vana din `module1` aparțin numai pardoselii. Fără tur/referință
-validă se utilizează activarea neponderată, vizibilă în diagnostic.
+intrării. Fără tur sau referință validă se utilizează activarea neponderată,
+vizibilă în diagnostic. Reglajul local și hardware-ul sunt în afara integrării;
+vezi [contractul regulatorului local](local-supply-regulator-contract.md).
 
 ## Comportament și învățare
 
@@ -117,8 +118,6 @@ reală. Stările software ale pompei și cererii nu confirmă debitul sau ardere
 
 ```sh
 .venv/bin/python -m unittest discover -s tests -q
-c++ -std=c++17 -Wall -Wextra -Werror tests/mixing_controller_test.cpp -o /tmp/mixing-controller-test
-/tmp/mixing-controller-test
 .venv/bin/python simulations/thermal_acceptance.py
 ```
 
@@ -138,8 +137,8 @@ eligibilitate nu sunt prezentate drept control predictiv.
 Cazul de sarcină mică este un contraexemplu de calibrare, păstrat în raport.
 Nu declarăm îndeplinită acceptarea universală: mai puține porniri nu compensează
 un deficit sau o depășire severă mai mare. Nu activați live pe baza acestor
-simulări până la îndeplinirea criteriilor pe toate scenariile de menținere și verificarea firmware-ului.
+simulări până la îndeplinirea criteriilor pe toate scenariile de menținere.
 
-Ordinea rămâne explicită: observare → verificare releu și instalare controlată
-ESPHome → refacere observații → adaptive pe pardoseală → minimum șapte zile
-evaluare → extindere la radiatoare. Nicio etapă nu a fost activată automat.
+Ordinea rămâne explicită: observare → verificarea entităților instalației →
+refacere observații → adaptive pe pardoseală → minimum șapte zile evaluare →
+extindere la radiatoare. Nicio etapă nu a fost activată automat.

@@ -143,7 +143,7 @@ def write_markdown(results):
         '', 'Etapa de după învățare include nouă zile de observații sintetice și refacerea istoricului după restaurare. Eligibilitatea și minutele predictive efective sunt în JSON. Un profil inițial deja exact nu poate demonstra o îmbunătățire de 15% și rămâne pe PI.', '',
         'Legacy poate avea deficit aproape nul prin prelungirea impulsurilor mici la durata minimă. Reducerea pornirilor nu justifică declararea acceptării când deficitul sau depășirea severă cresc. Cazurile de setpoint și aport extern necesită și ele calibrare.', '',
         'Protecțiile, contabilizarea limitată, persistența și lipsa comenzilor suplimentare în observe sunt verificate separat prin teste deterministe. Criteriile de confort pentru activare live nu sunt încă demonstrate pe toate cazurile. Penalizările 0.02/0.01 sunt explicite, dar nu sunt considerate calibrate pentru activare live.', '',
-        'Reproducere: `.venv/bin/python simulations/thermal_acceptance.py`. Datele sunt sintetice și nu reprezintă confort obținut în instalație. Compilarea ESP32 rămâne neverificată; firmware-ul nu a fost instalat.', '',
+        'Reproducere: `.venv/bin/python simulations/thermal_acceptance.py`. Datele sunt sintetice și nu reprezintă confort obținut în instalație.', '',
     ]
     (ROOT/'docs/thermal-simulation-results.md').write_text('\n'.join(lines))
 
