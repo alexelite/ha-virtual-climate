@@ -1,0 +1,99 @@
+{
+  "description": "Read-only ha_zamfir observations for later reasoning; no live or source changes.",
+  "timezone": "Europe/Bucharest",
+  "captured_at": "2026-10-30",
+  "esphome_source": "/Users/alex/.codex/attachments/2319db0f-a98c-4718-8ec8-b84be1173ff9/Pasted text.txt",
+  "controller": {
+    "loop_seconds": 30,
+    "enabled_only_when": "switch.pompa_ip is on and manual valve control is off",
+    "full_travel_seconds": 120,
+    "deadband_c": 2,
+    "step_fraction_error_2_to_5_c": 0.02,
+    "step_fraction_error_over_5_c": 0.05,
+    "closes_when_pump_off": true,
+    "ntc_filter": {
+      "type": "quantile",
+      "window_size": 7,
+      "send_every": 4,
+      "quantile": 0.9,
+      "observed_recorder_cadence_minutes": 4
+    },
+    "position_feedback": "time-based estimate, not mechanical feedback"
+  },
+  "entity_map": {
+    "effective_supply_temperature": "sensor.ntc_temperature",
+    "estimated_valve_position": "sensor.valve_1_position",
+    "valve_cover": "cover.mix_valve_1",
+    "local_supply_target": "number.setpoint_temperature",
+    "ufh_pump": "switch.pompa_ip",
+    "radiator_pump": "switch.pompa_radiatoare",
+    "ufh_source_request": "switch.camera_tehnica_module1_ct_gaz_ufh",
+    "radiator_source_request": "switch.camera_tehnica_module1_ct_gaz_radiatoare",
+    "source_relay_feedback": "binary_sensor.camera_tehnica_module1_ct_gaz_relay_active",
+    "room_climate": "climate.mansarda",
+    "room_temperature": "sensor.mansarda_temperature",
+    "room_actuator": "input_boolean.trv_mansarda"
+  },
+  "mixing_window": {
+    "start": "2026-10-30T16:30:00+02:00",
+    "end": "2026-10-30T18:24:00+02:00",
+    "target_c": 42.0,
+    "ntc_sample_count": 25,
+    "valve_position_record_count": 761,
+    "cover_state_record_count": 171,
+    "pump_state_record_count": 22,
+    "ntc_min_c": 30.0411491394043,
+    "ntc_max_c": 48.757926940918,
+    "max_overshoot_c": 6.757926940918,
+    "source_relay_feedback": {
+      "state": "on_continuously",
+      "off_at": "2026-10-30T18:21:28.204088+02:00"
+    },
+    "cycles": [
+      {"start":"16:34:29","end":"16:42:58","duration_s":509,"valve_peak_pct":80,"ntc_samples_c":[30.59,32.77],"max_through_4m_after_c":43.91},
+      {"start":"16:47:01","end":"16:55:11","duration_s":490,"valve_peak_pct":null,"ntc_samples_c":[43.48],"max_through_4m_after_c":43.48},
+      {"start":"16:58:54","end":"17:06:54","duration_s":480,"valve_peak_pct":80,"ntc_samples_c":[33.01],"max_through_4m_after_c":44.38},
+      {"start":"17:10:13","end":"17:18:07","duration_s":474,"valve_peak_pct":null,"ntc_samples_c":[43.59],"max_through_4m_after_c":43.59},
+      {"start":"17:21:07","end":"17:28:58","duration_s":471,"valve_peak_pct":75,"ntc_samples_c":[30.41,33.69],"max_through_4m_after_c":45.33},
+      {"start":"17:31:58","end":"17:39:28","duration_s":450,"valve_peak_pct":null,"ntc_samples_c":[43.59,33.39],"max_through_4m_after_c":43.59},
+      {"start":"17:42:28","end":"17:49:58","duration_s":450,"valve_peak_pct":60,"ntc_samples_c":[31.54,39.91],"max_through_4m_after_c":42.32},
+      {"start":"17:52:58","end":"18:00:28","duration_s":450,"valve_peak_pct":10,"ntc_samples_c":[34.05],"max_through_4m_after_c":34.05},
+      {"start":"18:03:28","end":"18:10:58","duration_s":450,"valve_peak_pct":75,"ntc_samples_c":[36.07],"max_through_4m_after_c":48.76},
+      {"start":"18:13:58","end":"18:21:28","duration_s":450,"valve_peak_pct":null,"ntc_samples_c":[47.53],"max_through_4m_after_c":47.53}
+    ],
+    "observed_target_crossing_delays_s": [209, 266, 314, 329]
+  },
+  "mansarda_window": {
+    "start": "2026-10-29T21:40:00+02:00",
+    "end": "2026-10-30T08:35:00+02:00",
+    "room_start_c": 17.30244371496425,
+    "room_target_c": 21.0,
+    "room_target_crossed_at": "2026-10-30T00:32:10.029784+02:00",
+    "room_max_c": 21.233350212983915,
+    "room_max_at": "2026-10-30T07:24:10.447917+02:00",
+    "room_overshoot_c": 0.233350212983915,
+    "room_end_c": 21.0808143618416,
+    "ufh_pump": "on continuously until 2026-10-30T08:29:46.764734+02:00",
+    "local_supply_target_c": 37.0,
+    "ntc_min_c": 29.4719161987305,
+    "ntc_max_c": 42.3913764953613,
+    "local_supply_max_overshoot_c": 5.3913764953613
+  },
+  "virtual_climate_live_options": {
+    "heating_source_entity": "switch.camera_tehnica_module1_ct_gaz_radiatoare",
+    "circulation_pump_entity": "switch.pompa_radiatoare",
+    "heating_source_start_delay_seconds": 30,
+    "minimum_off_time_seconds": 180,
+    "minimum_run_time_seconds": 300,
+    "pump_post_run_seconds": 120,
+    "heating_supply_target_c": 32,
+    "target_supply_temperature_entity": null
+  },
+  "limitations": [
+    "NTC recorder cadence is about four minutes and the value is a 0.9 quantile over seven source samples.",
+    "Valve position is estimated from actuator runtime and is not mechanical feedback.",
+    "Source relay feedback does not prove flame, modulation, primary temperature, or flow.",
+    "Primary supply temperature, return temperature, and flow are not recorded in this dataset.",
+    "Hydraulic topology must be confirmed before attributing radiator-room overshoot to the UFH mixing valve."
+  ]
+}
