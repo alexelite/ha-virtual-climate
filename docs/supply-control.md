@@ -112,3 +112,9 @@ Un răspuns insuficient persistent, o abatere medie a turului sau o diferență 
 Comenzile de tur sunt așteptate până la terminarea apelului de serviciu, cu timeout de 10 secunde. Înaintea unei porniri noi, transmiterea trebuie să reușească. În funcționare, eșecul produce reîncercări și notificare, fără oprirea automată a sursei doar pentru acea eroare. Limitele și unitatea entității țintă sunt verificate; o comandă în afara limitelor dispozitivului este refuzată. Succesul apelului nu confirmă realizarea temperaturii fizice.
 
 Implementarea poate fi verificată prin `python -m unittest discover -s tests -v`. Testele includ un model termic simplificat pe patru zile, cicluri pornit/oprit, corecții în ambele direcții, restaurare, pierderea senzorilor, comenzi eșuate și compatibilitatea configurațiilor vechi. Încărcarea completă în Home Assistant și răspunsul dispozitivelor necesită verificare pe instalația reală înainte de calibrarea parametrilor.
+
+## Responsabilitățile circuitului
+
+Profilurile direct/extern și matricea capabilităților sunt descrise în
+[Circuite gestionate extern și migrarea Homer](external-circuit.md). Cererea
+externă este context de comandă pentru monitorizare, fără confirmarea arzătorului.

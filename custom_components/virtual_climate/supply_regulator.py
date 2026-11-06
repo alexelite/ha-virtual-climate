@@ -119,7 +119,7 @@ class SupplyRegulator:
         ready = bool(target_state and finite(target_state.state) is not None)
         if entity and not ready:
             self.command_error = "target_unavailable"
-        elif not entity and controlled and mode == "HEAT" and config["heating_strategy"] == "weather_compensated":
+        elif not entity and options.get("circuit_control", "direct") != "external" and controlled and mode == "HEAT" and config["heating_strategy"] == "weather_compensated":
             self.command_error = "target_not_configured"
         outdoor = self._temperature(config["outdoor_sensor"], now)
         if outdoor is not None and not -80 <= outdoor <= 60:
@@ -151,7 +151,7 @@ class SupplyRegulator:
         """Confirm service completion, without waiting for water convergence."""
         entity = options.get("target_supply_temperature_entity")
         if not entity:
-            if mode == "HEAT" and self.controller.config["heating_strategy"] == "weather_compensated":
+            if options.get("circuit_control", "direct") != "external" and mode == "HEAT" and self.controller.config["heating_strategy"] == "weather_compensated":
                 self.command_error = "target_not_configured"
                 self._last_attempt = time.time()
                 self.controller.cancel_probe(time.time(), "command_error")

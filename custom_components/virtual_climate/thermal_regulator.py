@@ -51,6 +51,8 @@ class ThermalRegulator:
             fingerprint["entry_parameters"] = options.get("thermal_parameters", {})
             fingerprint["supply_sensor"] = options.get("supply_control", {}).get("supply_sensor")
             fingerprint["source_entity"] = options.get("heating_source_entity")
+            if options.get("circuit_control", "direct") == "external":
+                fingerprint["circuit_demand_entity"] = options.get("circuit_demand_entity")
             fingerprint["pump_entity"] = options.get("circulation_pump_entity")
             if self.fingerprints.get(zid) == fingerprint:
                 continue
@@ -70,7 +72,12 @@ class ThermalRegulator:
 
     def minimum_pulse(self, options, zone):
         minimum = float(zone.get("limits", {}).get("zone_min_on_s", 180)) + float(zone.get("actuator", {}).get("open_s", 20))
-        if options.get("heating_source_entity") or options.get("circulation_pump_entity"):
+        if options.get("circuit_control", "direct") == "external":
+            minimum = max(minimum, max(float(zone.get("actuator", {}).get("open_s", 20)),
+                          float(options.get("external_start_delay_seconds", 0))) +
+                          float(options.get("minimum_run_time_seconds", 300)) +
+                          float(options.get("external_post_run_seconds", 120)))
+        elif options.get("heating_source_entity") or options.get("circulation_pump_entity"):
             minimum = max(minimum, float(zone.get("actuator", {}).get("open_s", 20)) +
                           float(options.get("pump_start_delay_seconds", 0)) +
                           float(options.get("heating_source_start_delay_seconds", 30)) +
@@ -122,9 +129,9 @@ class ThermalRegulator:
             if pulse_minimum > max_cycle:
                 model.reason = "minimum_pulse_exceeds_cycle_limit"
         self.diagnostics[zid] = dict(model.diagnostics(), strategy=self.strategy,
-                                     actual_actuator_on=on, source_context="controlled" if options.get("heating_source_entity") else "independent",
+                                     actual_actuator_on=on, source_context="controlled" if options.get("heating_source_entity") or options.get("circuit_demand_entity") else "independent",
                                      pump_software_state=self._state(options.get("circulation_pump_entity")),
-                                     source_request_software_state=self._state(options.get("heating_source_entity")),
+                                     source_request_software_state=self._state(options.get("circuit_demand_entity") or options.get("heating_source_entity")),
                                      minimum_pulse_seconds=pulse_minimum, proposed_pulse_on=decision["pulse_on"])
         return decision
 

@@ -20,6 +20,11 @@
           "title": "Virtual Climate — Global settings",
           "description": "Pick the global HEAT/COOL/OFF mode helper and base coordination settings.",
           "data": {
+            "external_post_run_seconds": "Keep zones open after demand stops (s)",
+            "external_start_delay_seconds": "HA delay before demand (s)",
+            "circuit_state_entity": "Reported circuit state (optional)",
+            "circuit_demand_entity": "External circuit demand",
+            "circuit_control": "Circuit control (direct / external)",
             "global_co_mode_entity": "Global mode helper (HEAT/COOL/OFF)",
             "heating_source_entity": "Heating source switch",
             "cooling_source_entity": "Cooling source switch",
@@ -114,6 +119,7 @@
         }
       },
       "error": {
+        "invalid_circuit": "External control requires demand and cleared direct pump/source/changeover outputs. Check timing values.",
         "invalid_config_json": "Invalid configuration JSON. Provide a full config object or a non-empty zone array.",
         "invalid_zones_json": "Invalid zones JSON. Provide a non-empty array of zone objects.",
         "invalid_zone": "Invalid zone values. Check required fields and JSON formats.",
@@ -154,6 +160,11 @@
           "title": "Global Settings",
           "description": "Configure global coordination parameters.",
           "data": {
+            "external_post_run_seconds": "Keep zones open after demand stops (s)",
+            "external_start_delay_seconds": "HA delay before demand (s)",
+            "circuit_state_entity": "Reported circuit state (optional)",
+            "circuit_demand_entity": "External circuit demand",
+            "circuit_control": "Circuit control (direct / external)",
             "instance_temperature_fallback": "Heat zones with missing sensors using the instance median (only while measured zones request heat)",
             "global_co_mode_entity": "Global mode helper (HEAT/COOL/OFF)",
             "heating_source_entity": "Heating source switch",
@@ -241,6 +252,7 @@
         }
       },
       "error": {
+        "invalid_circuit": "External control requires demand and cleared direct pump/source/changeover outputs. Check timing values.",
         "invalid_config_json": "Invalid configuration JSON. Provide a full config object or a non-empty zone array.",
         "no_zones": "No zones found. Please add zones first.",
         "invalid_floor_limits": "Invalid floor limits. Minimum must be less than maximum for each mode.",

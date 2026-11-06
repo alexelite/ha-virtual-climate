@@ -24,6 +24,7 @@ from .const import (
     CONF_PUMP_POST_RUN_SECONDS, CONF_MINIMUM_OFF_TIME_SECONDS,
     DEFAULTS, EVENT_ENTRY_ID
 )
+from .capabilities import validate_circuit, circuit_capabilities
 from .config_flow import get_current_config
 from .helpers import co_mode_from_entity
 from .supply_regulator import SupplyRegulator
@@ -43,6 +44,10 @@ class ZoneManager:
         self.entry = entry
         # Use unified config loading that merges options over data
         self._options = get_current_config(entry)
+        validate_circuit(self._options)
+        self._external_hold_until = 0.0
+        self._external_demand_on = False
+        self._external_withdrawing = False
         self._zones: Dict[str, Dict[str, Any]] = {}  # last status per zone
         self._unsub_bus = None
         self._unsub_tick = None
@@ -113,7 +118,8 @@ class ZoneManager:
         observed = {z.get("switch_actuator") for z in self._options.get("zones", [])}
         observed.update(self._options.get(key) for key in (
             CONF_GLOBAL_CO_MODE_ENTITY, CONF_HEATING_SOURCE_ENTITY,
-            CONF_COOLING_SOURCE_ENTITY, CONF_CIRCULATION_PUMP_ENTITY))
+            CONF_COOLING_SOURCE_ENTITY, CONF_CIRCULATION_PUMP_ENTITY,
+            "circuit_demand_entity", "circuit_state_entity"))
         if observed - {None}:
             self._unsub_bus = async_track_state_change_event(
                 self.hass, list(observed - {None}), self._on_output_change)
@@ -151,6 +157,14 @@ class ZoneManager:
             await asyncio.gather(*tasks, return_exceptions=True)
         self._plant_start_task = None
         self._plant_stop_task = None
+        if self._external_circuit():
+            await self._set_switch_state(self._options.get("circuit_demand_entity"), False)
+            if self._external_demand_on or self._external_hold_until > time.time():
+                hold = self._options.get("external_post_run_seconds", 120)
+                remaining = hold if self._external_demand_on else self._external_hold_until - time.time()
+                if remaining > 0:
+                    await asyncio.sleep(remaining)
+            self._external_demand_on = False
         await self._set_switch_state(self._options.get(CONF_HEATING_SOURCE_ENTITY), False)
         await self._set_switch_state(self._options.get(CONF_COOLING_SOURCE_ENTITY), False)
         await self._set_switch_state(self._options.get(CONF_CIRCULATION_PUMP_ENTITY), False)
@@ -224,7 +238,7 @@ class ZoneManager:
         if not self._started or self._stopped:
             return
         now = time.time()
-        deadlines = []
+        deadlines = [self._external_hold_until] if self._external_hold_until > now else []
         if self._cycle_active:
             deadlines.append(self._cycle_start + self._cycle_length)
             for slot in self._slots.values():
@@ -301,6 +315,16 @@ class ZoneManager:
             "cycle_length_s": self._cycle_length,
             "packing_mode": self._packing,
             "aggregated_demand_ratio": rounded_ratio,
+            "circuit_control": self._options.get("circuit_control", "direct"),
+            "capabilities": circuit_capabilities(self._options,
+                outdoor_valid=self._valid_sensor_value((self._options.get("supply_control") or {}).get("outdoor_sensor")) is not None,
+                supply_valid=self._valid_sensor_value((self._options.get("supply_control") or {}).get("supply_sensor")) is not None,
+                operating=self._plant_state == "running"),
+            "circuit_reported_state": self._circuit_reported_state(),
+            "circuit_unavailable_entities": [entity for key in ("circuit_demand_entity", "circuit_state_entity")
+                if (entity := self._options.get(key)) and (not self.hass.states.get(entity)
+                    or self.hass.states.get(entity).state in ("unknown", "unavailable"))],
+            "request_duration_basis": "demand" if self._external_circuit() else "source_request",
             "plant_state": self._plant_state,
             "plant_mode": self._plant_mode or "OFF",
             "total_zones": len(zone_states),
@@ -333,7 +357,10 @@ class ZoneManager:
 
     async def _async_tick(self, *, refresh=False):
         self._options = get_current_config(self.entry)
+        validate_circuit(self._options)
         system_mode = co_mode_from_entity(self.hass, self._options)
+        if self._external_circuit() and system_mode == "COOL":
+            system_mode = "OFF"
         now = time.time()
         # Coalesce a periodic sample with a coincident slot/output callback.
         thermal_due = ((refresh and (self._last_thermal_update is None
@@ -384,16 +411,21 @@ class ZoneManager:
             self._publish_zone_diagnostics({}, system_mode, "mode_change", sampled=thermal_due)
             return
 
+        previous_plan = self._cached_wants
         if replan:
             self._cached_wants = self._plan_cycle()
         plan = self._apply_thermal_plan(self._cached_wants, system_mode)
         if not self._cycle_active or time.time() - self._cycle_start >= self._cycle_length:
-            if plan and self._plant_state != "stopping":
+            if plan and (self._plant_state != "stopping" or self._external_circuit()):
                 await self._start_cycle(plan)
             else:
                 self._cycle_active = False
                 self._slots = {}
 
+        if (self._external_circuit() and replan and plan and not previous_plan
+                and self._plant_state == "stopping"
+                and not any(self._zone_slot_is_running(zid) for zid in plan)):
+            await self._start_cycle(plan)
         self._refresh_thermal_slots(plan, system_mode)
         if thermal_due and self.thermal.strategy != "legacy":
             await self.thermal.async_learn()
@@ -658,10 +690,22 @@ class ZoneManager:
         if task and not task.done():
             task.cancel()
 
+    def _valid_sensor_value(self, entity):
+        return self.supply._temperature(entity, time.time()) if entity else None
+
+    def _external_circuit(self):
+        return self._options.get("circuit_control", "direct") == "external"
+
+    def _circuit_reported_state(self):
+        entity = self._options.get("circuit_state_entity")
+        state = self.hass.states.get(entity) if entity else None
+        return state.state if state else None
+
     def _plant_control_enabled(self) -> bool:
         return any(
             self._options.get(key)
             for key in (
+                "circuit_demand_entity",
                 CONF_HEATING_SOURCE_ENTITY,
                 CONF_COOLING_SOURCE_ENTITY,
                 CONF_CHANGEOVER_ENTITY,
@@ -703,6 +747,8 @@ class ZoneManager:
         return self._source_entity_for_mode(mode) is not None
 
     def _source_entity_for_mode(self, mode: str) -> str | None:
+        if self._external_circuit():
+            return self._options.get("circuit_demand_entity") if mode == "HEAT" else None
         heat_ent = self._options.get(CONF_HEATING_SOURCE_ENTITY)
         cool_ent = self._options.get(CONF_COOLING_SOURCE_ENTITY)
         changeover_ent = self._options.get(CONF_CHANGEOVER_ENTITY)
@@ -741,6 +787,8 @@ class ZoneManager:
         )
 
     async def _set_target_supply_for_mode(self, mode: str) -> None:
+        if self._external_circuit() and not self._options.get(CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY):
+            return  # A local fixed target can operate independently of HA target output.
         await self._update_supply(mode, force=True)
         if not await self.supply.async_write(self._options, mode, force=True):
             raise ValueError("Supply target command has not succeeded")
@@ -765,13 +813,24 @@ class ZoneManager:
 
         # Complete source shutdown and pump post-run before changing mode/restarting.
         if self._plant_state == "stopping":
-            return
+            if not self._external_circuit() or self._plant_mode != mode:
+                return
+            if self._external_withdrawing:
+                return  # Let the blocking withdrawal finish before submitting a new demand.
+            self._cancel_task(self._plant_stop_task)
+            self._plant_stop_task = None
+            if self._external_demand_on:
+                self._plant_state = "running"
+                return
+            self._plant_state = "off"
+            self._plant_started_at = 0.0
 
         if self._plant_state in ("running", "starting") and self._plant_mode != mode:
             await self._request_plant_stop("mode_change")
             return
 
-        self._plant_hold_zones.clear()
+        if not self._external_circuit() or time.time() >= self._external_hold_until:
+            self._plant_hold_zones.clear()
         self._plant_state = "starting"
         self._plant_mode = mode
         self._plant_start_task = self.hass.async_create_task(
@@ -831,6 +890,29 @@ class ZoneManager:
                 if wait_off > 0:
                     _LOGGER.info("Plant waiting %.1fs for minimum off time", wait_off)
                     await asyncio.sleep(wait_off)
+
+            if self._external_circuit():
+                delay = max(self._options.get("external_start_delay_seconds", 0), self._flow_open_delay())
+                if delay > 0:
+                    await asyncio.sleep(delay)
+                if not self._flow_zones(require_open=True) or not self._measured_slot_active():
+                    await self._request_plant_stop("no_demand")
+                    return
+                await self._set_target_supply_for_mode(mode)
+                # Recheck after the blocking target service too.
+                if not self._measured_slot_active() or not self._flow_zones(require_open=True):
+                    await self._request_plant_stop("no_demand")
+                    return
+                entity = self._source_entity_for_mode(mode)
+                state = self.hass.states.get(entity)
+                if not state or state.state not in ("on", "off"):
+                    raise ValueError("External demand entity unavailable")
+                self._external_demand_on = True  # A failed/ambiguous write still requires orderly withdrawal.
+                await self._set_switch_state(entity, True)
+                self._plant_started_at = time.time()
+                self._plant_state = "running"
+                self._refresh_global_diagnostics(system_mode=mode)
+                return
 
             await self._set_changeover_for_mode(mode)
             await self._set_target_supply_for_mode(mode)
@@ -902,6 +984,27 @@ class ZoneManager:
                 if wait_run > 0:
                     _LOGGER.info("Plant waiting %.1fs for minimum run time", wait_run)
                     await asyncio.sleep(wait_run)
+
+            if self._external_circuit():
+                self._external_withdrawing = True
+                try:
+                    await self._set_switch_state(self._source_entity_for_mode("HEAT"), False)
+                finally:
+                    self._external_withdrawing = False
+                was_on = self._external_demand_on or bool(self._plant_started_at)
+                self._external_demand_on = False
+                self._plant_started_at = 0.0
+                if was_on:
+                    self._plant_stopped_at = time.time()
+                    self._external_hold_until = time.time() + self._options.get("external_post_run_seconds", 120)
+                self.async_request_evaluation()
+                remaining = self._external_hold_until - time.time()
+                if reason != "no_flow" and remaining > 0:
+                    await asyncio.sleep(remaining)
+                self._plant_state = "off"
+                self._plant_mode = None
+                self._plant_hold_zones.clear()
+                return
 
             entities_to_turn_off = {
                 self._options.get(CONF_HEATING_SOURCE_ENTITY),
@@ -1170,6 +1273,8 @@ class ZoneManager:
         self._observe_actuators()
 
     async def _reconcile_zones(self, wants, force_off=False):
+        if self._external_circuit() and self._plant_state != "stopping" and time.time() >= self._external_hold_until:
+            self._plant_hold_zones.clear()
         self._plant_hold_zones.intersection_update(
             zid for zid in self._zones if self._actuator_state(zid) is True and not self._hard_blocked(zid)
         )
@@ -1189,11 +1294,12 @@ class ZoneManager:
                 desired.add(zid)
             elif slot and zid not in wants:
                 self._slots.pop(zid, None)
-            if zid in self._plant_hold_zones and self._plant_state == "stopping":
+            if zid in self._plant_hold_zones and (self._plant_state == "stopping" or
+                    (self._external_circuit() and time.time() < self._external_hold_until)):
                 desired.add(zid)
 
         await self._retain_handover_path(desired, force_off)
-        if self._plant_state == "stopping":
+        if self._plant_state == "stopping" or (self._external_circuit() and time.time() < self._external_hold_until):
             desired.update(self._plant_hold_zones)
         desired.update(self._handover_hold_zones)
         self._desired_on = desired

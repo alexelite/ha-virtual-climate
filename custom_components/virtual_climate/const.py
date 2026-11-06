@@ -77,3 +77,13 @@ DEFAULTS = {
     CONF_PUMP_POST_RUN_SECONDS: 120,
     CONF_MINIMUM_OFF_TIME_SECONDS: 180,
 }
+
+# Circuit ownership is explicit; legacy entries remain direct.
+CONF_CIRCUIT_CONTROL = "circuit_control"
+CONF_CIRCUIT_DEMAND_ENTITY = "circuit_demand_entity"
+CONF_CIRCUIT_STATE_ENTITY = "circuit_state_entity"
+CONF_EXTERNAL_START_DELAY_SECONDS = "external_start_delay_seconds"
+CONF_EXTERNAL_POST_RUN_SECONDS = "external_post_run_seconds"
+DEFAULTS.update({CONF_CIRCUIT_CONTROL: "direct", CONF_CIRCUIT_DEMAND_ENTITY: None,
+                 CONF_CIRCUIT_STATE_ENTITY: None, CONF_EXTERNAL_START_DELAY_SECONDS: 0,
+                 CONF_EXTERNAL_POST_RUN_SECONDS: 120})

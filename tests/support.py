@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 import inspect
 import importlib.util
 import logging
+import math
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -225,6 +226,8 @@ def coordinator(config=None, zones=None):
                       STRATEGIES=thermal_module.STRATEGIES, ThermalZone=thermal_module.ThermalZone)
     load_source('thermal_regulator.py', thermal_ns)
     namespace['ThermalRegulator'] = thermal_ns['ThermalRegulator']
+    namespace['isfinite'] = math.isfinite
+    load_source('capabilities.py', namespace)
     load_source('zone_manager.py', namespace)
     options = dict(namespace['DEFAULTS'], t_cycle_min=600, t_cycle_max=600)
     options.update(config or {})
@@ -254,6 +257,8 @@ def options_flow():
                      STRATEGIES=thermal_module.STRATEGIES, normalize_thermal=thermal_module.normalize,
                      config_entries=SimpleNamespace(OptionsFlow=FakeOptionsFlow),
                      selector=lambda config: lambda value: value)
+    namespace['isfinite'] = math.isfinite
+    load_source('capabilities.py', namespace)
     return load_source('config_flow.py', namespace, skip_classes=('ConfigFlow',))
 
 

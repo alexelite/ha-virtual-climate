@@ -20,6 +20,11 @@
           "title": "Climat Virtual — Setări globale",
           "description": "Alegeți helper-ul global pentru modul HEAT/COOL/OFF și setările de coordonare de bază.",
           "data": {
+            "external_post_run_seconds": "Menținere zone după oprirea demand (s)",
+            "external_start_delay_seconds": "Întârziere HA înainte de demand (s)",
+            "circuit_state_entity": "Stare raportată circuit (opțional)",
+            "circuit_demand_entity": "Cerere circuit extern (demand)",
+            "circuit_control": "Control circuit (direct / extern)",
             "global_co_mode_entity": "Helper mod global (HEAT/COOL/OFF)",
             "heating_source_entity": "Switch sursă încălzire",
             "cooling_source_entity": "Switch sursă răcire",
@@ -114,6 +119,7 @@
         }
       },
       "error": {
+        "invalid_circuit": "Controlul extern necesită demand și eliminarea ieșirilor directe pompă/sursă/changeover. Verificați temporizările.",
         "invalid_config_json": "JSON configurație invalid. Furnizați un obiect complet de configurare sau un array ne-gol de zone.",
         "invalid_zones_json": "JSON zone invalid. Furnizați un array ne-gol de obiecte zonă.",
         "invalid_zone": "Valori zonă invalide. Verificați câmpurile necesare și formatele JSON.",
@@ -154,6 +160,11 @@
           "title": "Setări Globale",
           "description": "Configurați parametrii globali de coordonare.",
           "data": {
+            "external_post_run_seconds": "Menținere zone după oprirea demand (s)",
+            "external_start_delay_seconds": "Întârziere HA înainte de demand (s)",
+            "circuit_state_entity": "Stare raportată circuit (opțional)",
+            "circuit_demand_entity": "Cerere circuit extern (demand)",
+            "circuit_control": "Control circuit (direct / extern)",
             "instance_temperature_fallback": "Încălzire cu temperatura de avarie a instanței (numai cât cer căldură zonele măsurate)",
             "global_co_mode_entity": "Helper mod global (HEAT/COOL/OFF)",
             "heating_source_entity": "Switch sursă încălzire",
@@ -241,6 +252,7 @@
         }
       },
       "error": {
+        "invalid_circuit": "Controlul extern necesită demand și eliminarea ieșirilor directe pompă/sursă/changeover. Verificați temporizările.",
         "invalid_config_json": "JSON configurație invalid. Furnizați un obiect complet de configurare sau un array ne-gol de zone.",
         "no_zones": "Nu s-au găsit zone. Vă rugăm să adăugați zone mai întâi.",
         "invalid_floor_limits": "Limite podea invalide. Minimul trebuie să fie mai mic decât maximul pentru fiecare mod.",

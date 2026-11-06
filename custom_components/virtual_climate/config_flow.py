@@ -8,6 +8,7 @@ from homeassistant import config_entries
 from homeassistant.helpers.selector import selector
 from homeassistant.core import callback
 from .supply_control import finite, normalize_supply_config
+from .capabilities import CIRCUIT_DEFAULTS, validate_circuit
 from .thermal_control import STRATEGIES, normalize as normalize_thermal
 
 DOMAIN = "virtual_climate"
@@ -80,7 +81,9 @@ DEFAULTS = {
     ZK_ZONE_MIN_OFF: 180,
 }
 
-GLOBAL_CONFIG_KEYS = (
+DEFAULTS.update(CIRCUIT_DEFAULTS)
+
+GLOBAL_CONFIG_KEYS = (*CIRCUIT_DEFAULTS,
     "heating_control_strategy",
     "thermal_parameters",
     "instance_temperature_fallback",
@@ -116,6 +119,19 @@ def _optional_entity_field(key: str, domains: list[str], default: Any = ...):
     description = {} if default in (..., None, "") else {"suggested_value": default}
     schema_key = vol.Optional(key, description=description)
     return schema_key, selector({"entity": {"domain": domains}})
+
+
+def _circuit_schema(config):
+    fields = {vol.Optional("circuit_control", default=config.get("circuit_control", "direct")):
+              selector({"select": {"options": ["direct", "external"]}})}
+    for key, domains in (("circuit_demand_entity", ["switch", "input_boolean"]),
+                         ("circuit_state_entity", ["sensor"])):
+        marker, field = _optional_entity_field(key, domains, config.get(key))
+        fields[marker] = field
+    for key in ("external_start_delay_seconds", "external_post_run_seconds"):
+        fields[vol.Optional(key, default=config.get(key, CIRCUIT_DEFAULTS[key]))] = selector({
+            "number": {"min": 0, "max": 3600, "step": 1, "mode": "box"}})
+    return fields
 
 
 def _validate_zone_id_unique(zones: List[Dict[str, Any]], new_id: str) -> None:
@@ -191,6 +207,7 @@ def _normalize_global_config(config: Dict[str, Any]) -> Dict[str, Any]:
     if CONF_SUPPLY_CONTROL in normalized:
         normalized[CONF_SUPPLY_CONTROL] = normalize_supply_config(normalized[CONF_SUPPLY_CONTROL])
 
+    validate_circuit(normalized)
     return normalized
 
 
@@ -405,6 +422,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_show_form(
                 step_id="manual_global",
                 data_schema=vol.Schema({
+                    **_circuit_schema(self._global),
                     vol.Required(CONF_GLOBAL_CO_MODE_ENTITY): selector({
                         "entity": {
                             "multiple": False,
@@ -460,6 +478,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     })
                 })
             )
+        try:
+            validate_circuit(user_input)
+        except (ValueError, TypeError):
+            form = await self.async_step_manual_global()
+            form["errors"] = {"base": "invalid_circuit"}
+            return form
         self._global = dict(user_input)
         return await self.async_step_choose_method()
 
@@ -871,6 +895,7 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
             return self.async_show_form(
                 step_id="global_options",
                 data_schema=vol.Schema({
+                    **_circuit_schema(self.current_config),
                     vol.Optional("instance_temperature_fallback", default=self.current_config.get("instance_temperature_fallback", False)): selector({"boolean": {}}),
                     vol.Required(CONF_GLOBAL_CO_MODE_ENTITY, default=current_global[CONF_GLOBAL_CO_MODE_ENTITY]): selector({
                         "entity": {
@@ -928,8 +953,15 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
                 })
             )
 
+        try:
+            validate_circuit(user_input)
+        except (ValueError, TypeError):
+            form = await self.async_step_global_options()
+            form["errors"] = {"base": "invalid_circuit"}
+            return form
         # Save global options
         options = self._config_entry.options.copy()
+        options.update({key: user_input.get(key, default) for key, default in CIRCUIT_DEFAULTS.items()})
         options.update({
             "instance_temperature_fallback": user_input.get("instance_temperature_fallback", False),
             CONF_GLOBAL_CO_MODE_ENTITY: user_input[CONF_GLOBAL_CO_MODE_ENTITY],

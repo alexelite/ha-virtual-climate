@@ -497,3 +497,6 @@ soldul impulsurilor sunt descrise în [ghid](docs/adaptive-control.md).
 Configurațiile existente rămân `legacy`. Integrarea comunică cu regulatorul
 local prin [contractul instalației](docs/local-supply-regulator-contract.md) și
 nu include firmware sau implementarea controllerului dispozitivului.
+
+Pentru delegarea pompei, vanei și cererii către sursă unui CC-HC, consultați
+[profilul extern și migrarea Homer](docs/external-circuit.md).
