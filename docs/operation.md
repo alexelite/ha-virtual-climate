@@ -1,5 +1,8 @@
 # Operation
 
+See [Control flows](reference/control-flows.md) for diagrams of zone demand,
+supply-target dependencies, and reported feedback.
+
 ## Modes and demand
 
 The global helper selects `HEAT`, `COOL`, or `OFF`. Each virtual thermostat uses

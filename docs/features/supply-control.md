@@ -1,5 +1,8 @@
 # Supply temperature control
 
+The [control-flow diagrams](../reference/control-flows.md#supply-target-calculation-and-transmission)
+show the inputs required for calculation, transmission, monitoring, and learning.
+
 Open **Supply temperature control** during setup or in the integration's options.
 Configure the target entity, constant targets, strategies, sensors, and limits.
 Virtual Climate calculates and transmits a target; a local device regulates the
