@@ -57,3 +57,11 @@ Verify local Markdown links, JSON syntax and configuration schema, documented
 keys/defaults against the source, and `git diff --check`. Update guides when
 behavior changes and check that generated reports retain the agreed language
 and structure. See the [documentation policy](documentation-policy.md).
+
+## Circuit diagnostic sensor coverage
+
+Global sensor tests use the production coordinator and sensor logic with Home
+Assistant I/O doubles. They check direct/external circuit attributes, publication
+when only controller feedback or availability changes, listener removal, and
+preservation of other sensors' attributes. The public field definitions are in
+the [diagnostics reference](../reference/diagnostics.md#global-entities).

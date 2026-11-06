@@ -5,6 +5,11 @@ corresponds to that release; the guides on `main` describe the current source.
 
 ## Unreleased
 
+### Fixed
+
+- Exposed circuit profile, capabilities, reported state, external entity
+  availability, and request timing basis as Plant state sensor attributes.
+
 ### Documentation
 
 - Reorganized English guides around setup, operation, optional features, and reference.

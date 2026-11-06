@@ -186,6 +186,12 @@ class VirtualClimateGlobalSensor(SensorEntity):
 
     @property
     def extra_state_attributes(self):
+        if self.entity_description.value_key == "plant_state":
+            diagnostics = self.manager.get_global_diagnostics()
+            return {key: diagnostics.get(key) for key in (
+                "circuit_control", "capabilities", "circuit_reported_state",
+                "circuit_unavailable_entities", "request_duration_basis",
+            )}
         if self.entity_description.value_key == "supply_learning_status":
             diagnostics = self.manager.get_global_diagnostics()
             return {key: diagnostics.get(key) for key in (

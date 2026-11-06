@@ -49,8 +49,26 @@ The global set includes **Cycle active**, **System mode**, **Coordinator phase**
 Running zones includes `scheduled_running_zones`, `actuator_mismatches`, and
 `unavailable_actuators` attributes.
 
-Detailed circuit capabilities and reported-state diagnostics are internal and
-are not exposed as sensor attributes.
+**Plant state** exposes the following attributes. Open **Developer tools → States**
+and select that sensor to inspect them or use them in automation templates.
+
+| Attribute | Meaning |
+| --- | --- |
+| `circuit_control` | Configured profile: `direct` or `external` |
+| `capabilities` | Feature flags derived from configuration and current data/operating context |
+| `circuit_reported_state` | External controller's sensor state, or `null` when unconfigured/missing |
+| `circuit_unavailable_entities` | Configured external demand/state entities that are missing, `unknown`, or `unavailable` |
+| `request_duration_basis` | `demand` for external timing, `source_request` for direct timing |
+
+The `capabilities` object includes `external_circuit`, `direct_pump`,
+`direct_source`, `cooling`, `supply_target`, `weather_compensation`,
+`supply_verification`, `circuit_state`, and `external_zone_hold`.
+Flags describe configured roles and applicable data/context requirements; they
+do not establish physical operation or guarantee entity availability. The
+unavailable-entity list covers external demand/state entities only.
+Attributes update when diagnostics change, even if the main plant state stays
+the same. See [External circuit](../features/external-circuit.md) for ownership
+and timing semantics.
 
 Supply diagnostics distinguish **Supply curve target**, **Learned supply
 correction**, **Supply trial adjustment**, **Recovery boost**, and **Supply target**.
