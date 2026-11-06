@@ -12,8 +12,8 @@ class ControlClockTests(unittest.IsolatedAsyncioTestCase):
         self.instances = []
 
     async def make(self, temperature='21.07', **options):
-        config = dict(id='noah', name='Noah', sensor_air='sensor.air', sensor_rh='sensor.rh',
-                      switch_actuator='switch.noah', support_mode='BOTH', sensor_floor=None,
+        config = dict(id='zone_1', name='Zone 1', sensor_air='sensor.air', sensor_rh='sensor.rh',
+                      switch_actuator='switch.zone_1', support_mode='BOTH', sensor_floor=None,
                       open_s=60, close_s=60, zone_min_on_s=180, zone_min_off_s=180)
         m, h, c = coordinator(dict(zones=[config], **options))
         h.states.set('sensor.air', temperature)
@@ -76,13 +76,13 @@ class ControlClockTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_exact_slot_end_does_not_wait_for_next_minute_or_resample(self):
         m, h, c, climate, writes, samples, plans = await self.make()
-        end = m._cycle_start + m._slots['noah']['t_on']
+        end = m._cycle_start + m._slots['zone_1']['t_on']
         self.assertAlmostEqual(end - c.now, 372)
         await self.advance(h, c, 371)
-        self.assertEqual(h.states.get('switch.noah').state, 'on')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'on')
         before = (len(samples), len(plans))
         await self.advance(h, c, 1)
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
         self.assertEqual((len(samples), len(plans)), before)
         self.assertEqual(h.calls[-1][0], end)
 
@@ -102,7 +102,7 @@ class ControlClockTests(unittest.IsolatedAsyncioTestCase):
         h.states.set('sensor.air', 'unavailable')
         await self.advance(h, c, 60)
         self.assertIsNone(climate.current_temperature)
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
         h.states.set('sensor.air', '23')
         await self.advance(h, c, 60)
         self.assertEqual(climate.current_temperature, 23)
@@ -113,14 +113,14 @@ class ControlClockTests(unittest.IsolatedAsyncioTestCase):
         await self.advance(h, c, 60)
         expected = 20 + 1 - math.exp(-1/3)
         self.assertAlmostEqual(climate.current_temperature, expected)
-        self.assertAlmostEqual(m._zones['noah']['delta_air'], 22 - expected)
-        self.assertAlmostEqual(m.supply.controller._history['noah'][-1][1], expected)
+        self.assertAlmostEqual(m._zones['zone_1']['delta_air'], 22 - expected)
+        self.assertAlmostEqual(m.supply.controller._history['zone_1'][-1][1], expected)
         self.assertAlmostEqual(writes[-1][1]['t_air'], expected)
         # Options normally reload the entry. A hot change must also reset memory.
         m.entry.config['zones'][0]['temperature_filter_enabled'] = False
         await self.advance(h, c, 60)
         self.assertEqual(climate.current_temperature, 21)
-        self.assertEqual(m.supply.controller._history['noah'][-1][1], 21)
+        self.assertEqual(m.supply.controller._history['zone_1'][-1][1], 21)
         m.entry.config['zones'][0]['temperature_filter_enabled'] = True
         h.states.set('sensor.air', '21.5')
         await self.advance(h, c, 60)
@@ -147,7 +147,7 @@ class ControlClockTests(unittest.IsolatedAsyncioTestCase):
         before = len(samples)
         await self.advance(h, c, 700)
         self.assertEqual(len(samples), before)
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
         self.assertFalse(h.states.listeners)
 
     async def test_unchanged_operational_evaluations_do_not_republish_diagnostics(self):
@@ -188,7 +188,7 @@ class ControlClockTests(unittest.IsolatedAsyncioTestCase):
         await self.drain()
         self.assertEqual(climate.current_temperature, initial)
         self.assertEqual(climate.target_temperature, 23)
-        self.assertAlmostEqual(m._zones['noah']['delta_air'], 23 - initial)
+        self.assertAlmostEqual(m._zones['zone_1']['delta_air'], 23 - initial)
         self.assertEqual(len(plans), 2)
 
     async def test_one_hour_of_scheduled_control_respects_source_run_and_flow(self):

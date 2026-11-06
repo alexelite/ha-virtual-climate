@@ -16,7 +16,7 @@ class CircuitTests(unittest.IsolatedAsyncioTestCase):
                       # These direct timings must have no effect on delegated control.
                       pump_start_delay_seconds=400, heating_source_start_delay_seconds=500)
         config.update(overrides)
-        m, h, c = coordinator(config, [zone(delta=1.5, actuator=dict(entity_id='switch.noah', open_s=0))])
+        m, h, c = coordinator(config, [zone(delta=1.5, actuator=dict(entity_id='switch.zone_1', open_s=0))])
         h.states.set('switch.demand', 'off', c.now - 1000)
         self.instances.append((m, h, c))
         return m, h, c
@@ -42,14 +42,14 @@ class CircuitTests(unittest.IsolatedAsyncioTestCase):
         await self.tick(m, h, c)
         self.assertEqual(h.states.get('switch.demand').state, 'on')
         self.assertEqual(m._plant_started_at, c.now)
-        self.assertTrue(all(entity in ('switch.noah', 'switch.demand') for _, _, entity in h.calls))
+        self.assertTrue(all(entity in ('switch.zone_1', 'switch.demand') for _, _, entity in h.calls))
         self.assertTrue(m.get_global_diagnostics()['capabilities']['external_circuit'])
         self.assertFalse(m.get_global_diagnostics()['capabilities']['direct_pump'])
         self.assertEqual(m.get_global_diagnostics()['request_duration_basis'], 'demand')
 
     async def test_zone_opening_and_target_complete_before_demand(self):
         m, h, c = self.make(target_supply_temperature_entity='number.target')
-        m._zones['noah']['actuator']['open_s'] = 60
+        m._zones['zone_1']['actuator']['open_s'] = 60
         h.states.set('number.target', '32')
         await self.tick(m, h, c)
         self.assertEqual(h.states.get('switch.demand').state, 'off')
@@ -75,7 +75,7 @@ class CircuitTests(unittest.IsolatedAsyncioTestCase):
     async def test_demand_lost_during_delay_never_starts(self):
         m, h, c = self.make(external_start_delay_seconds=30)
         await self.tick(m, h, c)
-        m._zones['noah']['delta_air'] = 0
+        m._zones['zone_1']['delta_air'] = 0
         await self.tick(m, h, c, 30)
         self.assertFalse(any(service == 'turn_on' and entity == 'switch.demand' for _, service, entity in h.calls))
 
@@ -86,12 +86,12 @@ class CircuitTests(unittest.IsolatedAsyncioTestCase):
         m.entry.config['test_mode'] = 'OFF'
         await self.tick(m, h, c, 1)
         self.assertEqual(h.states.get('switch.demand').state, 'off')
-        self.assertEqual(h.states.get('switch.noah').state, 'on')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'on')
         await self.tick(m, h, c, 119)
-        self.assertEqual(h.states.get('switch.noah').state, 'on')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'on')
         await self.tick(m, h, c, 1)
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
-        self.assertTrue(all(entity in ('switch.noah', 'switch.demand') for _, _, entity in h.calls))
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
+        self.assertTrue(all(entity in ('switch.zone_1', 'switch.demand') for _, _, entity in h.calls))
 
     async def test_new_request_cancels_pending_zone_close(self):
         m, h, c = self.make()
@@ -104,7 +104,7 @@ class CircuitTests(unittest.IsolatedAsyncioTestCase):
         h.calls.clear()
         await self.tick(m, h, c, 120)
         self.assertEqual(h.states.get('switch.demand').state, 'on')
-        self.assertFalse(any(service == 'turn_off' and entity == 'switch.noah' for _, service, entity in h.calls))
+        self.assertFalse(any(service == 'turn_off' and entity == 'switch.zone_1' for _, service, entity in h.calls))
 
     async def test_minimum_request_and_pause_use_demand_activation_and_withdrawal(self):
         m, h, c = self.make(minimum_run_time_seconds=60, minimum_off_time_seconds=180)
@@ -116,7 +116,7 @@ class CircuitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(h.states.get('switch.demand').state, 'off')
         m.entry.config['test_mode'] = 'HEAT'
         await self.tick(m, h, c, 30)
-        self.assertEqual(h.states.get('switch.noah').state, 'on')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'on')
         await self.tick(m, h, c, 149)
         self.assertEqual(h.states.get('switch.demand').state, 'off')
         await self.tick(m, h, c, 1)
@@ -141,11 +141,11 @@ class CircuitTests(unittest.IsolatedAsyncioTestCase):
         for _ in range(8):
             await asyncio.sleep(0)
         self.assertEqual(h.states.get('switch.demand').state, 'off')
-        self.assertEqual(h.states.get('switch.noah').state, 'on')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'on')
         self.assertFalse(stop.done())
         c.advance(120)
         await stop
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
 
     async def test_external_weather_curve_without_target_does_not_block_local_circuit(self):
         m, h, c = self.make(supply_control=dict(heating_strategy='weather_compensated',
@@ -159,7 +159,7 @@ class CircuitTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_fractional_slot_keeps_its_planned_pause(self):
         m, h, c = self.make()
-        m._zones['noah']['delta_air'] = 0.6
+        m._zones['zone_1']['delta_air'] = 0.6
         await self.tick(m, h, c)
         cycle_start = m._cycle_start
         await self.tick(m, h, c, 240)
@@ -168,15 +168,15 @@ class CircuitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(h.states.get('switch.demand').state, 'off')
         self.assertEqual(m._cycle_start, cycle_start)
         await self.tick(m, h, c, 60)
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
         await self.tick(m, h, c, 240)
         self.assertEqual(h.states.get('switch.demand').state, 'on')
 
     async def test_external_cooling_is_disabled(self):
         m, h, c = self.make(test_mode='COOL')
-        m._zones['noah']['delta_air'] = -1.5
+        m._zones['zone_1']['delta_air'] = -1.5
         await self.tick(m, h, c)
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
         self.assertEqual(h.states.get('switch.demand').state, 'off')
 
     async def test_import_options_and_export_enforce_single_owner(self):

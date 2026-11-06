@@ -191,7 +191,7 @@ class FakeHass:
                 await asyncio.to_thread(fn, None)
 
 
-def zone(zid='noah', delta=0.3, **overrides):
+def zone(zid='zone_1', delta=0.3, **overrides):
     value = {
         'zone_id': zid, 'co_mode': 'HEAT', 'active_co_mode': 'HEAT',
         'delta_air': delta, 't_air': 22 - delta, 't_floor': None,

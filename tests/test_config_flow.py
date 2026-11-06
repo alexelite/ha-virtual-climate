@@ -64,8 +64,8 @@ class OptionalEntityTests(unittest.IsolatedAsyncioTestCase):
     async def test_clear_retain_replace_survive_saved_options_and_reload(self):
         ns = options_flow()
         original = {
-            'id': 'noah', 'name': 'Noah', 'sensor_air': 'sensor.air', 'sensor_rh': 'sensor.rh',
-            'switch_actuator': 'switch.noah', 'sensor_floor': 'sensor.old_floor',
+            'id': 'zone_1', 'name': 'Zone 1', 'sensor_air': 'sensor.air', 'sensor_rh': 'sensor.rh',
+            'switch_actuator': 'switch.zone_1', 'sensor_floor': 'sensor.old_floor',
             'window_switch': 'binary_sensor.old_window',
         }
         for field in ('sensor_floor', 'window_switch'):
@@ -73,7 +73,7 @@ class OptionalEntityTests(unittest.IsolatedAsyncioTestCase):
                 with self.subTest(field=field, submitted=submitted):
                     entry = SimpleNamespace(data={'zones': [deepcopy(original)]}, options={})
                     flow = ns['VirtualClimateOptionsFlow'](entry)
-                    flow.selected_zone_id = 'noah'
+                    flow.selected_zone_id = 'zone_1'
                     form = await flow.async_step_zone_edit()
                     payload = {key: value for key, value in original.items() if key not in ('id', 'name', field)}
                     if submitted is not None:

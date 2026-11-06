@@ -151,7 +151,7 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
         m, h, c = self.make()
         await self.tick(m, h, c)
         await self.tick(m, h, c, 240)
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
 
     async def test_full_demand_continues_across_cycle_boundary(self):
         m, h, c = self.make(zones=[zone(delta=1.5)])
@@ -159,7 +159,7 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
         h.calls.clear()
         await self.tick(m, h, c, 600)
         self.assertEqual(h.calls, [])
-        self.assertEqual(h.states.get('switch.noah').state, 'on')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'on')
 
     async def test_cycle_rollover_does_not_publish_zero_or_stop(self):
         m, h, c = self.make(zones=[zone(delta=1.5)])
@@ -180,28 +180,28 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_demand_remains_positive_during_restart_lockout(self):
         m, h, c = self.make()
-        m._zone_last_off_at['noah'] = c.now - 10
+        m._zone_last_off_at['zone_1'] = c.now - 10
         await self.tick(m, h, c)
         self.assertGreater(m.get_global_diagnostics()['aggregated_demand_ratio'], 0)
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
         await self.tick(m, h, c, 230)
-        self.assertEqual(h.states.get('switch.noah').state, 'on')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'on')
 
     async def test_real_off_requires_full_restart_delay(self):
         m, h, c = self.make(config={'t_cycle_min': 300, 't_cycle_max': 300})
         await self.tick(m, h, c)
         await self.tick(m, h, c, 240)
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
         await self.tick(m, h, c, 60)
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
         await self.tick(m, h, c, 179)
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
 
     async def test_cycle_length_frozen_while_inputs_change(self):
         m, h, c = self.make(config={'t_cycle_min': 360, 't_cycle_max': 1440})
         await self.tick(m, h, c)
         first = m._cycle_length
-        m._zones['noah']['delta_air'] = 1.5
+        m._zones['zone_1']['delta_air'] = 1.5
         await self.tick(m, h, c, 1)
         self.assertEqual(m._cycle_length, first)
         await self.tick(m, h, c, first - 1)
@@ -219,7 +219,7 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
         m, h, c = self.make(zones=[zone(delta=0.001)])
         await self.tick(m, h, c)
         self.assertGreater(m.get_global_diagnostics()['aggregated_demand_ratio'], 0)
-        m._zones['noah']['delta_air'] = 0
+        m._zones['zone_1']['delta_air'] = 0
         await self.tick(m, h, c, 1)
         self.assertEqual(m.get_global_diagnostics()['aggregated_demand_ratio'], 0)
 
@@ -228,16 +228,16 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
         h.auto_confirm = False
         await self.tick(m, h, c)
         c.advance(100)
-        h.states.set('switch.noah', 'on')
+        h.states.set('switch.zone_1', 'on')
         h.auto_confirm = True
         await self.tick(m, h, c)
         await self.tick(m, h, c, 200)
-        self.assertEqual(h.states.get('switch.noah').state, 'on')
-        m._zones['noah']['delta_air'] = 0
+        self.assertEqual(h.states.get('switch.zone_1').state, 'on')
+        m._zones['zone_1']['delta_air'] = 0
         await self.tick(m, h, c, 39)
-        self.assertEqual(h.states.get('switch.noah').state, 'on')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'on')
         await self.tick(m, h, c, 1)
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
 
     async def test_pending_feedback_is_not_counted_as_running(self):
         m, h, c = self.make()
@@ -252,18 +252,18 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
     async def test_window_interlock_stops_active_zone_immediately(self):
         m, h, c = self.make()
         await self.tick(m, h, c)
-        m._zones['noah']['eligible_window'] = False
+        m._zones['zone_1']['eligible_window'] = False
         await self.tick(m, h, c, 1)
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
 
     async def test_no_demand_honors_zone_minimum_on(self):
         m, h, c = self.make()
         await self.tick(m, h, c)
-        m._zones['noah']['delta_air'] = 0
+        m._zones['zone_1']['delta_air'] = 0
         await self.tick(m, h, c, 1)
-        self.assertEqual(h.states.get('switch.noah').state, 'on')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'on')
         await self.tick(m, h, c, 239)
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
 
     async def test_global_off_cannot_be_undone_by_stale_callback(self):
         m, h, c = self.make(config={'packing_mode': 'staggered'}, zones=[zone('a'), zone('b')])
@@ -277,14 +277,14 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
         m, h, c = self.make()
         await self.tick(m, h, c)
         await m.async_stop()
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
         c.advance(600)
         await h.dispatch_due()
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
 
     async def test_command_failure_does_not_claim_running(self):
         m, h, c = self.make()
-        h.fail_entities.add('switch.noah')
+        h.fail_entities.add('switch.zone_1')
         with self.assertLogs(level='ERROR'):
             await self.tick(m, h, c)
         self.assertEqual(m.get_global_diagnostics()['running_zones'], 0)
@@ -322,7 +322,7 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
         for _ in range(8):
             await asyncio.sleep(0)
         self.assertEqual(h.states.get('switch.source').state, 'off')
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
 
     async def test_state_only_diagnostics_preserve_demand(self):
         m, h, c = self.make()
@@ -335,11 +335,11 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
         m, h, c = self.make()
         await self.tick(m, h, c)
         c.advance(60)
-        h.states.set('switch.noah', 'off')
+        h.states.set('switch.zone_1', 'off')
         await self.tick(m, h, c)
-        off_at = m._zone_last_off_at['noah']
+        off_at = m._zone_last_off_at['zone_1']
         await self.tick(m, h, c, 30)
-        self.assertEqual(m._zone_last_off_at['noah'], off_at)
+        self.assertEqual(m._zone_last_off_at['zone_1'], off_at)
         data = h.zone_schedules[-1]
         self.assertEqual(data['blocked_by'], 'zone_min_off')
         self.assertGreater(data['requested_fraction'], 0)
@@ -360,12 +360,12 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
                                     'minimum_run_time_seconds': 0, 'pump_post_run_seconds': 0})
         h.states.set('switch.source', 'on')
         h.states.set('switch.pump', 'on')
-        h.states.set('switch.noah', 'on')
+        h.states.set('switch.zone_1', 'on')
         await self.tick(m, h, c)
         await self.tick(m, h, c)
         self.assertEqual(h.states.get('switch.source').state, 'off')
         self.assertEqual(h.states.get('switch.pump').state, 'off')
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
 
     async def test_startup_cleans_a_leftover_pump_without_source(self):
         m, h, c = self.make(config={'circulation_pump_entity': 'switch.pump'}, zones=[zone(delta=0)])
@@ -380,17 +380,17 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
         await self.tick(m, h, c)
         await self.tick(m, h, c, 60)
         self.assertEqual(h.states.get('switch.source').state, 'on')
-        m._zones['noah']['delta_air'] = 0
+        m._zones['zone_1']['delta_air'] = 0
         await self.tick(m, h, c, 180)
         self.assertEqual(h.states.get('switch.source').state, 'on')
         await self.tick(m, h, c, 120)
         self.assertEqual(h.states.get('switch.source').state, 'off')
         self.assertEqual(h.states.get('switch.pump').state, 'on')
-        self.assertEqual(h.states.get('switch.noah').state, 'on')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'on')
         await self.tick(m, h, c, 120)
         await self.tick(m, h, c)
         self.assertEqual(h.states.get('switch.pump').state, 'off')
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
 
     async def prepare_handover(self, delayed=False, cycle=600):
         m, h, c = self.make(config={
@@ -546,8 +546,8 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
         await self.tick(m, h, c)
         await self.tick(m, h, c, 60)
         m.entry.config['test_mode'] = 'COOL'
-        m._zones['noah']['co_mode'] = 'COOL'
-        m._zones['noah']['delta_air'] = -1
+        m._zones['zone_1']['co_mode'] = 'COOL'
+        m._zones['zone_1']['delta_air'] = -1
         await self.tick(m, h, c, 1)
         self.assertEqual(h.states.get('switch.heat').state, 'off')
         await self.tick(m, h, c, 1)
@@ -558,14 +558,14 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
                                     'heating_source_start_delay_seconds': 0, 'minimum_run_time_seconds': 300})
         await self.tick(m, h, c)
         await self.tick(m, h, c, 60)
-        m._zones['noah']['delta_air'] = 0
+        m._zones['zone_1']['delta_air'] = 0
         await self.tick(m, h, c, 180)
         self.assertEqual(m._plant_state, 'stopping')
-        m._zones['noah']['eligible_window'] = False
+        m._zones['zone_1']['eligible_window'] = False
         await self.tick(m, h, c, 1)
         self.assertEqual(h.states.get('switch.source').state, 'off')
         self.assertEqual(h.states.get('switch.pump').state, 'off')
-        self.assertEqual(h.states.get('switch.noah').state, 'off')
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
 
     async def test_two_hour_variable_demand_respects_minimum_transitions(self):
         m, h, c = self.make(config={'t_cycle_min': 360, 't_cycle_max': 720}, zones=[zone('a'), zone('b')])

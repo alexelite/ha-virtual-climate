@@ -20,7 +20,7 @@ class SupplyIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                            outdoor_sensor='sensor.outdoor', boost_enabled=False))
         options.update(config or {})
         m, h, c = coordinator(options, [zone(delta=1.5, actuator={
-            'entity_id': 'switch.noah', 'open_s': 0, 'close_s': 0})])
+            'entity_id': 'switch.zone_1', 'open_s': 0, 'close_s': 0})])
         h.states.set('number.target', '32')
         h.states.set('sensor.outdoor', '0')
         self.instances.append((m, h, c))
@@ -103,12 +103,12 @@ class SupplyIntegrationTests(unittest.IsolatedAsyncioTestCase):
         m, h, c = self.make({'target_supply_temperature_entity': None, 'supply_control': {
             'heating_strategy': 'constant', 'trend_seconds': 120, 'fault_seconds': 600,
             'recovery_seconds': 120}})
-        m._zones['noah']['delta_air'] = 2
-        m._zones['noah']['t_air'] = 20
+        m._zones['zone_1']['delta_air'] = 2
+        m._zones['zone_1']['t_air'] = 20
         await self.tick(m, h, c)
         for _ in range(22):
             await self.tick(m, h, c, 30)
-        self.assertIn('zone:noah:insufficient_response', m.supply.diagnostics['supply_faults'])
+        self.assertIn('zone:zone_1:insufficient_response', m.supply.diagnostics['supply_faults'])
         self.assertEqual(m._plant_state, 'running')
 
     async def test_units_device_bounds_nan_and_freshness_are_checked(self):
@@ -160,21 +160,21 @@ class SupplyIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_filtered_room_sample_cannot_mask_unavailable_or_old_source(self):
         m, h, c = self.make()
-        m.entry.config['zones'] = [dict(id='noah', sensor_air='sensor.air')]
+        m.entry.config['zones'] = [dict(id='zone_1', sensor_air='sensor.air')]
         m._options['zones'] = m.entry.config['zones']
         h.states.set('sensor.air', '21')
-        m._zones['noah'].update(t_air=20.5, delta_air=1.5,
+        m._zones['zone_1'].update(t_air=20.5, delta_air=1.5,
                                 air_sensor_entity_id='sensor.air', temperature_sampled_at=c.now)
         await m._update_supply('HEAT', force=True)
-        self.assertEqual(m.supply.controller._history['noah'][-1][1], 20.5)
+        self.assertEqual(m.supply.controller._history['zone_1'][-1][1], 20.5)
         h.states.set('sensor.air', 'unavailable')
         c.advance(60)
         await m._update_supply('HEAT', force=True)
-        self.assertNotIn('noah', m.supply.controller._history)
+        self.assertNotIn('zone_1', m.supply.controller._history)
         h.states.set('sensor.air', '21')
         c.advance(61)
         await m._update_supply('HEAT', force=True)
-        self.assertNotIn('noah', m.supply.controller._history)
+        self.assertNotIn('zone_1', m.supply.controller._history)
 
     async def test_legacy_thirty_second_observation_profile_has_effective_minute_cadence(self):
         m, h, c = self.make({'supply_control': {

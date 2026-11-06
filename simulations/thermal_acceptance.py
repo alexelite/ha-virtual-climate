@@ -1,8 +1,8 @@
 """Reproducible synthetic acceptance cases; no hardware or HA interaction.
 
 Run: .venv/bin/python simulations/thermal_acceptance.py
-The initial PI and pulse policy is measured before model eligibility. Model
-identification and held-out eligibility are covered separately by unit tests.
+Compares initial PI and a separately trained/restored model against legacy.
+Eligibility and actual predictive minutes are reported rather than assumed.
 """
 import importlib.util
 import json
@@ -123,12 +123,38 @@ def run():
 
 
 def write_markdown(results):
+    """Write generic validation evidence with fingerprints of the tested sources."""
+    from datetime import datetime, timezone
+    from hashlib import sha256
+
+    fingerprints = {
+        str(path.relative_to(ROOT)): sha256(path.read_bytes()).hexdigest()
+        for path in (ROOT/'custom_components/virtual_climate/thermal_control.py',
+                     Path(__file__).resolve())
+    }
     lines = [
-        '# Raport de simulare termică', '',
-        'Sunt păstrate inclusiv rezultatele nefavorabile. Acceptarea completă pentru activare live **nu este îndeplinită**.', '',
-        'Instalație sintetică: câștig 0.6°C/h, pierdere 0.45°C/h (0.15°C/h la sarcină mică), impuls minim 9 minute, pauză minimă 4 minute, ciclu legacy fix de 12 minute. Parametrii au un efect puternic asupra comparației; rezultatele nu sunt universale.', '',
-        'Deficitul este de două ori integrala pătratului abaterii sub setpoint−0.2°C; depășirea severă integrează pătratul abaterii peste setpoint+0.6°C, în °C²·h. Pragul de severitate este o convenție de simulare. Pornirile sunt tranziții ale actuatorului, fără confirmare de ardere.', '',
-        '| Scenariu | Deficit legacy / PI / după învățare | Depășire severă legacy / PI / după învățare | Porniri legacy / PI / după învățare | Acceptare PI |',
+        '# Thermal simulation results', '',
+        f'Generated on {datetime.now(timezone.utc).date().isoformat()} (UTC). '
+        'Source fingerprints identify the tested revision, including uncommitted changes.', '',
+        '| Source | SHA-256 |', '| --- | --- |',
+        *[f'| `{path}` | `{digest}` |' for path, digest in fingerprints.items()], '',
+        '## Method and scope', '',
+        'Synthetic plant: gain 0.6°C/hour, loss 0.45°C/hour (0.15 at low load), '
+        'minimum pulse 9 minutes, minimum pause 4 minutes, and a fixed 12-minute '
+        'legacy cycle. Four days of control are simulated per scenario. '
+        'Delays range from 20 to 60 minutes and persistence from 45 to 180 minutes. '
+        'These assumptions strongly influence the comparison.', '',
+        'Weighted deficit is twice the integrated squared deviation below '
+        'setpoint−0.2°C. Severe overshoot integrates squared deviation above '
+        'setpoint+0.6°C, in °C²·hour. The severity threshold is a simulation '
+        'convention. Starts are actuator transitions, not confirmed combustion.', '',
+        'The after-learning stage includes nine synthetic training days and '
+        'rebuilds active history after restoration. The JSON records model '
+        'eligibility and actual predictive minutes. An already accurate initial '
+        'profile may not demonstrate 15% improvement and remains on initial PI.', '',
+        '## Results', '',
+        '**Full comfort acceptance is not met.** Unfavorable results are retained.', '',
+        '| Scenario | Deficit legacy / PI / after learning | Severe overshoot legacy / PI / after learning | Starts legacy / PI / after learning | Initial PI acceptance |',
         '| --- | --- | --- | --- | --- |',
     ]
     for name, row in results.items():
@@ -137,20 +163,35 @@ def write_markdown(results):
             metrics.append(' / '.join(str(row[stage][key]) if key == 'starts' else f'{row[stage][key]:.3f}'
                                      for stage in ('legacy', 'initial_pi', 'after_learning')))
         accepted = row['maintenance_acceptance']
-        status = 'da' if accepted else 'nu' if accepted is False else 'scenariu funcțional'
+        status = 'pass' if accepted else 'fail' if accepted is False else 'functional scenario'
         lines.append(f'| {name} | {metrics[0]} | {metrics[1]} | {metrics[2]} | {status} |')
     lines += [
-        '', 'Etapa de după învățare include nouă zile de observații sintetice și refacerea istoricului după restaurare. Eligibilitatea și minutele predictive efective sunt în JSON. Un profil inițial deja exact nu poate demonstra o îmbunătățire de 15% și rămâne pe PI.', '',
-        'Legacy poate avea deficit aproape nul prin prelungirea impulsurilor mici la durata minimă. Reducerea pornirilor nu justifică declararea acceptării când deficitul sau depășirea severă cresc. Cazurile de setpoint și aport extern necesită și ele calibrare.', '',
-        'Protecțiile, contabilizarea limitată, persistența și lipsa comenzilor suplimentare în observe sunt verificate separat prin teste deterministe. Criteriile de confort pentru activare live nu sunt încă demonstrate pe toate cazurile. Penalizările 0.02/0.01 sunt explicite, dar nu sunt considerate calibrate pentru activare live.', '',
-        'Reproducere: `.venv/bin/python simulations/thermal_acceptance.py`. Datele sunt sintetice și nu reprezintă confort obținut în instalație.', '',
+        '', '## Interpretation and limitations', '',
+        'Maintenance acceptance requires reduced weighted deficit without increased '
+        'severe overshoot or starts versus legacy. Reduced starts do not compensate '
+        'for worse deficit or overshoot. Legacy may achieve near-zero deficit by '
+        'extending small pulses to the minimum duration. Low load, setpoint changes, '
+        'and external heat expose additional calibration limitations.', '',
+        'The comparison is between synthetic scheduling policies, not a complete '
+        'Home Assistant service simulation or a hydraulic model. Deterministic '
+        'coordinator tests separately cover protections, bounded accounting, '
+        'persistence, multiple zones, and command identity in observe/legacy. '
+        'Neither those tests nor these scenarios establish comfort in physical equipment.', '',
+        'The variation/start penalties 0.02/0.01 are explicit assumptions; '
+        'they are not established calibration for general use. These results '
+        'do not support recommending adaptive control as a comfort improvement '
+        'across the maintenance scenarios.', '',
+        '## Reproduce', '',
+        'Run `.venv/bin/python simulations/thermal_acceptance.py` from the repository root. '
+        'The generator updates this report and [numerical results](thermal-simulation-results.json). '
+        'See [Testing](../testing.md) and [Adaptive heating](../../features/adaptive-control.md).', '',
     ]
-    (ROOT/'docs/thermal-simulation-results.md').write_text('\n'.join(lines))
+    (ROOT/'docs/development/observations/thermal-simulation-results.md').write_text('\n'.join(lines))
 
 
 if __name__ == '__main__':
     result=run()
-    path=ROOT/'docs/thermal-simulation-results.json'
+    path=ROOT/'docs/development/observations/thermal-simulation-results.json'
     path.write_text(json.dumps(result,indent=2)+'\n')
     write_markdown(result)
     print(json.dumps(result,indent=2))

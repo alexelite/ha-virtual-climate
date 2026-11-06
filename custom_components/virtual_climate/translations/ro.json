@@ -111,7 +111,7 @@
         },
         "thermal_control": {
           "title": "Control termic cu memorie",
-          "description": "Legacy păstrează controlul existent. Observe calculează propuneri fără comenzi suplimentare. Adaptive necesită activare explicită. Parametrii avansați sunt descriși în docs/adaptive-control.md.",
+          "description": "Legacy păstrează controlul existent. Observe calculează propuneri fără comenzi suplimentare. Adaptive necesită activare explicită. Parametrii avansați sunt descriși în docs/features/adaptive-control.md.",
           "data": {
             "heating_control_strategy": "Strategie de încălzire",
             "thermal_parameters": "Parametri avansați (obiect JSON)"
@@ -195,7 +195,7 @@
         },
         "zone_edit": {
           "title": "Editează Setările Zonei",
-          "description": "Configurați parametrii specifici zonei. Limitele de siguranță pentru pardoseală de mai jos sunt rezervate pentru utilizare viitoare și nu reprezintă setpoint-ul temperaturii camerei. Ele se aplică doar când este configurat un senzor valid de temperatură a pardoselii.",
+          "description": "Configurați parametrii zonei. Cu un senzor de pardoseală valid, maximul de încălzire și minimul de răcire blochează funcționarea respectivă. Celelalte limite au rol de diagnostic. Limitele pardoselii sunt distincte de setpointurile camerei.",
           "data": {
             "support_mode": "Moduri suportate",
             "sensor_air": "Senzor temperatură aer",
@@ -244,7 +244,7 @@
         },
         "thermal_control": {
           "title": "Control termic cu memorie",
-          "description": "Legacy păstrează controlul existent. Observe calculează propuneri fără comenzi suplimentare. Adaptive necesită activare explicită. Parametrii avansați sunt descriși în docs/adaptive-control.md.",
+          "description": "Legacy păstrează controlul existent. Observe calculează propuneri fără comenzi suplimentare. Adaptive necesită activare explicită. Parametrii avansați sunt descriși în docs/features/adaptive-control.md.",
           "data": {
             "heating_control_strategy": "Strategie de încălzire",
             "thermal_parameters": "Parametri avansați (obiect JSON)"
@@ -265,7 +265,7 @@
     "services": {
       "update_zone": {
         "name": "Actualizează setările zonei",
-        "description": "Actualizează configurația zonei în timp real fără repornire.",
+        "description": "Salvează configurația zonei și reîncarcă instanța integrării.",
         "fields": {
           "zone_id": {
             "name": "ID Zonă",

@@ -111,7 +111,7 @@
         },
         "thermal_control": {
           "title": "Heating control with thermal memory",
-          "description": "Legacy preserves existing control. Observe calculates proposals without extra commands. Adaptive requires explicit activation. Advanced parameters are documented in docs/adaptive-control.md.",
+          "description": "Legacy preserves existing control. Observe calculates proposals without extra commands. Adaptive requires explicit activation. Advanced parameters are documented in docs/features/adaptive-control.md.",
           "data": {
             "heating_control_strategy": "Heating strategy",
             "thermal_parameters": "Advanced parameters (JSON object)"
@@ -195,7 +195,7 @@
         },
         "zone_edit": {
           "title": "Edit Zone Settings",
-          "description": "Configure zone-specific parameters. The floor safety limits below are reserved for future use and are not the room temperature setpoint. They only apply when a valid floor temperature sensor is configured.",
+          "description": "Configure zone-specific parameters. With a valid floor sensor, the heating maximum and cooling minimum block the respective operation. The other floor bounds are diagnostic only. Floor limits are distinct from room setpoints.",
           "data": {
             "support_mode": "Supported modes",
             "sensor_air": "Air temperature sensor",
@@ -244,7 +244,7 @@
         },
         "thermal_control": {
           "title": "Heating control with thermal memory",
-          "description": "Legacy preserves existing control. Observe calculates proposals without extra commands. Adaptive requires explicit activation. Advanced parameters are documented in docs/adaptive-control.md.",
+          "description": "Legacy preserves existing control. Observe calculates proposals without extra commands. Adaptive requires explicit activation. Advanced parameters are documented in docs/features/adaptive-control.md.",
           "data": {
             "heating_control_strategy": "Heating strategy",
             "thermal_parameters": "Advanced parameters (JSON object)"
@@ -265,7 +265,7 @@
     "services": {
       "update_zone": {
         "name": "Update zone settings",
-        "description": "Update zone configuration at runtime without restart.",
+        "description": "Save zone configuration and reload the integration entry.",
         "fields": {
           "zone_id": {
             "name": "Zone ID",

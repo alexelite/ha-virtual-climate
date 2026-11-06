@@ -2,24 +2,33 @@
 status: accepted
 ---
 
-# Separarea compensării climatice de reglajul local al turului
+# Separate supply target calculation from local regulation
 
-Modulul de compensare climatică din Virtual Climate calculează temperatura țintă de tur din condițiile exterioare și interioare și o transmite dispozitivului care realizează reglajul local. Prima etapă acoperă încălzirea; răcirea va fi tratată ulterior. Această decizie extinde strategia cu ținte fixe descrisă în README. Implementarea inițială și profilul configurabil de calibrare sunt descrise în [ghidul de utilizare](../supply-control.md).
+Virtual Climate calculates a target supply temperature and transmits it through
+a configured entity. A local device regulates the actual water temperature and
+implements equipment-specific protections. This separates room/weather policy
+from device-dependent regulation and avoids implementing mixing-valve control
+in Home Assistant.
 
-Pentru instalațiile radiante cu inerție mare, evaluarea urmărește comportamentul pe o perioadă relevantă, fără a cere urmărirea strictă a țintei în fiecare moment. Oscilațiile în jurul țintei pot fi acceptabile; exemplul discutat este o țintă de 33°C cu valori de aproximativ 32–34°C. Exemplul nu stabilește o toleranță sau o fereastră de timp universală.
+Slow radiant systems need response evaluation over meaningful periods rather
+than strict instantaneous tracking. Persistent deviations can justify diagnostic
+notifications without establishing their physical cause or automatically stopping
+heating. Existing protection limits retain priority.
 
-Modulul trebuie să poată detecta abateri persistente și să semnaleze posibile avarii în limita senzorilor disponibili, fără să preia reglajul local. Separarea păstrează reglajul dependent de echipament în dispozitiv, iar calculul țintei și supravegherea în integrare. O cerere de funcționare emisă de integrare nu confirmă funcționarea efectivă.
+Supply-curve learning and active response monitoring use context from operating
+requests controlled by Virtual Climate. Curve calculation alone does not justify
+learning. Suspected faults suspend learning for the common curve so a faulty
+zone is not silently excluded from comfort evaluation; validated corrections
+remain available. Recovery requires sustained acceptable response and does not
+override explicitly frozen learning.
 
-Învățarea și monitorizarea activă a răspunsului sunt condiționate inițial de controlul cererii de încălzire de către Virtual Climate. Perioadele de evaluare folosesc contextul cererilor emise. Calculul curbei este o funcție distinctă; prezența lui nu este suficientă pentru activarea învățării sau monitorizării. Avariile suspectate suspendă învățarea, pentru ca o problemă de funcționare să nu fie încorporată în curba învățată. Criteriile și ferestrele exacte de evaluare rămân de stabilit.
+A command failure is distinct from a thermal-response fault. A required startup
+target write must succeed before a source request. An operational write failure
+causes controlled retries and notification without itself stopping the source.
+Write success does not confirm achieved supply temperature.
 
-Lipsa răspunsului termic produce inițial diagnostic și notificare, fără oprirea automată a încălzirii. Învățarea bazată pe observațiile suspecte se suspendă, iar escaladarea nejustificată a boostului se oprește. Încălzirea continuă în limitele configurate, cu prioritate pentru protecțiile existente. Notificarea separă observația de cauzele posibile; de exemplu, un răspuns insuficient poate justifica verificarea debitului, dar nu confirmă singur un debit insuficient.
-
-Inițial, o abatere termică suspectă într-o zonă eligibilă suspendă învățarea întregii curbe de tur comune. Corecțiile validate se păstrează, încălzirea continuă și zona rămâne vizibilă în evaluarea confortului și în diagnostic. Regula evită optimizarea curbei doar pentru camerele fără probleme și va fi reevaluată pe baza funcționării reale.
-
-Învățarea se poate relua automat după o perioadă de funcționare cu date valide și răspuns termic acceptabil, nu după o singură măsurătoare bună. Confirmarea notificării nu șterge condiția tehnică. Înghețarea manuală a învățării rămâne disponibilă și nu este anulată de această reluare automată. Durata și criteriile numerice ale perioadei de revenire rămân de calibrat.
-
-## Transmiterea țintei
-
-Indisponibilitatea entității țintă sau eșecul apelului de scriere reprezintă o problemă de comandă, distinctă de lipsa răspunsului termic. Pe durata problemei se suspendă probele și învățarea, se reîncearcă transmiterea la intervale controlate și se semnalează eroarea.
-
-Înaintea unei porniri noi a sursei, integrarea așteaptă transmiterea cu succes a țintei. Dacă instalația funcționează deja, eroarea de transmitere nu provoacă singură oprirea automată; protecțiile existente rămân active. Succesul transmiterii nu confirmă realizarea temperaturii solicitate, care se evaluează separat în timp, numai dacă există senzor de tur.
+The [supply guide](../features/supply-control.md) and
+[reference](../reference/configuration.md#supply-policy) define current behavior
+and configurable thresholds. [Operation](../operation.md#circuit-responsibilities)
+distinguishes direct and external sequencing ownership; both retain local
+supply regulation in the device.

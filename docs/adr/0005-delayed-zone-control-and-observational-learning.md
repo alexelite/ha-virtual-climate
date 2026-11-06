@@ -2,30 +2,29 @@
 status: accepted
 ---
 
-# Control cu memorie și învățare observațională a zonelor
+# Delayed zone control and observational learning
 
-Calculul cererii de încălzire poate folosi istoricul activării raportate a
-actuatorului, cu întârziere și persistență explicită. Alegem un model simplu,
-identificabil prin grilă și regresie cu constrângeri, în locul escaladării
-automate a turului sau a unei dependențe ML. Indicatorul de aport nu este energie.
+Zone heating policy can account for reported actuator history with explicit
+delay and persistence. Use a bounded grid and constrained regression to identify
+a simple thermal model, avoiding a machine-learning dependency or automatic
+supply escalation. Delayed effect is an indicator, not measured energy.
 
-Învățarea observațională a zonei este distinctă de învățarea curbei sursei:
-poate folosi o sursă independentă fără să inventeze confirmarea funcționării
-acesteia. Aceasta extinde delimitarea din ADR 0001–0003 numai pentru modelul
-zonei; cerințele de control pentru învățarea curbei de tur rămân valabile.
+Observational zone learning is separate from supply-curve learning. It can use
+an independently managed source without inventing evidence of source operation.
+This extends ADRs 0001–0003 only for the zone model; supply-curve learning retains
+its controlled-request requirements.
 
-Configurațiile existente rămân `legacy`; `observe` învață exclusiv din
-comenzile reale și nu intervine în ele. `adaptive` este explicit. Predicția
-necesită șapte zile valide, trei secvențe informative încălzire/pauză și
-minimum 15% îmbunătățire pe date ulterioare, excluse din ajustare. Până atunci
-se folosește control proporțional cu integrală lentă. Modelul persistă separat
-pe intrare și zonă; soldul impulsurilor și istoricul activ se reconstruiesc
-la restart. Protecțiile au prioritate față de orice propunere.
+Existing and new configurations default to `legacy`. `observe` learns from actual
+commands without extra commands. `adaptive` is explicit and uses initial PI until
+prediction eligibility is established by valid data, informative sequences, and
+held-out improvement. Persist zone models separately from common supply learning;
+rebuild active history and pulse balance after restart. Protections take priority.
 
-Reglajul local al turului și implementarea hardware rămân în afara integrării.
-Virtual Climate comunică prin entități Home Assistant selectate explicit și nu
-depinde de structura firmware-ului sau de o anumită platformă de dispozitiv.
-[Contractul regulatorului local](../local-supply-regulator-contract.md),
-[specificația aprobată](../adaptive-control-plan.md) și
-[ghidul implementării](../adaptive-control.md) descriu seam-ul, parametrii și
-validarea.
+Device firmware and local supply regulation remain outside the integration.
+Commands use explicitly configured Home Assistant entities. Circuit ownership is
+described in [Operation](../operation.md#circuit-responsibilities).
+
+An accepted architectural decision does not mean comfort acceptance has passed.
+The [feature guide](../features/adaptive-control.md) explains eligibility and
+limitations; the [synthetic report](../development/observations/thermal-simulation-results.md)
+preserves results, including unmet criteria.

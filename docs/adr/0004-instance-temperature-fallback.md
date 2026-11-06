@@ -2,16 +2,19 @@
 status: accepted
 ---
 
-# Încălzire oportunistă cu temperatură de avarie
+# Opportunistic heating with an entry-level fallback temperature
 
-O zonă fără măsurare poate folosi mediana temperaturilor reale ale instanței
-pentru a calcula deschiderea actuatorului, păstrând indisponibilă temperatura
-afișată. Numai zonele măsurate solicită sursa și determină ciclul; zona pe
-avarie primește căldură în ferestrele lor de funcționare. Această separare
-păstrează utilitatea setpointului fără a trata estimarea drept observație.
+A zone without its own room measurement can use the median of real measurements
+in the same entry to calculate actuator demand while its displayed measured
+temperature remains unavailable. Only measured zones request the source and
+determine the cycle; fallback zones join their operating windows. This preserves
+a useful setpoint without presenting an estimate as an observation.
 
-Funcția este opțională și exclusiv pentru încălzire. Fallbackul nu participă
-la boost sau monitorizarea răspunsului camerei; suspendă învățarea curbei
-comune, continuând politica prudentă din ADR 0001–0003. Senzorii reali pot
-continua să determine boostul. În lipsa tuturor măsurătorilor nu există
-cerere de funcționare. Detaliile sunt în [ghid](../temperature-fallback.md).
+The feature is opt-in and heating-only. Fallback zones do not contribute to
+recovery boost or room-response monitoring. Active fallback suspends learning of
+the common supply curve under the conservative policy in ADRs 0001–0003, retaining
+validated corrections. Measured rooms may still determine boost. Without valid
+measured demand, fallback cannot start the circuit.
+
+See [Temperature fallback](../features/temperature-fallback.md) for behavior and
+limitations, including the risk of an estimate overheating or underheating a room.

@@ -9,7 +9,7 @@ from support import Clock, FakeHass, thermostat
 class ClimateDiagnosticsTests(unittest.TestCase):
     def make(self):
         hass = FakeHass(Clock())
-        config = {'id': 'noah', 'switch_actuator': 'switch.noah', 'sensor_floor': None, 'support_mode': 'BOTH'}
+        config = {'id': 'zone_1', 'switch_actuator': 'switch.zone_1', 'sensor_floor': None, 'support_mode': 'BOTH'}
         entry = SimpleNamespace(config={'zones': [config]})
         entry.entry_id = 'test'
         return thermostat(hass, entry, config), hass
@@ -17,13 +17,13 @@ class ClimateDiagnosticsTests(unittest.TestCase):
     def test_heat_demand_without_actuator_on_is_idle(self):
         climate, hass = self.make()
         climate._t_air = 20
-        hass.states.set('switch.noah', 'off')
+        hass.states.set('switch.zone_1', 'off')
         self.assertEqual(climate.hvac_action, 'idle')
 
     def test_actuator_on_reports_heating_even_during_minimum_run_hold(self):
         climate, hass = self.make()
         climate._t_air = 22.1
-        hass.states.set('switch.noah', 'on')
+        hass.states.set('switch.zone_1', 'on')
         self.assertEqual(climate.hvac_action, 'heating')
 
     def test_removed_floor_sensor_has_no_floor_diagnostic(self):
@@ -42,7 +42,7 @@ class ClimateDiagnosticsTests(unittest.TestCase):
             hass.states.set('sensor.air', str(temperature))
             asyncio.run(climate._async_publish_status(None))
             climate._on_zone_schedule({
-                'entry_id': 'test', 'zone_id': 'noah',
+                'entry_id': 'test', 'zone_id': 'zone_1',
                 'aggregated_demand_ratio': tick / 100,
             })
             self.assertAlmostEqual(hass.zone_status[-1]['t_air'], temperature)
@@ -59,11 +59,11 @@ class ClimateDiagnosticsTests(unittest.TestCase):
         climate.async_write_ha_state = lambda: writes.append(climate.hvac_action)
         asyncio.run(climate._async_publish_status(None))
         hass.clock.advance(5)
-        hass.states.set('switch.noah', 'on')
+        hass.states.set('switch.zone_1', 'on')
         asyncio.run(climate._async_publish_status(None))
         self.assertEqual(writes, ['idle', 'heating'])
         climate._on_zone_schedule({
-            'entry_id': 'test', 'zone_id': 'noah', 'blocked_by': 'window_open',
+            'entry_id': 'test', 'zone_id': 'zone_1', 'blocked_by': 'window_open',
         })
         self.assertEqual(len(writes), 3)
 
