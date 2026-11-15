@@ -15,6 +15,13 @@ _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "virtual_climate"
 
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the shared frontend and API once, before loading entries."""
+    from .panel import async_setup_panel
+
+    await async_setup_panel(hass)
+    return True
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up the Virtual Climate integration from a config entry."""
     hass.data.setdefault(DOMAIN, {})

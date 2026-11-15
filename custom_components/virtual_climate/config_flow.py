@@ -271,13 +271,27 @@ def _parse_supply_form(user_input):
 
 def _supply_output_options(user_input, current):
     """Keep persisted keys stable while editing them in the supply form."""
-    result = {CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY: user_input.get(CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY)}
+    entity = user_input.get(CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY) or None
+    if entity is not None and (not isinstance(entity, str) or entity.count(".") != 1
+                              or entity.split(".")[0] not in ("number", "input_number")
+                              or not entity.split(".")[1]):
+        raise ValueError("Target output must be a number or input_number entity")
+    result = {CONF_TARGET_SUPPLY_TEMPERATURE_ENTITY: entity}
     for key in (CONF_HEATING_SUPPLY_TARGET, CONF_COOLING_SUPPLY_TARGET):
         value = finite(user_input.get(key, current.get(key, DEFAULTS[key])))
         low, high = (10, 60) if key == CONF_HEATING_SUPPLY_TARGET else (5, 30)
         if value is None or not low <= value <= high:
             raise ValueError(f"Invalid {key}")
         result[key] = value
+    return result
+
+
+def build_supply_options(current, options, user_input):
+    """Validate a complete supply form without mutating persisted configuration."""
+    config = _parse_supply_form(user_input)
+    result = dict(options)
+    result.update(_supply_output_options(user_input, current))
+    result[CONF_SUPPLY_CONTROL] = config
     return result
 
 
@@ -810,10 +824,7 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
         errors, reason = {}, ""
         if user_input is not None:
             try:
-                config = _parse_supply_form(user_input)
-                options = dict(self._config_entry.options)
-                options.update(_supply_output_options(user_input, self.current_config))
-                options[CONF_SUPPLY_CONTROL] = config
+                options = build_supply_options(self.current_config, self._config_entry.options, user_input)
                 return self.async_create_entry(title="", data=options)
             except (ValueError, TypeError) as error:
                 errors, reason = {"base": "invalid_supply_control"}, str(error)

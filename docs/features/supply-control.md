@@ -5,6 +5,8 @@ show the inputs required for calculation, transmission, monitoring, and learning
 
 Open **Supply temperature control** during setup or in the integration's options.
 Configure the target entity, constant targets, strategies, sensors, and limits.
+The [Virtual Climate panel](../configuration.md#virtual-climate-panel) also
+provides a conditional editor with a base-curve graph and review before applying.
 Virtual Climate calculates and transmits a target; a local device regulates the
 actual water temperature. See [circuit responsibilities](../operation.md#circuit-responsibilities).
 

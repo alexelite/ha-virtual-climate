@@ -4,6 +4,39 @@ Open the integration's options in **Settings → Devices & services** to edit an
 existing configuration. Each configuration entry has its own zones, circuit
 entities, and learning state.
 
+## Virtual Climate panel
+
+Open **Virtual Climate** in the sidebar. The panel shares one sidebar entry
+across configuration entries; use the instance selector to switch circuits.
+Entry-specific URLs can be bookmarked.
+
+**Operation** provides basic room setpoint and AUTO/OFF controls and reported
+circuit values. **Diagnostics** shows supply-target contributions separately;
+administrators can also consult the saved base curve without opening an editor.
+These pages do not edit integration configuration. Reported output activation
+does not confirm physical operation; see [Operation](operation.md#protection-and-reported-state).
+
+Administrators can open **Settings → Supply temperature control** to edit supply
+strategies, sensors, target output, constant targets, limits, base-curve points,
+learning mode and recovery boost. Curve fields appear when heating uses weather
+compensation; cooling settings are omitted for the heating-only external profile.
+The editor preserves hidden values and advanced supply tuning. Other settings
+remain in the integration's options flow.
+
+Edits remain local until **Review changes**, followed by **Apply changes**.
+The review lists changed values, learning resets and the reload impact described
+[below](#saving-and-reload). Discarding edits restores the last configuration
+loaded into the editor. Applying changes affects only the selected entry.
+If another session or options flow saves first, reload the saved configuration
+before editing again; stale edits are rejected rather than overwriting it.
+
+The graph compares the draft base curve with the saved curve. A constant
+strategy appears as a horizontal line. Graph temperatures are in °C. The graph
+does not command equipment or include live learned corrections, trials or boost;
+consult their separate values in **Diagnostics**. Point count and outdoor
+interval changes reset all curve learning; changing a base point resets that
+point's learning. See [Supply control](features/supply-control.md#learning-and-recovery-boost).
+
 ## Global Settings
 
 Select the global mode helper and the `direct` or `external` circuit profile.

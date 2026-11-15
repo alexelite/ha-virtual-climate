@@ -5,6 +5,13 @@ corresponds to that release; the guides on `main` describe the current source.
 
 ## Unreleased
 
+### Added
+
+- Shared Virtual Climate sidebar panel with instance selection, basic thermostat
+  controls, read-only supply diagnostics, and administrator supply settings.
+- Conditional weather-curve editor with a graph, review of learning resets and
+  reload effects, and protection against overwriting newer configuration edits.
+
 ### Fixed
 
 - Exposed circuit profile, capabilities, reported state, external entity

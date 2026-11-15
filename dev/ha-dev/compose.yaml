@@ -1,0 +1,11 @@
+name: virtual-climate-dev
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:${HA_VERSION:?Set HA_VERSION to an explicit release}
+    ports:
+      - "127.0.0.1:8124:8123"
+    environment:
+      TZ: Europe/Bucharest
+    volumes:
+      - ../../local/ha-dev/config:/config
+      - ../../custom_components/virtual_climate:/config/custom_components/virtual_climate:ro
