@@ -1,7 +1,7 @@
 {
   "domain": "virtual_climate",
   "name": "Virtual Climate",
-  "version": "0.1.1b2",
+  "version": "0.1.1b3",
   "documentation": "https://github.com/alexelite/ha-virtual-climate",
   "issue_tracker": "https://github.com/alexelite/ha-virtual-climate/issues",
   "requirements": [],
