@@ -16,6 +16,9 @@ corresponds to that release; the guides on `main` describe the current source.
 
 - Exposed circuit profile, capabilities, reported state, external entity
   availability, and request timing basis as Plant state sensor attributes.
+- Panel and options-flow supply editors keep the 0–90 °C supply limits of
+  configurations created before `supply_control`, matching runtime behavior,
+  instead of silently applying the 20–45 °C defaults on save.
 
 ### Documentation
 

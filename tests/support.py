@@ -219,7 +219,8 @@ def coordinator(config=None, zones=None):
     load_source('const.py', namespace)
     regulator_ns = dict(__name__='test_supply_regulator', asyncio=asyncio, logging=logging,
                         time=clock, THERMAL_UPDATE_SECONDS=60, Store=MemoryStore, SupplyController=supply_module.SupplyController,
-                        finite=supply_module.finite, normalize_supply_config=supply_module.normalize_supply_config)
+                        finite=supply_module.finite, normalize_supply_config=supply_module.normalize_supply_config,
+                        effective_supply_config=supply_module.effective_supply_config)
     load_source('supply_regulator.py', regulator_ns)
     namespace['SupplyRegulator'] = regulator_ns['SupplyRegulator']
     thermal_ns = dict(__name__='test_thermal_regulator', logging=logging, time=clock, Store=MemoryStore,
@@ -254,6 +255,7 @@ def options_flow():
     namespace = dict(__name__='test_config_flow', vol=vol, callback=callback,
                      SUPPLY_DEFAULTS=supply_module.SUPPLY_DEFAULTS, finite=supply_module.finite,
                      normalize_supply_config=supply_module.normalize_supply_config,
+                     effective_supply_config=supply_module.effective_supply_config,
                      STRATEGIES=thermal_module.STRATEGIES, normalize_thermal=thermal_module.normalize,
                      config_entries=SimpleNamespace(OptionsFlow=FakeOptionsFlow),
                      selector=lambda config: lambda value: value)

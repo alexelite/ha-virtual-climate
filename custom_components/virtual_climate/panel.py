@@ -21,7 +21,7 @@ from .config_flow import (
     DEFAULTS, SUPPLY_BASIC_KEYS, SUPPLY_CURVE_KEYS, build_supply_options,
     get_current_config,
 )
-from .supply_control import normalize_supply_config
+from .supply_control import effective_supply_config
 
 DOMAIN = "virtual_climate"
 SUPPLY_KEYS = SUPPLY_BASIC_KEYS + SUPPLY_CURVE_KEYS
@@ -36,7 +36,7 @@ def revision(entry):
 
 
 def settings(config):
-    supply = normalize_supply_config(config.get("supply_control"))
+    supply = effective_supply_config(config.get("supply_control"))
     return {**{key: config.get(key, DEFAULTS[key]) for key in OUTPUT_KEYS},
             **{key: deepcopy(supply[key]) for key in SUPPLY_KEYS}}
 
@@ -48,7 +48,7 @@ def prepare_change(entry, changes):
     current = get_current_config(entry)
     before = settings(current)
     proposed = {**before, **deepcopy(changes)}
-    supply = normalize_supply_config(current.get("supply_control"))
+    supply = effective_supply_config(current.get("supply_control"))
     supply.update({key: proposed[key] for key in SUPPLY_KEYS})
     form = {key: proposed[key] for key in OUTPUT_KEYS}
     form.update({key: supply[key] for key in SUPPLY_BASIC_KEYS})

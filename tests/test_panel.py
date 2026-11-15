@@ -45,6 +45,20 @@ class PanelTests(unittest.TestCase):
                 _, preview = self.ns["prepare_change"](self.entry, changes)
                 self.assertEqual(preview["learning_reset"], "all")
 
+    def test_legacy_entry_keeps_runtime_limits_when_saved(self):
+        # Entries created before supply_control run with 0-90 limits; a panel
+        # edit must neither narrow them silently nor hide a change in review.
+        entry = SimpleNamespace(domain="virtual_climate", data={
+            "global_co_mode_entity": "input_select.mode", "zones": [{"id": "zone_a"}],
+        }, options={"heating_supply_target": 55})
+        settings = self.ns["settings"](self.ns["get_current_config"](entry))
+        self.assertEqual((settings["heating_min"], settings["heating_max"]), (0.0, 90.0))
+        options, preview = self.ns["prepare_change"](entry, {"supply_sensor": "sensor.supply"})
+        self.assertEqual([c["key"] for c in preview["changes"]], ["supply_sensor"])
+        supply = options["supply_control"]
+        self.assertEqual((supply["heating_min"], supply["heating_max"]), (0.0, 90.0))
+        self.assertEqual((supply["cooling_min"], supply["cooling_max"]), (0.0, 90.0))
+
     def test_rejects_invalid_and_out_of_scope_settings_without_mutation(self):
         before = deepcopy(self.entry)
         invalid = ({"zones": []}, {"heating_strategy": "weather_compensated"},

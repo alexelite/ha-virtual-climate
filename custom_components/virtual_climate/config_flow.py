@@ -7,7 +7,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers.selector import selector
 from homeassistant.core import callback
-from .supply_control import finite, normalize_supply_config
+from .supply_control import effective_supply_config, finite, normalize_supply_config
 from .capabilities import CIRCUIT_DEFAULTS, validate_circuit
 from .thermal_control import STRATEGIES, normalize as normalize_thermal
 
@@ -216,8 +216,8 @@ SUPPLY_BASIC_KEYS = ("heating_strategy", "cooling_strategy", "outdoor_sensor", "
 SUPPLY_CURVE_KEYS = ("outdoor_min", "outdoor_max", "supply_points")
 
 
-def _supply_schema(config, user_input=None, global_config=None):
-    config = normalize_supply_config(config)
+def _supply_schema(config, user_input=None, global_config=None, legacy=False):
+    config = effective_supply_config(config) if legacy else normalize_supply_config(config)
     if user_input is not None:
         for key in SUPPLY_BASIC_KEYS:
             if key in user_input or key.endswith("_sensor"):
@@ -829,7 +829,7 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
             except (ValueError, TypeError) as error:
                 errors, reason = {"base": "invalid_supply_control"}, str(error)
         return self.async_show_form(step_id="supply_control",
-                                    data_schema=_supply_schema(self.current_config.get(CONF_SUPPLY_CONTROL), user_input, self.current_config),
+                                    data_schema=_supply_schema(self.current_config.get(CONF_SUPPLY_CONTROL), user_input, self.current_config, legacy=True),
                                     errors=errors, description_placeholders={"reason": reason})
 
     async def async_step_import_json_replace(self, user_input=None):

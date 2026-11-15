@@ -7,7 +7,7 @@ import time
 
 from homeassistant.helpers.storage import Store
 
-from .supply_control import SupplyController, finite, normalize_supply_config
+from .supply_control import SupplyController, effective_supply_config, finite
 from .const import THERMAL_UPDATE_SECONDS
 
 _LOGGER = logging.getLogger(__name__)
@@ -30,12 +30,8 @@ class SupplyRegulator:
         self.diagnostics = {}
 
     def _config(self, options):
-        value = options.get("supply_control")
-        if value is None:
-            # Legacy fixed targets retain their previously configured range.
-            value = {"heating_min": 0.0, "heating_max": 90.0,
-                     "cooling_min": 0.0, "cooling_max": 90.0}
-        config = normalize_supply_config(value)
+        # Legacy fixed targets retain their previously configured range.
+        config = effective_supply_config(options.get("supply_control"))
         # Old exports may specify 30 seconds; the integration now samples rooms
         # once a minute, so learning must use the same effective sample cadence.
         config["sample_seconds"] = max(THERMAL_UPDATE_SECONDS, config["sample_seconds"])
