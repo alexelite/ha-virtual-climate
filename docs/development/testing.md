@@ -34,6 +34,16 @@ changes and identify the source revision in the report.
 
 ## Deployment helpers
 
+For an isolated local UI environment with synthetic entities, see the
+[Home Assistant Container setup](../../dev/ha-dev/README.md).
+
+Panel configuration tests cover preserved advanced settings, invalid curves,
+learning-reset previews, stale revisions and saves during entry reload. Run
+`node --check custom_components/virtual_climate/frontend/panel.js` for frontend
+syntax. In a real development HA instance, also verify administrator access,
+validation without writes, instance isolation, save/reload, and conditional fields
+in the browser. Unit tests use HA I/O doubles and do not replace those checks.
+
 `dev/sync.sh` and `dev/deploy.py` support SSH deployment to a user-supplied host.
 They are contributor tools rather than prerequisites for using the integration.
 Use `bash dev/sync.sh --help` for options and host requirements. Supply your own

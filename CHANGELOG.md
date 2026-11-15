@@ -5,10 +5,20 @@ corresponds to that release; the guides on `main` describe the current source.
 
 ## Unreleased
 
+### Added
+
+- Shared Virtual Climate sidebar panel with instance selection, basic thermostat
+  controls, read-only supply diagnostics, and administrator supply settings.
+- Conditional weather-curve editor with a graph, review of learning resets and
+  reload effects, and protection against overwriting newer configuration edits.
+
 ### Fixed
 
 - Exposed circuit profile, capabilities, reported state, external entity
   availability, and request timing basis as Plant state sensor attributes.
+- Panel and options-flow supply editors keep the 0–90 °C supply limits of
+  configurations created before `supply_control`, matching runtime behavior,
+  instead of silently applying the 20–45 °C defaults on save.
 
 ### Documentation
 

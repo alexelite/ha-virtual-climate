@@ -46,6 +46,15 @@ def finite(value):
     return result if math.isfinite(result) else None
 
 
+LEGACY_SUPPLY_LIMITS = {"heating_min": 0.0, "heating_max": 90.0,
+                        "cooling_min": 0.0, "cooling_max": 90.0}
+
+
+def effective_supply_config(value):
+    """Normalize a stored block; entries without one keep the legacy 0-90 range."""
+    return normalize_supply_config(deepcopy(LEGACY_SUPPLY_LIMITS) if value is None else value)
+
+
 def normalize_supply_config(value=None):
     """Validate both imports and options; reject unknown keys and NaN."""
     if value is not None and not isinstance(value, dict):
