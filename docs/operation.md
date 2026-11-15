@@ -52,7 +52,20 @@ equipment protections can reject or interrupt commands. With multiple entries
 sharing a source, use one owner of the physical output or an external demand
 arbiter; entries must not independently fight over the same relay.
 
-Omitted direct pump/source outputs mean that function is managed independently.
+Omitted direct outputs mean that function is managed independently. The two
+cases behave differently:
+
+- **Source configured, no pump.** Virtual Climate sequences the source; the pump
+  must circulate on its own.
+- **Pump configured, no source at all (pump-only).** Virtual Climate starts the
+  pump after a zone valve reports open and stops it with the normal post-run,
+  in heating and in cooling. The source must produce supply water on its own:
+  Virtual Climate does not start it, cannot tell whether it runs, and does not
+  check water temperature. Supply-curve learning is not used. Saving this
+  configuration in the options flow shows a notice explaining it.
+- **Heating source configured, no cooling source or changeover.** Cooling remains
+  unsupported; the pump does not start in cooling mode.
+
 The integration does not create a substitute output. Device firmware, pins,
 mixing-valve regulation, and hardware interlocks are outside this repository.
 
@@ -85,7 +98,12 @@ connection loss, and the heating-only restriction.
 
 Window contacts, manual off, floor limits, and humidity/dew-point conditions can
 block a zone. Cooling is derated near the humidity alert threshold and blocked
-on humidity fault or an unsafe dew-point condition. With a valid floor sensor, the coordinator blocks heating at `heat_max` and
+on humidity fault or an unsafe dew-point condition. If a zone has a humidity
+sensor configured and it becomes unavailable, or no dew point can be derived,
+that zone stops cooling with block reason `rh_unavailable` until the value
+returns. A zone without a configured humidity sensor cools without humidity
+protection. Heating does not depend on humidity. See
+[ADR 0006](adr/0006-cooling-stops-on-humidity-loss.md). With a valid floor sensor, the coordinator blocks heating at `heat_max` and
 cooling at `cool_min`. The other floor bounds are diagnostic conditions, not
 additional interlocks or a demand to maintain floor temperature. A missing floor
 sensor is reported and contributes no floor limit.

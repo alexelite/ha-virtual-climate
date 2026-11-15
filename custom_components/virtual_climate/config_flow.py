@@ -8,7 +8,7 @@ from homeassistant import config_entries
 from homeassistant.helpers.selector import selector
 from homeassistant.core import callback
 from .supply_control import effective_supply_config, finite, normalize_supply_config
-from .capabilities import CIRCUIT_DEFAULTS, validate_circuit
+from .capabilities import CIRCUIT_DEFAULTS, pump_only_modes, validate_circuit
 from .thermal_control import STRATEGIES, normalize as normalize_thermal
 
 DOMAIN = "virtual_climate"
@@ -970,6 +970,18 @@ class VirtualClimateOptionsFlow(config_entries.OptionsFlow):
             form = await self.async_step_global_options()
             form["errors"] = {"base": "invalid_circuit"}
             return form
+        if pump_only_modes(user_input):
+            self._pending_global = user_input
+            return await self.async_step_confirm_pump_only()
+        return self._save_global_options(user_input)
+
+    async def async_step_confirm_pump_only(self, user_input=None):
+        """Explain pump-only operation before it is saved."""
+        if user_input is not None:
+            return self._save_global_options(self._pending_global)
+        return self.async_show_form(step_id="confirm_pump_only", data_schema=vol.Schema({}))
+
+    def _save_global_options(self, user_input):
         # Save global options
         options = self._config_entry.options.copy()
         options.update({key: user_input.get(key, default) for key, default in CIRCUIT_DEFAULTS.items()})

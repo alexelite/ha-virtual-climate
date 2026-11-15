@@ -129,6 +129,10 @@
     },
     "options": {
       "step": {
+        "confirm_pump_only": {
+          "title": "Pump without a heat or cooling source",
+          "description": "No heating or cooling source is configured, so Virtual Climate will command only the circulation pump. The pump starts when a zone requests demand and its valve is open, and stops with the normal post-run.\n\nThe heat or cooling source must produce supply water on its own. Virtual Climate does not start it, cannot tell whether it is running, and does not verify that the water is hot or cold. Supply-curve learning is not used, because the source is not controlled.\n\nSubmit to save these settings."
+        },
         "init": {
           "title": "Virtual Climate Options",
           "description": "Configure global settings, edit zones, replace the configuration from JSON, or export the current configuration.",

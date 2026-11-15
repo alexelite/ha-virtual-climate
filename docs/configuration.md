@@ -12,7 +12,10 @@ Entry-specific URLs can be bookmarked.
 
 **Operation** provides basic room setpoint and AUTO/OFF controls and reported
 circuit values. **Diagnostics** shows supply-target contributions separately;
-administrators can also consult the saved base curve without opening an editor.
+administrators can also consult the saved base curve and the complete **Saved
+configuration** without opening an editor: instance and circuit settings, the
+effective supply settings, and each zone, as stored. Empty optional settings are
+omitted.
 These pages do not edit integration configuration. Reported output activation
 does not confirm physical operation; see [Operation](operation.md#protection-and-reported-state).
 
@@ -20,10 +23,20 @@ Administrators can open **Settings → Supply temperature control** to edit supp
 strategies, sensors, target output, constant targets, limits, base-curve points,
 learning mode and recovery boost. Curve fields appear when heating uses weather
 compensation; cooling settings are omitted for the heating-only external profile.
-The editor preserves hidden values and advanced supply tuning. Other settings
-remain in the integration's options flow.
+The editor preserves hidden values and advanced supply tuning.
 
-Edits remain local until **Review changes**, followed by **Apply changes**.
+Administrators can open **Zone settings** to edit one zone at a time: name,
+supported modes, temperature smoothing, room sensor, actuator switch, humidity
+sensor, floor sensor, window contact, valve timings, minimum on/off times and
+floor limits (10–40 °C). Zone ID, thermal profile, thermal parameters and keys
+not shown are preserved and remain editable only in the options flow. Other zones
+are unaffected.
+
+Global and circuit settings, thermal control, adding or removing zones, and
+JSON import/export remain available only in the integration's options flow.
+
+Both editors work the same way. Edits remain local until **Review changes**,
+followed by **Apply changes**.
 The review lists changed values, learning resets and the reload impact described
 [below](#saving-and-reload). Discarding edits restores the last configuration
 loaded into the editor. Applying changes affects only the selected entry.
@@ -48,6 +61,11 @@ Choose `simultaneous` packing to start eligible zone slots together, or
 `staggered` to offset them by demand rank. Cycle minimum and maximum bound the
 cycle length selected from measured-zone demand. Humidity thresholds and the
 dew-point margin apply during cooling.
+
+If a circulation pump is configured without any heating or cooling source,
+saving shows a notice before the change is stored: Virtual Climate will command
+only the pump, and the source must operate independently. See
+[Operation](operation.md#circuit-responsibilities).
 
 Temperature fallback is an explicit heating-only option; read its
 [limitations](features/temperature-fallback.md) before enabling it.

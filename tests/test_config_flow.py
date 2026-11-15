@@ -88,3 +88,23 @@ class OptionalEntityTests(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class PumpOnlyConfirmationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_pump_without_source_requires_confirmation_before_saving(self):
+        ns = options_flow()
+        entry = SimpleNamespace(data=dict(global_co_mode_entity='input_select.mode'), options={})
+        flow = ns['VirtualClimateOptionsFlow'](entry)
+        form = await flow.async_step_global_options()
+        values = form['data_schema']({'circulation_pump_entity': 'switch.pump'})
+        notice = await flow.async_step_global_options(values)
+        self.assertEqual(notice['step_id'], 'confirm_pump_only')
+        result = await flow.async_step_confirm_pump_only({})
+        self.assertEqual(result['type'], 'create_entry')
+        self.assertEqual(result['data']['circulation_pump_entity'], 'switch.pump')
+
+    def test_pump_only_modes(self):
+        modes = options_flow()['pump_only_modes']
+        self.assertEqual(modes({'circulation_pump_entity': 'switch.p', 'heating_source_entity': 'switch.h'}), [])
+        self.assertEqual(modes({'circulation_pump_entity': 'switch.p', 'circuit_control': 'external'}), [])
+        self.assertEqual(modes({'heating_source_entity': 'switch.h'}), [])

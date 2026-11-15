@@ -24,7 +24,7 @@ from .const import (
     CONF_PUMP_POST_RUN_SECONDS, CONF_MINIMUM_OFF_TIME_SECONDS,
     DEFAULTS, EVENT_ENTRY_ID
 )
-from .capabilities import validate_circuit, circuit_capabilities
+from .capabilities import validate_circuit, circuit_capabilities, pump_only_modes
 from .config_flow import get_current_config
 from .helpers import co_mode_from_entity
 from .supply_regulator import SupplyRegulator
@@ -376,7 +376,7 @@ class ZoneManager:
         self._last_system_mode = system_mode
         inputs = (self._options, {
             zid: {key: z.get(key) for key in (
-                "delta_air", "control_setpoint", "temperature_sampled_at", "t_air", "t_air_raw", "t_floor", "rh", "dew_point", "manual_off",
+                "delta_air", "control_setpoint", "temperature_sampled_at", "t_air", "t_air_raw", "t_floor", "rh", "rh_sensor_configured", "dew_point", "manual_off",
                 "eligible_window", "support_mode", "actuator", "limits")}
             for zid, z in self._zones.items()})
         replan = thermal_due or inputs != self._last_control_inputs
@@ -582,6 +582,17 @@ class ZoneManager:
                 z["coordinator_status"] = "blocked"
                 continue
 
+            # A configured humidity sensor that stops reporting removes the
+            # condensation protections, so the zone stops cooling. Zones
+            # without a configured sensor keep cooling unprotected (ADR 0006).
+            if co_mode == "COOL" and z.get("rh_sensor_configured") and (rh is None or t_dew is None):
+                block_reasons.append("rh_unavailable")
+                z["requested_p"] = 0.0
+                z["requested_t_on"] = 0.0
+                z["last_block_reasons"] = block_reasons
+                z["coordinator_status"] = "blocked"
+                continue
+
             # RH fault interlock (COOL only)
             rh_fault_active = False
             if co_mode == "COOL" and rh is not None and rh >= rh_fault:
@@ -744,7 +755,11 @@ class ZoneManager:
         await self._request_plant_stop(reason)
 
     def _plant_mode_supported(self, mode: str) -> bool:
-        return self._source_entity_for_mode(mode) is not None
+        if self._source_entity_for_mode(mode) is not None:
+            return True
+        # Direct pump-only: Virtual Climate runs the pump; an independently
+        # managed source must supply the water itself.
+        return mode in pump_only_modes(self._options)
 
     def _source_entity_for_mode(self, mode: str) -> str | None:
         if self._external_circuit():
@@ -879,7 +894,8 @@ class ZoneManager:
         )
         try:
             min_off = int(self._options.get(CONF_MINIMUM_OFF_TIME_SECONDS, DEFAULTS[CONF_MINIMUM_OFF_TIME_SECONDS]))
-            source_state = self.hass.states.get(self._source_entity_for_mode(mode))
+            source_entity = self._source_entity_for_mode(mode)
+            source_state = self.hass.states.get(source_entity) if source_entity else None
             stopped_at = self._plant_stopped_at
             if source_state and source_state.state == "off":
                 changed = getattr(source_state, "last_changed", None)

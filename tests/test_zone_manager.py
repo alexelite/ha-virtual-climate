@@ -249,6 +249,27 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(data['actuator_mismatch'])
         self.assertTrue(data['scheduled_running'])
 
+    async def test_cooling_stops_when_configured_humidity_is_lost(self):
+        cool = dict(co_mode='COOL', active_co_mode='COOL', delta_air=-1.5, t_air=25,
+                    rh_sensor_configured=True, rh=50, dew_point=15)
+        m, h, c = self.make(config={'test_mode': 'COOL'}, zones=[zone(**cool)])
+        await self.tick(m, h, c)
+        self.assertEqual(h.states.get('switch.zone_1').state, 'on')
+        m._zones['zone_1'].update(rh=None, dew_point=None)
+        await self.tick(m, h, c, 1)
+        self.assertEqual(m._zones['zone_1']['last_block_reasons'], ['rh_unavailable'])
+        self.assertEqual(h.states.get('switch.zone_1').state, 'off')
+
+    async def test_cooling_without_configured_humidity_is_unchanged(self):
+        m, h, c = self.make(config={'test_mode': 'COOL'}, zones=[zone(
+            co_mode='COOL', active_co_mode='COOL', delta_air=-1.5, t_air=25, rh=None, dew_point=None)])
+        await self.tick(m, h, c)
+        self.assertEqual(m._zones['zone_1']['requested_p'], 1.0)
+        # Heating never depends on humidity.
+        m, h, c = self.make(zones=[zone(delta=1.5, rh_sensor_configured=True, rh=None)])
+        await self.tick(m, h, c)
+        self.assertEqual(m._zones['zone_1']['requested_p'], 1.0)
+
     async def test_window_interlock_stops_active_zone_immediately(self):
         m, h, c = self.make()
         await self.tick(m, h, c)
@@ -297,6 +318,20 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(h.states.get('switch.source'))
         await self.tick(m, h, c, 1)
         self.assertEqual(h.states.get('switch.source').state, 'on')
+
+    async def test_pump_only_circuit_runs_pump_with_independent_source(self):
+        m, h, c = self.make(config={'circulation_pump_entity': 'switch.pump'}, zones=[zone(delta=1.5)])
+        await self.tick(m, h, c)
+        self.assertEqual(h.states.get('switch.zone_1').state, 'on')
+        for _ in range(4):
+            await self.tick(m, h, c, 60)
+        self.assertEqual(h.states.get('switch.pump').state, 'on')
+        self.assertEqual(m._plant_state, 'running')
+        m._zones['zone_1']['delta_air'] = -1
+        for _ in range(20):
+            await self.tick(m, h, c, 120)
+        self.assertEqual(h.states.get('switch.pump').state, 'off')
+        self.assertEqual(m._plant_state, 'off')
 
     async def test_source_never_starts_without_confirmed_open_zone(self):
         m, h, c = self.make(config={'heating_source_entity': 'switch.source'})

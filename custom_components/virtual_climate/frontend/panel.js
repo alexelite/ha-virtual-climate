@@ -30,6 +30,15 @@ const TEXT = {
     failed:"The request failed. Check the connection and try again.", temperature:"Room setpoint", auto:"Follow system", mode:"Zone mode", current:"Room temperature", savedOnly:"Saved base curve",
     coolingHelp:"Cooling uses a constant target. Availability depends on circuit configuration.", fallbackHelp:"Used for constant heating and when outdoor data is invalid during weather compensation.",
     inactiveHelp:"The curve and learning settings are preserved while constant heating is selected.", requiredOutdoor:"Weather compensation requires an outdoor sensor.",
+    zonesTab:"Zone settings", zoneEditor:"Zone settings", zoneHelp:"Edit one zone at a time. Changes stay here until you review and apply them.", zone:"Zone",
+    savedConfig:"Saved configuration", savedConfigHelp:"Every stored setting of this instance, read-only. Empty optional settings are omitted.", globalSettings:"Instance and circuit", setting:"Setting", value:"Value",
+    name:"Name", support_mode:"Supported modes", HEAT:"Heating only", COOL:"Cooling only", BOTH:"Heating and cooling", temperature_filter_enabled:"Smooth room temperature",
+    sensor_air:"Room temperature sensor", switch_actuator:"Valve / actuator switch", sensor_rh:"Humidity sensor", sensor_floor:"Floor temperature sensor", window_switch:"Window contact",
+    open_s:"Valve opening time (s)", close_s:"Valve closing time (s)", zone_min_on_s:"Minimum on time (s)", zone_min_off_s:"Minimum off time (s)",
+    floor_heat_min:"Floor heating minimum (°C)", floor_heat_max:"Floor heating maximum (°C)", floor_cool_min:"Floor cooling minimum (°C)", floor_cool_max:"Floor cooling maximum (°C)",
+    zoneSensors:"Sensors and actuator", zoneTiming:"Valve timing", zoneFloor:"Floor limits", zoneFloorHelp:"Optional, 10–40 °C. Heating stops at the heating maximum and cooling at the cooling minimum.",
+    rhHelp:"With a humidity sensor configured, the zone stops cooling while it is unavailable. Without one, the zone cools without humidity protection.",
+    zoneOther:"Zone ID, thermal profile and thermal parameters stay in Settings → Devices & services → Virtual Climate.", zoneSuccess:"Zone saved. The instance is reloading.",
   },
   ro: {
     operation:"Operare", diagnostics:"Diagnostic", settings:"Setări", instance:"Instanță", loading:"Se încarcă…",
@@ -60,6 +69,15 @@ const TEXT = {
     failed:"Cererea a eșuat. Verifică conexiunea și reîncearcă.", temperature:"Temperatură dorită", auto:"Urmează sistemul", mode:"Mod zonă", current:"Temperatură cameră", savedOnly:"Curba de bază salvată",
     coolingHelp:"Răcirea folosește o țintă constantă. Disponibilitatea depinde de configurația circuitului.", fallbackHelp:"Folosită pentru încălzirea constantă și când datele exterioare sunt invalide în modul curbă climatică.",
     inactiveHelp:"Curba și setările de învățare se păstrează când este selectată încălzirea constantă.", requiredOutdoor:"Curba climatică necesită un senzor exterior.",
+    zonesTab:"Setări zone", zoneEditor:"Setări zone", zoneHelp:"Editezi câte o zonă. Modificările rămân aici până le verifici și le aplici.", zone:"Zonă",
+    savedConfig:"Configurația salvată", savedConfigHelp:"Toate setările salvate ale instanței, doar pentru consultare. Setările opționale goale nu sunt afișate.", globalSettings:"Instanță și circuit", setting:"Setare", value:"Valoare",
+    name:"Nume", support_mode:"Moduri permise", HEAT:"Doar încălzire", COOL:"Doar răcire", BOTH:"Încălzire și răcire", temperature_filter_enabled:"Netezește temperatura camerei",
+    sensor_air:"Senzor temperatură cameră", switch_actuator:"Comutator valvă / actuator", sensor_rh:"Senzor umiditate", sensor_floor:"Senzor temperatură pardoseală", window_switch:"Contact fereastră",
+    open_s:"Timp deschidere valvă (s)", close_s:"Timp închidere valvă (s)", zone_min_on_s:"Timp minim pornit (s)", zone_min_off_s:"Timp minim oprit (s)",
+    floor_heat_min:"Pardoseală încălzire minim (°C)", floor_heat_max:"Pardoseală încălzire maxim (°C)", floor_cool_min:"Pardoseală răcire minim (°C)", floor_cool_max:"Pardoseală răcire maxim (°C)",
+    zoneSensors:"Senzori și actuator", zoneTiming:"Temporizări valvă", zoneFloor:"Limite pardoseală", zoneFloorHelp:"Opțional, 10–40 °C. Încălzirea se oprește la maximul de încălzire, răcirea la minimul de răcire.",
+    rhHelp:"Cu senzor de umiditate configurat, zona nu răcește cât timp senzorul e indisponibil. Fără senzor, zona răcește fără protecție la umiditate.",
+    zoneOther:"ID-ul zonei, profilul termic și parametrii termici rămân în Settings → Devices & services → Virtual Climate.", zoneSuccess:"Zona a fost salvată. Instanța se reîncarcă.",
   },
 };
 
@@ -108,12 +126,12 @@ class VirtualClimatePanel extends HTMLElement {
     try {
       this._entries = await this._api("entries");
       if (!this._entries.some((entry) => entry.entry_id === this._entryId)) this._readRoute(true);
-      if (this._entryId && this._page !== "settings" && this._hass.user?.is_admin) {
+      const editing = () => ["settings", "zones"].includes(this._page);
+      if (this._entryId && !editing() && this._hass.user?.is_admin) {
         const id = this._entryId;
         const snapshot = await this._api("settings", {entry_id:id});
-        if (id === this._entryId && this._page !== "settings" && snapshot.revision !== this._snapshot?.revision) {
-          this._snapshot = snapshot;
-          this._draft = clone(snapshot.settings);
+        if (id === this._entryId && !editing() && snapshot.revision !== this._snapshot?.revision) {
+          await this._loadSnapshots(id);
           this._render();
         }
       }
@@ -121,7 +139,26 @@ class VirtualClimatePanel extends HTMLElement {
     } catch { /* The HA connection indicator handles temporary disconnects. */ }
   }
   _api(command, data = {}) { return this._hass.callWS({type:`virtual_climate/panel/${command}`, ...data}); }
-  _dirty() { return !!this._snapshot && JSON.stringify(this._draft) !== JSON.stringify(this._snapshot.settings); }
+  _dirty() {
+    const supply = !!this._snapshot && JSON.stringify(this._draft) !== JSON.stringify(this._snapshot.settings);
+    return supply || (!!this._zoneDraft && JSON.stringify(this._zoneDraft) !== JSON.stringify(this._savedZone()?.settings));
+  }
+  _savedZone() { return this._config?.zones.find((zone) => zone.id === this._zoneId); }
+  _selectZone(id) {
+    this._zoneId = id;
+    this._zoneDraft = this._savedZone() ? clone(this._savedZone().settings) : null;
+    this._review = null;
+  }
+  async _loadSnapshots(id) {
+    const sequence = this._sequence;
+    const [snapshot, config] = await Promise.all([this._api("settings", {entry_id:id}), this._api("config", {entry_id:id})]);
+    if (sequence !== this._sequence || id !== this._entryId) return false;
+    this._snapshot = snapshot;
+    this._draft = clone(snapshot.settings);
+    this._config = config;
+    this._selectZone(config.zones.some((zone) => zone.id === this._zoneId) ? this._zoneId : config.zones[0]?.id);
+    return true;
+  }
   _entry() { return this._entries.find((entry) => entry.entry_id === this._entryId); }
   _entity(key) { return this._entry()?.entities.find((entity) => entity.key === key)?.entity_id; }
   _state(key) { return this._hass.states[this._entity(key)]; }
@@ -140,7 +177,7 @@ class VirtualClimatePanel extends HTMLElement {
   _readRoute(force = false) {
     const parts = (this._route?.path || location.pathname.replace(/^\/virtual-climate/, "")).split("/").filter(Boolean);
     const id = this._entries.some((entry) => entry.entry_id === parts[0]) ? parts[0] : this._entries[0]?.entry_id;
-    const page = ["operation", "diagnostics", "settings"].includes(parts[1]) ? parts[1] : "operation";
+    const page = ["operation", "diagnostics", "settings", "zones"].includes(parts[1]) ? parts[1] : "operation";
     if (force || id !== this._entryId || page !== this._page) {
       if (this._dirty() && !window.confirm(this.t("leave"))) {
         history.replaceState(null, "", `/virtual-climate/${this._entryId}/${this._page}`);
@@ -153,15 +190,12 @@ class VirtualClimatePanel extends HTMLElement {
     const sequence = this._sequence = (this._sequence || 0) + 1;
     this._entryId = id;
     this._page = page;
-    this._snapshot = this._draft = this._review = null;
+    this._snapshot = this._draft = this._review = this._config = this._zoneDraft = null;
     this._error = this._notice = "";
     this._render();
     if (id && this._hass.user?.is_admin) {
       try {
-        const snapshot = await this._api("settings", {entry_id:id});
-        if (sequence !== this._sequence) return;
-        this._snapshot = snapshot;
-        this._draft = clone(snapshot.settings);
+        if (!await this._loadSnapshots(id)) return;
       } catch (error) { if (sequence === this._sequence) this._error = this._errorText(error); }
       if (sequence === this._sequence) this._render();
     }
@@ -172,10 +206,10 @@ class VirtualClimatePanel extends HTMLElement {
     this.shadowRoot.innerHTML = `<style>${STYLES}</style>
       <header><button class="menu" aria-label="${this.t("menu")}">☰</button><b>Virtual Climate</b>
       ${this._entries.length > 1 ? `<label class="instance">${this.t("instance")}<select id="instance" ${this._busy ? "disabled" : ""}>${this._entries.map((entry, index) => `<option value="${entry.entry_id}" ${entry.entry_id === this._entryId ? "selected" : ""}>${escapeHTML(entry.title)} · ${index + 1}</option>`).join("")}</select></label>` : `<span class="instance">${escapeHTML(this._entry()?.title || "")}</span>`}</header>
-      <nav aria-label="Virtual Climate">${["operation", "diagnostics", ...(this._hass?.user?.is_admin ? ["settings"] : [])].map((page) => `<button data-page="${page}" class="${this._page === page ? "active" : ""} ${page === "settings" ? "settings-tab" : ""}" aria-current="${this._page === page ? "page" : "false"}">${page === "settings" ? "⚙ " : ""}${this.t(page)}</button>`).join("")}</nav>
+      <nav aria-label="Virtual Climate">${["operation", "diagnostics", ...(this._hass?.user?.is_admin ? ["settings", "zones"] : [])].map((page) => `<button data-page="${page}" class="${this._page === page ? "active" : ""} ${page === "settings" ? "settings-tab" : ""}" aria-current="${this._page === page ? "page" : "false"}">${["settings", "zones"].includes(page) ? "⚙ " : ""}${this.t(page === "zones" ? "zonesTab" : page)}</button>`).join("")}</nav>
       <main>${this._error ? `<div role="alert" class="alert error">${escapeHTML(this._error)} <button id="retry">${this.t("reload")}</button></div>` : ""}
       ${this._notice ? `<div role="status" class="alert success">${escapeHTML(this._notice)}</div>` : ""}
-      ${!this._entries.length ? `<p>${this.t(this._error || this._loadedEntries ? "noEntries" : "loading")}</p>` : !this._entryId ? "" : this._page === "settings" ? this._settingsView() : this._page === "diagnostics" ? this._diagnosticsView() : this._operationView()}</main>`;
+      ${!this._entries.length ? `<p>${this.t(this._error || this._loadedEntries ? "noEntries" : "loading")}</p>` : !this._entryId ? "" : this._page === "zones" ? this._zonesView() : this._page === "settings" ? this._settingsView() : this._page === "diagnostics" ? this._diagnosticsView() : this._operationView()}</main>`;
     this.shadowRoot.querySelector(".menu").onclick = () => this.dispatchEvent(new CustomEvent("hass-toggle-menu", {bubbles:true, composed:true}));
     this.shadowRoot.querySelectorAll("[data-page]").forEach((button) => button.onclick = () => this._navigate(this._entryId, button.dataset.page));
     const picker = this.shadowRoot.querySelector("#instance");
@@ -184,6 +218,7 @@ class VirtualClimatePanel extends HTMLElement {
       if (!this._dirty() || window.confirm(this.t("leave"))) this._switch(this._entryId, this._page);
     });
     this._bindSettings();
+    this._bindZone();
     this._bindControls();
     this._updateLive();
   }
@@ -204,7 +239,28 @@ class VirtualClimatePanel extends HTMLElement {
     return `<div class="page-heading"><div><p class="eyebrow">${this.t("diagnostics")}</p><h1>${this.t("diagnosticTitle")}</h1><p>${this.t("diagnosticHelp")}</p></div></div>
       <section class="card"><h2>${this.t("applied")}</h2><p>${this.t("appliedHelp")}</p>${this._snapshot ? `<div class="metrics"><div class="metric"><span>${this.t("strategy")}</span><strong>${this.t(this._snapshot.settings.heating_strategy)}</strong></div><div class="metric"><span>${this.t("heating_supply_target")}</span><strong>${this._snapshot.settings.heating_supply_target} °C</strong></div></div>${this._graph(this._snapshot.settings)}` : `<p>${this.t(this._hass.user?.is_admin ? "loading" : "adminOnly")}</p>`}</section>
       <section class="card"><h2>${this.t("contributions")}</h2><div class="metrics">${["supply_curve_target", "supply_learned_correction", "supply_probe_adjustment", "supply_boost"].map((key) => this._metric(key, key)).join("")}${this._metric("supply_target", "target")}${this._metric("supply_actual", "actual")}</div></section>
-      <section class="card"><div class="metrics">${["supply_learning_status", "plant_state", "coordinator_phase"].map((key) => this._metric(key, key)).join("")}</div></section><p class="footnote">${this.t("feedback")}</p>`;
+      <section class="card"><div class="metrics">${["supply_learning_status", "plant_state", "coordinator_phase"].map((key) => this._metric(key, key)).join("")}</div></section>
+      ${this._hass.user?.is_admin ? this._savedConfigView() : ""}<p class="footnote">${this.t("feedback")}</p>`;
+  }
+  _format(value) {
+    if (value === null || value === undefined || value === "") return "—";
+    if (typeof value === "boolean") return value ? "✓" : "—";
+    if (Array.isArray(value)) return value.map((item) => this._format(item)).join(", ");
+    if (typeof value === "object") return Object.entries(value).map(([key, item]) => `${key}: ${this._format(item)}`).join(" · ");
+    return String(value);
+  }
+  _rows(object) {
+    return Object.entries(object).filter(([, value]) => value !== null && value !== undefined && value !== "")
+      .map(([key, value]) => `<tr><td><code>${escapeHTML(key)}</code></td><td>${escapeHTML(this._format(value))}</td></tr>`).join("");
+  }
+  _savedConfigView() {
+    if (!this._config) return `<section class="card"><h2>${this.t("savedConfig")}</h2><p>${this.t("loading")}</p></section>`;
+    const {supply_control: supply, ...global} = this._config.config.global;
+    const head = `<thead><tr><th>${this.t("setting")}</th><th>${this.t("value")}</th></tr></thead>`;
+    return `<section class="card"><h2>${this.t("savedConfig")}</h2><p>${this.t("savedConfigHelp")}</p>
+      <details open><summary>${this.t("globalSettings")}</summary><div class="table-scroll"><table>${head}<tbody>${this._rows(global)}</tbody></table></div></details>
+      <details><summary>${this.t("supply")}</summary><div class="table-scroll"><table>${head}<tbody>${this._rows(supply || {})}</tbody></table></div></details>
+      ${this._config.config.zones.map((zone) => `<details><summary>${this.t("zone")}: ${escapeHTML(zone.name || zone.id)}</summary><div class="table-scroll"><table>${head}<tbody>${this._rows(zone)}</tbody></table></div></details>`).join("")}</section>`;
   }
   _number(key, min, max, step = "any") {
     return `<label>${this.t(key)}<input name="${key}" type="number" min="${min}" max="${max}" step="${step}" required value="${escapeHTML(this._draft[key])}"></label>`;
@@ -268,7 +324,7 @@ class VirtualClimatePanel extends HTMLElement {
     if (!review.changes.length) return `<section class="card" role="status">${this.t("noChanges")}</section>`;
     const format = (value) => escapeHTML(Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? value ? "✓" : "—" : value === null ? "—" : String(this.t(value)));
     return `<section class="card review-card"><h2>${this.t("reviewTitle")}</h2><div class="table-scroll"><table><thead><tr><th>${this.t("changed")}</th><th>${this.t("from")}</th><th>${this.t("to")}</th></tr></thead><tbody>${review.changes.map((change) => `<tr><td>${this.t(change.key === "supply_points" ? "curve" : change.key)}</td><td>${format(change.before)}</td><td>${format(change.after)}</td></tr>`).join("")}</tbody></table></div>
-      <p class="alert">${this.t("reloadWarning")}</p><p>${this.t(review.learning_reset === "all" ? "allReset" : review.learning_reset === "points" ? "pointsReset" : "noReset")} ${review.reset_points.join(", ")}</p>
+      <p class="alert">${this.t("reloadWarning")}</p><p ${this._page === "zones" ? "hidden" : ""}>${this.t(review.learning_reset === "all" ? "allReset" : review.learning_reset === "points" ? "pointsReset" : "noReset")} ${review.reset_points.join(", ")}</p>
       <button class="primary" id="apply" ${this._busy ? "disabled" : ""}>${this.t("apply")}</button></section>`;
   }
   _bindSettings() {
@@ -317,10 +373,77 @@ class VirtualClimatePanel extends HTMLElement {
       const result = await this._api(save ? "save" : "validate", payload);
       if (sequence !== this._sequence) return;
       if (save) {
-        this._snapshot = {...this._snapshot, settings:result.settings, revision:result.revision};
-        this._draft = clone(result.settings);
+        await this._loadSnapshots(id);
         this._review = null;
         this._notice = this.t("success");
+      } else this._review = result;
+    } catch (error) { this._error = this._errorText(error); this._review = null; }
+    finally { this._busy = false; this._render(); if (!save) this.shadowRoot.querySelector("#review")?.scrollIntoView({behavior:"smooth", block:"nearest"}); }
+  }
+  _zoneField(key, type, extra = "") {
+    const value = this._zoneDraft[key];
+    return `<label>${this.t(key)}<input data-zone-field="${key}" type="${type}" ${extra} value="${escapeHTML(value ?? "")}"></label>`;
+  }
+  _zoneEntity(key, domains, required = false) {
+    const options = Object.values(this._hass.states).filter((state) => domains.includes(state.entity_id.split(".")[0]));
+    return `<label>${this.t(key)}<input data-zone-field="${key}" type="text" list="zone-entities-${key}" ${required ? "required" : ""} placeholder="${domains.join(" / ")}" value="${escapeHTML(this._zoneDraft[key] ?? "")}"><datalist id="zone-entities-${key}">${options.map((state) => `<option value="${escapeHTML(state.entity_id)}">${escapeHTML(state.attributes.friendly_name)}</option>`).join("")}</datalist></label>`;
+  }
+  _zonesView() {
+    if (!this._hass.user?.is_admin) return `<p>${this.t("editOnly")}</p>`;
+    if (!this._config) return `<p>${this.t("loading")}</p>`;
+    if (!this._zoneDraft) return `<p>${this.t("noChanges")}</p>`;
+    const d = this._zoneDraft;
+    const floor = (key) => this._zoneField(key, "number", `min="10" max="40" step="0.5"`);
+    return `<div class="page-heading"><div><p class="eyebrow">${this.t("settings")}</p><h1>${this.t("zoneEditor")}</h1><p>${this.t("zoneHelp")}</p></div><span id="dirty" class="badge" ${!this._dirty() ? "hidden" : ""}>${this.t("unsaved")}</span></div>
+      <label class="zone-picker">${this.t("zone")}<select id="zone-picker" ${this._busy ? "disabled" : ""}>${this._config.zones.map((zone) => `<option value="${escapeHTML(zone.id)}" ${zone.id === this._zoneId ? "selected" : ""}>${escapeHTML(zone.settings.name || zone.id)} (${escapeHTML(zone.id)})</option>`).join("")}</select></label>
+      <form id="zone-form"><fieldset ${this._busy ? "disabled" : ""}><div class="settings-grid"><div>
+      <section class="card"><h2>${this.t("zone")}</h2>${this._zoneField("name", "text", `required maxlength="64"`)}
+      <label>${this.t("support_mode")}<select data-zone-field="support_mode">${["BOTH", "HEAT", "COOL"].map((mode) => `<option value="${mode}" ${d.support_mode === mode ? "selected" : ""}>${this.t(mode)}</option>`).join("")}</select></label>
+      <label class="check"><input type="checkbox" data-zone-field="temperature_filter_enabled" ${d.temperature_filter_enabled ? "checked" : ""}>${this.t("temperature_filter_enabled")}</label></section>
+      <section class="card"><h2>${this.t("zoneSensors")}</h2>${this._zoneEntity("sensor_air", ["sensor"], true)}${this._zoneEntity("switch_actuator", ["switch", "group"], true)}
+      ${this._zoneEntity("sensor_rh", ["sensor"])}<p class="hint">${this.t("rhHelp")}</p>${this._zoneEntity("sensor_floor", ["sensor"])}${this._zoneEntity("window_switch", ["binary_sensor"])}</section>
+      </div><div>
+      <section class="card"><h2>${this.t("zoneTiming")}</h2><div class="fields">${this._zoneField("open_s", "number", `min="0" max="600" step="1" required`)}${this._zoneField("close_s", "number", `min="0" max="600" step="1" required`)}
+      ${this._zoneField("zone_min_on_s", "number", `min="0" max="3600" step="1" required`)}${this._zoneField("zone_min_off_s", "number", `min="0" max="3600" step="1" required`)}</div></section>
+      <section class="card"><h2>${this.t("zoneFloor")}</h2><p class="hint">${this.t("zoneFloorHelp")}</p><div class="fields">${floor("floor_heat_min")}${floor("floor_heat_max")}${floor("floor_cool_min")}${floor("floor_cool_max")}</div></section>
+      </div></div>
+      <div class="actions"><button type="button" id="zone-discard">${this.t("discard")}</button><button class="primary" type="submit">${this._busy ? this.t("loading") : this.t("review")}</button></div></fieldset></form>
+      <div id="review">${this._reviewView()}</div><p class="footnote">${this.t("zoneOther")}</p>`;
+  }
+  _bindZone() {
+    const picker = this.shadowRoot.querySelector("#zone-picker");
+    if (picker) picker.onchange = () => {
+      if (this._dirty() && !window.confirm(this.t("leave"))) { picker.value = this._zoneId; return; }
+      this._selectZone(picker.value); this._error = this._notice = ""; this._render();
+    };
+    const form = this.shadowRoot.querySelector("#zone-form");
+    if (!form) return;
+    form.querySelectorAll("[data-zone-field]").forEach((input) => input.addEventListener("input", () => {
+      const key = input.dataset.zoneField;
+      this._zoneDraft[key] = input.type === "checkbox" ? input.checked : input.type === "number" ? input.value === "" ? null : Number(input.value) : input.value.trim() || null;
+      this._review = null;
+      this._notice = "";
+      this.shadowRoot.querySelector("#review").innerHTML = "";
+      this.shadowRoot.querySelector("#dirty").hidden = !this._dirty();
+    }));
+    form.onsubmit = async (event) => { event.preventDefault(); await this._submitZone(false); };
+    this.shadowRoot.querySelector("#zone-discard").onclick = () => { this._selectZone(this._zoneId); this._error = this._notice = ""; this._render(); };
+    this.shadowRoot.querySelector("#apply")?.addEventListener("click", () => this._submitZone(true));
+  }
+  async _submitZone(save) {
+    if (this._busy || (save && !this._review?.changes.length)) return;
+    this._busy = true;
+    this._error = this._notice = "";
+    const id = this._entryId, sequence = this._sequence;
+    const payload = {entry_id:id, zone_id:this._zoneId, revision:this._config.revision, changes:clone(this._zoneDraft)};
+    this._render();
+    try {
+      const result = await this._api(save ? "zone_save" : "zone_validate", payload);
+      if (sequence !== this._sequence) return;
+      if (save) {
+        await this._loadSnapshots(id);
+        this._review = null;
+        this._notice = this.t("zoneSuccess");
       } else this._review = result;
     } catch (error) { this._error = this._errorText(error); this._review = null; }
     finally { this._busy = false; this._render(); if (!save) this.shadowRoot.querySelector("#review")?.scrollIntoView({behavior:"smooth", block:"nearest"}); }
@@ -360,7 +483,7 @@ const STYLES = `
   :host{display:block;min-height:100%;background:var(--primary-background-color,#f5f6f8);color:var(--primary-text-color,#202b31);font-family:var(--paper-font-body1_-_font-family,Roboto,Arial,sans-serif);font-size:14px;--accent:var(--primary-color,#03a9f4)}
   *{box-sizing:border-box}header{height:72px;display:flex;align-items:center;gap:18px;padding:12px 32px;background:var(--card-background-color,#fff);border-bottom:1px solid var(--divider-color,#e5e7eb)}header b{font-size:20px}.instance{margin-left:auto;margin-bottom:0;display:flex;flex-direction:row;align-items:center;gap:12px;color:var(--secondary-text-color,#63717b)}.instance select{min-width:180px;margin:0}.menu{border:0;font-size:22px;padding:8px;background:none;color:inherit}
   nav{display:flex;gap:6px;padding:0 32px;background:var(--card-background-color,#fff);border-bottom:1px solid var(--divider-color,#e5e7eb)}nav button{border:0;border-radius:0;padding:20px 18px;background:none;color:var(--secondary-text-color,#63717b);border-bottom:3px solid transparent}nav button.active{color:var(--accent);border-bottom-color:var(--accent)}nav .settings-tab{margin-left:auto}
-  main{max-width:1320px;margin:auto;padding:32px}.page-heading{display:flex;justify-content:space-between;align-items:center;margin:4px 0 26px;gap:16px}.eyebrow{text-transform:uppercase;letter-spacing:.09em;font-size:11px;font-weight:700;color:var(--accent);margin:0 0 8px}h1{font-size:28px;line-height:1.25;letter-spacing:-.6px;margin:0 0 10px;font-weight:600}h2{font-size:18px;margin:0 0 18px;font-weight:600}h3{font-size:16px;margin:0 0 20px}p{line-height:1.6;margin:8px 0 18px;color:var(--secondary-text-color,#63717b)}.card{background:var(--card-background-color,#fff);border:1px solid var(--divider-color,#e5e7eb);border-radius:14px;padding:24px;margin-bottom:20px}.metrics{display:flex;flex-wrap:wrap;gap:24px 40px}.metric{display:flex;flex-direction:column;gap:10px;min-width:130px}.metric span{font-size:12px;color:var(--secondary-text-color,#63717b)}.metric strong{font-size:21px;font-weight:500}.zone-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}.zone{margin:0}.room-reading{display:flex;align-items:baseline;gap:12px;margin-bottom:24px}.room-reading strong{font-size:30px}.room-reading span{font-size:11px;color:var(--secondary-text-color,#63717b)}.section-title{margin:30px 0 18px}.zone-status{font-size:12px;margin:12px 0 0}.settings-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,1fr);gap:24px;align-items:start}aside{position:sticky;top:20px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.fields label{min-width:0}label{display:flex;flex-direction:column;gap:8px;font-size:13px;font-weight:500;margin-bottom:18px}input,select{font:inherit;color:inherit;background:var(--card-background-color,#fff);border:1px solid var(--divider-color,#cbd1d6);border-radius:8px;padding:12px;min-width:0;width:100%;min-height:44px}input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}input:invalid{border-color:var(--error-color,#db4437)}.check{display:flex;flex-direction:row;align-items:center;gap:10px}.check input{width:18px;min-height:18px}fieldset{border:0;padding:0;margin:0;min-width:0}.hint,.footnote{font-size:12px;color:var(--secondary-text-color,#63717b)}.hint{margin:0 0 20px}.footnote{margin:24px 0}.badge{font-size:12px;background:var(--secondary-background-color,#eef2f5);padding:8px 12px;border-radius:30px;white-space:nowrap}[hidden]{display:none!important}button{font:inherit;font-weight:500;padding:12px 18px;border:1px solid var(--divider-color,#cbd1d6);border-radius:8px;cursor:pointer;background:var(--card-background-color,#fff);color:inherit;min-height:44px}button.primary{background:var(--accent);border-color:var(--accent);color:var(--text-primary-color,#fff)}button:disabled{opacity:.5;cursor:wait}.actions{display:flex;justify-content:flex-end;gap:12px;padding:8px 0 20px}.alert{padding:16px;border-radius:8px;background:var(--secondary-background-color,#eef2f5);line-height:1.6;margin-bottom:20px}.alert.error{border-left:4px solid var(--error-color,#db4437)}.alert.success{border-left:4px solid var(--success-color,#43a047)}.alert button{margin-left:12px}.review-card{border:2px solid var(--accent)}.table-scroll{overflow:auto;margin-bottom:20px}table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}td,th{padding:10px 8px;border-bottom:1px solid var(--divider-color,#e5e7eb);max-width:260px;overflow-wrap:anywhere}th{color:var(--secondary-text-color,#63717b);font-weight:500}td input{max-width:120px}svg{display:block;width:100%;height:auto;overflow:visible}svg text{fill:var(--secondary-text-color,#63717b);font-size:11px}svg path{fill:none;stroke-width:3}.gridline{stroke:var(--divider-color,#e5e7eb)}.saved-curve{stroke:var(--secondary-text-color,#63717b);stroke-dasharray:6 5}.draft-curve{stroke:var(--accent)}svg circle{fill:var(--card-background-color,#fff);stroke:var(--accent);stroke-width:2}.legend{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--secondary-text-color,#63717b)}.saved-line,.draft-line{width:25px;border-top:3px solid var(--accent)}.saved-line{border-top:3px dashed var(--secondary-text-color,#63717b)}.draft-line{margin-left:18px}
+  main{max-width:1320px;margin:auto;padding:32px}.page-heading{display:flex;justify-content:space-between;align-items:center;margin:4px 0 26px;gap:16px}.eyebrow{text-transform:uppercase;letter-spacing:.09em;font-size:11px;font-weight:700;color:var(--accent);margin:0 0 8px}h1{font-size:28px;line-height:1.25;letter-spacing:-.6px;margin:0 0 10px;font-weight:600}h2{font-size:18px;margin:0 0 18px;font-weight:600}h3{font-size:16px;margin:0 0 20px}p{line-height:1.6;margin:8px 0 18px;color:var(--secondary-text-color,#63717b)}.card{background:var(--card-background-color,#fff);border:1px solid var(--divider-color,#e5e7eb);border-radius:14px;padding:24px;margin-bottom:20px}.metrics{display:flex;flex-wrap:wrap;gap:24px 40px}.metric{display:flex;flex-direction:column;gap:10px;min-width:130px}.metric span{font-size:12px;color:var(--secondary-text-color,#63717b)}.metric strong{font-size:21px;font-weight:500}.zone-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}.zone{margin:0}.room-reading{display:flex;align-items:baseline;gap:12px;margin-bottom:24px}.room-reading strong{font-size:30px}.room-reading span{font-size:11px;color:var(--secondary-text-color,#63717b)}.section-title{margin:30px 0 18px}.zone-status{font-size:12px;margin:12px 0 0}.settings-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,1fr);gap:24px;align-items:start}aside{position:sticky;top:20px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.fields label{min-width:0}label{display:flex;flex-direction:column;gap:8px;font-size:13px;font-weight:500;margin-bottom:18px}input,select{font:inherit;color:inherit;background:var(--card-background-color,#fff);border:1px solid var(--divider-color,#cbd1d6);border-radius:8px;padding:12px;min-width:0;width:100%;min-height:44px}input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}input:invalid{border-color:var(--error-color,#db4437)}.check{display:flex;flex-direction:row;align-items:center;gap:10px}.check input{width:18px;min-height:18px}fieldset{border:0;padding:0;margin:0;min-width:0}.hint,.footnote{font-size:12px;color:var(--secondary-text-color,#63717b)}.hint{margin:0 0 20px}.footnote{margin:24px 0}.badge{font-size:12px;background:var(--secondary-background-color,#eef2f5);padding:8px 12px;border-radius:30px;white-space:nowrap}[hidden]{display:none!important}button{font:inherit;font-weight:500;padding:12px 18px;border:1px solid var(--divider-color,#cbd1d6);border-radius:8px;cursor:pointer;background:var(--card-background-color,#fff);color:inherit;min-height:44px}button.primary{background:var(--accent);border-color:var(--accent);color:var(--text-primary-color,#fff)}button:disabled{opacity:.5;cursor:wait}.actions{display:flex;justify-content:flex-end;gap:12px;padding:8px 0 20px}.alert{padding:16px;border-radius:8px;background:var(--secondary-background-color,#eef2f5);line-height:1.6;margin-bottom:20px}.alert.error{border-left:4px solid var(--error-color,#db4437)}.alert.success{border-left:4px solid var(--success-color,#43a047)}.alert button{margin-left:12px}.review-card{border:2px solid var(--accent)}.table-scroll{overflow:auto;margin-bottom:20px}table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}td,th{padding:10px 8px;border-bottom:1px solid var(--divider-color,#e5e7eb);max-width:260px;overflow-wrap:anywhere}th{color:var(--secondary-text-color,#63717b);font-weight:500}td input{max-width:120px}svg{display:block;width:100%;height:auto;overflow:visible}svg text{fill:var(--secondary-text-color,#63717b);font-size:11px}svg path{fill:none;stroke-width:3}.gridline{stroke:var(--divider-color,#e5e7eb)}.saved-curve{stroke:var(--secondary-text-color,#63717b);stroke-dasharray:6 5}.draft-curve{stroke:var(--accent)}svg circle{fill:var(--card-background-color,#fff);stroke:var(--accent);stroke-width:2}details{border-top:1px solid var(--divider-color,#e5e7eb);padding:12px 0}summary{cursor:pointer;font-weight:500;padding:4px 0}details table{margin-top:12px}code{font-size:12px}.zone-picker{max-width:420px}.legend{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--secondary-text-color,#63717b)}.saved-line,.draft-line{width:25px;border-top:3px solid var(--accent)}.saved-line{border-top:3px dashed var(--secondary-text-color,#63717b)}.draft-line{margin-left:18px}
   @media(max-width:850px){main{padding:20px}.settings-grid{grid-template-columns:1fr}aside{position:static;grid-row:1}.preview-card{padding:18px}.zone-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}header,nav{padding-left:16px;padding-right:16px}.page-heading{align-items:flex-start}h1{font-size:24px}.badge{white-space:normal}.instance{font-size:0}.instance select{font-size:14px;min-width:130px;max-width:210px}}
   @media(max-width:480px){header{gap:8px}header b{font-size:17px}main{padding:16px}.card{padding:18px}.fields{grid-template-columns:1fr;gap:0}.metrics{gap:22px}.metric{min-width:110px}.metric strong{font-size:18px}nav{gap:0}nav button{padding:16px 12px}.actions{flex-direction:column}.instance select{max-width:150px}.page-heading{display:block}.badge{display:inline-block;margin-top:10px}}
 `;

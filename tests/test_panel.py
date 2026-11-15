@@ -110,3 +110,48 @@ class PanelTests(unittest.TestCase):
             "changes": {"heating_supply_target": 35},
         }, save=True)
         self.assertEqual(errors[-1][1], "not_ready")
+
+
+class PanelZoneTests(unittest.TestCase):
+    def setUp(self):
+        self.ns = panel()
+        self.zone = {"id": "zone_a", "name": "Living", "sensor_air": "sensor.living", "sensor_rh": "sensor.living_rh",
+                     "switch_actuator": "switch.living", "thermal_parameters": {}, "custom_key": 7}
+        self.entry = SimpleNamespace(domain="virtual_climate", state=SimpleNamespace(value="loaded"), data={
+            "global_co_mode_entity": "input_select.mode",
+            "zones": [self.zone, {"id": "zone_b", "name": "Bed", "sensor_air": "sensor.bed",
+                                  "switch_actuator": "switch.bed"}],
+        }, options={"packing_mode": "staggered"})
+
+    def test_zone_edit_changes_only_that_zone_and_keeps_unknown_keys(self):
+        before = deepcopy(self.entry)
+        options, preview = self.ns["prepare_zone_change"](self.entry, "zone_a", {
+            "name": "Living room", "floor_heat_max": 29, "sensor_rh": None})
+        self.assertEqual(self.entry, before)
+        zones = {zone["id"]: zone for zone in options["zones"]}
+        self.assertEqual(zones["zone_a"]["name"], "Living room")
+        self.assertEqual(zones["zone_a"]["floor_limits"], {"heat_max": 29.0})
+        self.assertIsNone(zones["zone_a"]["sensor_rh"])
+        self.assertEqual(zones["zone_a"]["custom_key"], 7)
+        self.assertEqual(zones["zone_b"]["name"], "Bed")
+        self.assertEqual(options["packing_mode"], "staggered")
+        self.assertEqual({c["key"] for c in preview["changes"]}, {"name", "floor_heat_max", "sensor_rh"})
+
+    def test_noop_zone_edit_reports_no_changes(self):
+        _, preview = self.ns["prepare_zone_change"](self.entry, "zone_a", {})
+        self.assertEqual(preview["changes"], [])
+
+    def test_invalid_zone_edits_are_rejected(self):
+        invalid = ({"sensor_air": None}, {"switch_actuator": "light.x"}, {"support_mode": "AUTO"},
+                   {"open_s": -1}, {"open_s": 1.5}, {"zone_min_on_s": True}, {"floor_heat_min": 35, "floor_heat_max": 30},
+                   {"floor_cool_min": 5}, {"name": " "}, {"id": "zone_c"}, {"temperature_filter_enabled": "yes"})
+        for changes in invalid:
+            with self.subTest(changes=changes), self.assertRaises((ValueError, TypeError)):
+                self.ns["prepare_zone_change"](self.entry, "zone_a", changes)
+        with self.assertRaises(KeyError):
+            self.ns["prepare_zone_change"](self.entry, "missing", {})
+
+    def test_full_config_shows_effective_supply_limits(self):
+        config = self.ns["full_config"](self.ns["get_current_config"](self.entry))
+        self.assertEqual(config["global"]["supply_control"]["heating_max"], 90.0)
+        self.assertEqual([zone["id"] for zone in config["zones"]], ["zone_a", "zone_b"])

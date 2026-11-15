@@ -60,9 +60,27 @@ and select that sensor to inspect them or use them in automation templates.
 | `circuit_unavailable_entities` | Configured external demand/state entities that are missing, `unknown`, or `unavailable` |
 | `request_duration_basis` | `demand` for external timing, `source_request` for direct timing |
 
-The `capabilities` object includes `external_circuit`, `direct_pump`,
-`direct_source`, `cooling`, `supply_target`, `weather_compensation`,
-`supply_verification`, `circuit_state`, and `external_zone_hold`.
+The `capabilities` object contains these flags:
+
+| Flag | `true` when |
+| --- | --- |
+| `external_circuit` | External profile with a configured demand entity |
+| `direct_pump` | Direct profile with a configured circulation pump |
+| `direct_source` | Direct profile with a configured heating or cooling source |
+| `cooling` | Direct profile that can request cooling: a cooling source, or a heating source with changeover |
+| `supply_target` | A target supply temperature entity is configured, so a target can be transmitted |
+| `weather_compensation` | Heating strategy is `weather_compensated` and the outdoor sensor currently reports a valid value |
+| `supply_verification` | The supply sensor currently reports a valid value **and** the circuit is operating |
+| `circuit_state` | External profile with a configured circuit state sensor |
+| `external_zone_hold` | External profile with a post-run zone hold longer than zero |
+
+`supply_verification` only means that actual supply temperature can be observed
+while the circuit runs. It does not mean that reaching the target is verified.
+Target-achievement monitoring additionally requires a transmitted target, that
+is, `supply_target` must also be `true` and the write must have succeeded. With
+`supply_target: false` and `supply_verification: true`, the supply temperature
+is measured but compared with no transmitted target.
+
 Flags describe configured roles and applicable data/context requirements; they
 do not establish physical operation or guarantee entity availability. The
 unavailable-entity list covers external demand/state entities only.

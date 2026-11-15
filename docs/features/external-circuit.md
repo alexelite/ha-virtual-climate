@@ -36,7 +36,9 @@ A target supply entity is optional. Without one, demand can start and the
 controller can use its own local target. If one is configured, Virtual Climate
 writes it before demand and handles errors. Weather-curve calculation remains
 independent of target transmission; monitoring target achievement requires an
-actually transmitted target and a supply sensor.
+actually transmitted target and a supply sensor. The `supply_verification`
+capability flag covers only the sensor and operating condition; see
+[Diagnostics](../reference/diagnostics.md#global-entities).
 
 ## Timing and circulation paths
 

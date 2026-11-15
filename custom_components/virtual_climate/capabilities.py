@@ -27,6 +27,16 @@ def validate_circuit(config):
             raise ValueError("Invalid circuit timing: " + key)
 
 
+def pump_only_modes(config):
+    """Direct modes in which Virtual Climate commands the pump but no source."""
+    # Only a circuit without any configured source is pump-only. A heating-only
+    # circuit keeps cooling unsupported instead of circulating in cooling mode.
+    if (config.get("circuit_control", "direct") != "direct" or not config.get("circulation_pump_entity")
+            or config.get("heating_source_entity") or config.get("cooling_source_entity")):
+        return []
+    return ["HEAT", "COOL"]
+
+
 def circuit_capabilities(config, *, outdoor_valid=False, supply_valid=False, operating=False):
     external = config.get("circuit_control", "direct") == "external"
     supply = config.get("supply_control") or {}

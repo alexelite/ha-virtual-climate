@@ -393,6 +393,7 @@ class VirtualThermostat(ClimateEntity, RestoreEntity):
             "t_air_raw": self._t_air_raw,
             "t_floor": self._t_floor,
             "rh": self._rh,
+            "rh_sensor_configured": bool(self._zone_config().get(ZK_SENSOR_RH)),
             "dew_point": self._dew,
             "delta_air": delta,
             "actuator": {

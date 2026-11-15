@@ -129,6 +129,10 @@
     },
     "options": {
       "step": {
+        "confirm_pump_only": {
+          "title": "Pompă fără sursă de căldură sau răcire",
+          "description": "Nu este configurată nicio sursă de încălzire sau răcire, deci Virtual Climate va comanda doar pompa de circulație. Pompa pornește când o zonă cere căldură sau răcire și valva ei este deschisă, și se oprește cu post-funcționarea normală.\n\nSursa trebuie să producă singură apa pe tur. Virtual Climate nu o pornește, nu știe dacă funcționează și nu verifică dacă apa este caldă sau rece. Învățarea curbei de tur nu se folosește, deoarece sursa nu este comandată.\n\nTrimite pentru a salva setările."
+        },
         "init": {
           "title": "Opțiuni Climat Virtual",
           "description": "Configurați setările globale, editați zonele, înlocuiți configurația din JSON sau exportați configurația curentă.",

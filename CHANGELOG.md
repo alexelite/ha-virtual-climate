@@ -11,6 +11,20 @@ corresponds to that release; the guides on `main` describe the current source.
   controls, read-only supply diagnostics, and administrator supply settings.
 - Conditional weather-curve editor with a graph, review of learning resets and
   reload effects, and protection against overwriting newer configuration edits.
+- Panel **Zone settings** editor for one zone at a time (sensors, actuator,
+  supported modes, window contact, timings, floor limits), with the same review
+  and conflict protection.
+- Read-only **Saved configuration** in the panel's Diagnostics page.
+- Direct pump-only circuits: with a circulation pump and no heating or cooling
+  source configured, Virtual Climate now runs the pump on zone demand; the
+  source must operate independently. The options flow shows a notice before
+  saving such a configuration.
+
+### Changed
+
+- **Cooling safety:** a zone with a configured humidity sensor stops cooling
+  (block reason `rh_unavailable`) while the sensor or derived dew point is
+  unavailable. Zones without a humidity sensor are unchanged. See ADR 0006.
 
 ### Fixed
 
@@ -26,5 +40,7 @@ corresponds to that release; the guides on `main` describe the current source.
 - Clarified direct versus external circuit ownership and adaptive heating limitations.
 - Corrected UI help for floor protections and zone-update reload behavior; fixed repository links.
 - Removed installation-specific reports and procedures from the repository tree.
+- Documented the meaning of each `capabilities` flag; `supply_verification`
+  means the supply sensor is valid while operating, not that the target is verified.
 - Established documentation maintenance and contribution rules.
 
