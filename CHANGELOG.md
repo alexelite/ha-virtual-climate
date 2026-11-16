@@ -36,6 +36,11 @@ corresponds to that release; the guides on `main` describe the current source.
 
 ### Documentation
 
+- Operation now explains humidity and dew-point protection: the humidity alert
+  reduces cooling demand, the dew-point margin compares the floor (or room air
+  without a floor sensor) with the dew point, and the humidity fault has no
+  clearing hysteresis.
+
 - Reorganized English guides around setup, operation, optional features, and reference.
 - Clarified direct versus external circuit ownership and adaptive heating limitations.
 - Corrected UI help for floor protections and zone-update reload behavior; fixed repository links.

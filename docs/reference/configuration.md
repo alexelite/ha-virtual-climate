@@ -61,8 +61,9 @@ global configuration explicitly.
 | `packing_mode` | `simultaneous` | `simultaneous` or `staggered` slots |
 | `t_cycle_seconds` | 720 | Initial cycle length |
 | `t_cycle_min` / `t_cycle_max` | 360 / 1440 | Dynamic cycle bounds |
-| `rh_alert` / `rh_fault` | 60 / 70 | Cooling humidity thresholds, % |
-| `dp_safety_margin_c` | 2 | Cooling dew-point margin |
+| `rh_alert` | 60 | Cooling humidity, %, from which zone cooling demand is reduced linearly toward half at `rh_fault` |
+| `rh_fault` | 70 | Cooling humidity, %, at or above which the zone stops cooling; no clearing hysteresis |
+| `dp_safety_margin_c` | 2 | Cooling margin, °C, between the floor (or room air without a floor sensor) and the dew point; demand is reduced inside it and stopped at the dew point |
 | `instance_temperature_fallback` | `false` | Limited heating with entry-median room temperature |
 | `heating_control_strategy` | `legacy` | `legacy`, `observe`, or `adaptive` |
 | `thermal_parameters` | Profile defaults | Advanced thermal parameter object |

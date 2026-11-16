@@ -60,7 +60,8 @@ zone-hold settings described in [External circuit](features/external-circuit.md)
 Choose `simultaneous` packing to start eligible zone slots together, or
 `staggered` to offset them by demand rank. Cycle minimum and maximum bound the
 cycle length selected from measured-zone demand. Humidity thresholds and the
-dew-point margin apply during cooling.
+dew-point margin apply during cooling; the humidity alert already reduces
+cooling. See [Humidity and dew-point protection](operation.md#humidity-and-dew-point-protection).
 
 If a circulation pump is configured without any heating or cooling source,
 saving shows a notice before the change is stored: Virtual Climate will command

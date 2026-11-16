@@ -10,7 +10,7 @@ activation, and circuit state.
 | Demand exists but valve is off | Block reason, scheduled slot, staggered offset, minimum off time, and whether a minimum pulse fits |
 | Valve is on but source is off | Opening time, startup delays, minimum off time, target-write error, and circuit profile |
 | Valve stays on after its slot | `plant_flow_hold` and its reason: transfer or normal shutdown |
-| Cooling does not start | External control does not support cooling; check direct outputs, humidity, dew point, and floor protection. Block reason `rh_unavailable` means the configured humidity sensor is not reporting |
+| Cooling does not start | External control does not support cooling; check direct outputs, humidity, dew point, and floor protection. Block reason `rh_unavailable` means the configured humidity sensor is not reporting; `rh_fault` means humidity is at or above the fault threshold; `dew_guard_lockout` means the floor or room is at the dew point. See [Humidity and dew-point protection](operation.md#humidity-and-dew-point-protection) |
 | Floor sensor is absent | `no_floor_sensor` means no floor limit participates; configure a valid sensor if required |
 | Displayed temperature is smoother than the sensor | The zone's room-temperature filter; raw sensor entities are unchanged |
 | Supply learning does not progress | Learning mode, valid observations, boost, fallback, suspected faults, outdoor interval, and trial status |

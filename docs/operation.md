@@ -97,8 +97,8 @@ connection loss, and the heating-only restriction.
 ## Protection and reported state
 
 Window contacts, manual off, floor limits, and humidity/dew-point conditions can
-block a zone. Cooling is derated near the humidity alert threshold and blocked
-on humidity fault or an unsafe dew-point condition. If a zone has a humidity
+block a zone. See [Humidity and dew-point protection](#humidity-and-dew-point-protection)
+for how cooling is reduced and stopped. If a zone has a humidity
 sensor configured and it becomes unavailable, or no dew point can be derived,
 that zone stops cooling with block reason `rh_unavailable` until the value
 returns. A zone without a configured humidity sensor cools without humidity
@@ -107,6 +107,33 @@ protection. Heating does not depend on humidity. See
 cooling at `cool_min`. The other floor bounds are diagnostic conditions, not
 additional interlocks or a demand to maintain floor temperature. A missing floor
 sensor is reported and contributes no floor limit.
+
+### Humidity and dew-point protection
+
+These rules apply to each zone in cooling only. They use the zone's room
+humidity and the dew point derived from room temperature and humidity.
+
+- **Humidity alert.** From `rh_alert` up to `rh_fault`, the zone's cooling
+  demand is reduced linearly: full demand at `rh_alert`, approaching half demand
+  just below `rh_fault`. With the defaults of 60% and 70%, a zone at 65% receives
+  75% of its normal cooling demand. The alert threshold reduces cooling; it is
+  not only a notification.
+- **Humidity fault.** At or above `rh_fault`, the zone stops cooling with block
+  reason `rh_fault`. It resumes as soon as humidity is below `rh_fault` again.
+  No clearing hysteresis is currently applied, so humidity that hovers around
+  the threshold can stop and resume the zone repeatedly.
+- **Dew-point margin.** The protected surface is the floor temperature when a
+  valid floor sensor is configured, otherwise the room air temperature. The
+  supply water temperature is not used. When the surface is above the dew point
+  by less than `dp_safety_margin_c`, cooling demand is scaled by the remaining
+  distance divided by the margin. At or below the dew point, the zone stops with
+  block reason `dew_guard_lockout`.
+
+Without a floor sensor, the comparison uses room air, which is normally much
+warmer than a cooled floor. In that case the dew-point margin protects much less
+than its value suggests; configure a floor sensor in zones that cool, and choose
+cooling supply limits that stay above the expected dew point. Thresholds and
+defaults are listed in the [configuration reference](reference/configuration.md#global-fields).
 
 A command requests an output change. A reported switch `on` establishes software
 feedback, not mechanical valve position, water flow, combustion, or delivered
