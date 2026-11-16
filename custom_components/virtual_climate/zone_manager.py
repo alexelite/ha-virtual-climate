@@ -71,6 +71,7 @@ class ZoneManager:
         self._cycle_start = 0.0
         self._cycle_mode: Optional[str] = None
         self._cycle_length = int(self._options.get(CONF_T_CYCLE_SECONDS, DEFAULTS[CONF_T_CYCLE_SECONDS]))
+        self._rh_fault_latched: set[str] = set()
         self._slots: Dict[str, Dict[str, float]] = {}  # zone_id -> {start_offset, t_on}
         self._zone_last_on_at: Dict[str, float] = {}
         self._zone_last_off_at: Dict[str, float] = {}
@@ -594,8 +595,17 @@ class ZoneManager:
                 continue
 
             # RH fault interlock (COOL only)
+            # Latch the fault until humidity falls below rh_fault - rh_clear, so a
+            # value hovering around the threshold cannot start and stop the zone.
+            zid = z["zone_id"]
+            if co_mode != "COOL" or rh is None:
+                self._rh_fault_latched.discard(zid)
+            elif rh >= rh_fault:
+                self._rh_fault_latched.add(zid)
+            elif rh < rh_fault - rh_clear:
+                self._rh_fault_latched.discard(zid)
             rh_fault_active = False
-            if co_mode == "COOL" and rh is not None and rh >= rh_fault:
+            if zid in self._rh_fault_latched:
                 rh_fault_active = True
                 block_reasons.append("rh_fault")
                 z["last_block_reasons"] = block_reasons

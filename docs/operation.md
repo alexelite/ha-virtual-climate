@@ -119,9 +119,10 @@ humidity and the dew point derived from room temperature and humidity.
   75% of its normal cooling demand. The alert threshold reduces cooling; it is
   not only a notification.
 - **Humidity fault.** At or above `rh_fault`, the zone stops cooling with block
-  reason `rh_fault`. It resumes as soon as humidity is below `rh_fault` again.
-  No clearing hysteresis is currently applied, so humidity that hovers around
-  the threshold can stop and resume the zone repeatedly.
+  reason `rh_fault`. The block holds until humidity falls more than 5
+  percentage points below `rh_fault` (65% with the defaults), so humidity that
+  hovers around the threshold does not stop and restart the zone repeatedly.
+  The block also clears when cooling ends or the humidity value disappears.
 - **Dew-point margin.** The protected surface is the floor temperature when a
   valid floor sensor is configured, otherwise the room air temperature. The
   supply water temperature is not used. When the surface is above the dew point

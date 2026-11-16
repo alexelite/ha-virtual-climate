@@ -156,8 +156,8 @@ const FIELD_INFO = {
     en:["Humidity alert (%)", "Cooling only: from this humidity upwards the zone's cooling demand is reduced progressively, down to half at the fault threshold."],
     ro:["Alertă umiditate (%)", "Doar la răcire: de la această umiditate în sus, cererea de răcire a zonei se reduce treptat, până la jumătate la pragul de defect."]},
   rh_fault: {
-    en:["Humidity fault (%)", "Cooling only: at or above this humidity the zone stops cooling to avoid condensation, and resumes once humidity is below it again."],
-    ro:["Defect umiditate (%)", "Doar la răcire: la sau peste această umiditate zona oprește răcirea pentru a evita condensul și reia când umiditatea scade sub prag."]},
+    en:["Humidity fault (%)", "Cooling only: at or above this humidity the zone stops cooling to avoid condensation. It resumes only when humidity is more than 5 points below this threshold."],
+    ro:["Defect umiditate (%)", "Doar la răcire: la sau peste această umiditate zona oprește răcirea pentru a evita condensul. Reia doar când umiditatea scade cu mai mult de 5 puncte sub acest prag."]},
   dp_safety_margin_c: {
     en:["Dew-point safety margin (°C)", "Cooling only: when the floor (or, without a floor sensor, the room) temperature comes within this margin of the room dew point, cooling demand is reduced; at the dew point the zone stops. The dew point comes from room temperature and humidity."],
     ro:["Marjă siguranță punct de rouă (°C)", "Doar la răcire: când temperatura pardoselii (sau a camerei, fără senzor de pardoseală) se apropie de punctul de rouă la mai puțin decât această marjă, cererea de răcire se reduce; la punctul de rouă zona se oprește. Punctul de rouă se calculează din temperatura și umiditatea camerei."]},

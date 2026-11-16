@@ -28,6 +28,10 @@ corresponds to that release; the guides on `main` describe the current source.
 
 ### Fixed
 
+- A humidity fault now holds until humidity is more than 5 points below
+  `rh_fault`; previously the zone resumed cooling as soon as humidity dipped
+  below the threshold, which could cycle it repeatedly.
+
 - Exposed circuit profile, capabilities, reported state, external entity
   availability, and request timing basis as Plant state sensor attributes.
 - Panel and options-flow supply editors keep the 0–90 °C supply limits of
@@ -38,8 +42,7 @@ corresponds to that release; the guides on `main` describe the current source.
 
 - Operation now explains humidity and dew-point protection: the humidity alert
   reduces cooling demand, the dew-point margin compares the floor (or room air
-  without a floor sensor) with the dew point, and the humidity fault has no
-  clearing hysteresis.
+  without a floor sensor) with the dew point.
 
 - Reorganized English guides around setup, operation, optional features, and reference.
 - Clarified direct versus external circuit ownership and adaptive heating limitations.

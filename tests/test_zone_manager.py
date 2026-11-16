@@ -260,6 +260,21 @@ class ZoneManagerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(m._zones['zone_1']['last_block_reasons'], ['rh_unavailable'])
         self.assertEqual(h.states.get('switch.zone_1').state, 'off')
 
+    async def test_humidity_fault_clears_only_below_hysteresis(self):
+        cool = dict(co_mode='COOL', active_co_mode='COOL', delta_air=-1.5, t_air=25,
+                    rh_sensor_configured=True, rh=71, dew_point=10)
+        m, h, c = self.make(config={'test_mode': 'COOL'}, zones=[zone(**cool)])
+        await self.tick(m, h, c)
+        self.assertIn('rh_fault', m._zones['zone_1']['last_block_reasons'])
+        # 69% is below the fault threshold but inside the 5% clearing band.
+        m._zones['zone_1']['rh'] = 69
+        await self.tick(m, h, c, 1)
+        self.assertIn('rh_fault', m._zones['zone_1']['last_block_reasons'])
+        m._zones['zone_1']['rh'] = 64
+        await self.tick(m, h, c, 1)
+        self.assertNotIn('rh_fault', m._zones['zone_1']['last_block_reasons'])
+        self.assertGreater(m._zones['zone_1']['requested_p'], 0)
+
     async def test_cooling_without_configured_humidity_is_unchanged(self):
         m, h, c = self.make(config={'test_mode': 'COOL'}, zones=[zone(
             co_mode='COOL', active_co_mode='COOL', delta_air=-1.5, t_air=25, rh=None, dew_point=None)])
