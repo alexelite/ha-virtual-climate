@@ -31,7 +31,7 @@ const TEXT = {
     coolingHelp:"Cooling uses a constant target. Availability depends on circuit configuration.", fallbackHelp:"Used for constant heating and when outdoor data is invalid during weather compensation.",
     inactiveHelp:"The curve and learning settings are preserved while constant heating is selected.", requiredOutdoor:"Weather compensation requires an outdoor sensor.",
     zonesTab:"Zone settings", zoneEditor:"Zone settings", zoneHelp:"Edit one zone at a time. Changes stay here until you review and apply them.", zone:"Zone",
-    savedConfig:"Saved configuration", savedConfigHelp:"Every stored setting of this instance, read-only. Empty optional settings are omitted.", globalSettings:"Instance and circuit", setting:"Setting", value:"Value",
+    savedConfig:"Saved configuration", savedConfigHelp:"Every stored setting of this instance, read-only. Empty optional settings are omitted.", globalSettings:"Instance and circuit", setting:"Setting", value:"Value", moreInfo:"About this setting",
     name:"Name", support_mode:"Supported modes", HEAT:"Heating only", COOL:"Cooling only", BOTH:"Heating and cooling", temperature_filter_enabled:"Smooth room temperature",
     sensor_air:"Room temperature sensor", switch_actuator:"Valve / actuator switch", sensor_rh:"Humidity sensor", sensor_floor:"Floor temperature sensor", window_switch:"Window contact",
     open_s:"Valve opening time (s)", close_s:"Valve closing time (s)", zone_min_on_s:"Minimum on time (s)", zone_min_off_s:"Minimum off time (s)",
@@ -70,7 +70,7 @@ const TEXT = {
     coolingHelp:"Răcirea folosește o țintă constantă. Disponibilitatea depinde de configurația circuitului.", fallbackHelp:"Folosită pentru încălzirea constantă și când datele exterioare sunt invalide în modul curbă climatică.",
     inactiveHelp:"Curba și setările de învățare se păstrează când este selectată încălzirea constantă.", requiredOutdoor:"Curba climatică necesită un senzor exterior.",
     zonesTab:"Setări zone", zoneEditor:"Setări zone", zoneHelp:"Editezi câte o zonă. Modificările rămân aici până le verifici și le aplici.", zone:"Zonă",
-    savedConfig:"Configurația salvată", savedConfigHelp:"Toate setările salvate ale instanței, doar pentru consultare. Setările opționale goale nu sunt afișate.", globalSettings:"Instanță și circuit", setting:"Setare", value:"Valoare",
+    savedConfig:"Configurația salvată", savedConfigHelp:"Toate setările salvate ale instanței, doar pentru consultare. Setările opționale goale nu sunt afișate.", globalSettings:"Instanță și circuit", setting:"Setare", value:"Valoare", moreInfo:"Despre această setare",
     name:"Nume", support_mode:"Moduri permise", HEAT:"Doar încălzire", COOL:"Doar răcire", BOTH:"Încălzire și răcire", temperature_filter_enabled:"Netezește temperatura camerei",
     sensor_air:"Senzor temperatură cameră", switch_actuator:"Comutator valvă / actuator", sensor_rh:"Senzor umiditate", sensor_floor:"Senzor temperatură pardoseală", window_switch:"Contact fereastră",
     open_s:"Timp deschidere valvă (s)", close_s:"Timp închidere valvă (s)", zone_min_on_s:"Timp minim pornit (s)", zone_min_off_s:"Timp minim oprit (s)",
@@ -79,6 +79,175 @@ const TEXT = {
     rhHelp:"Cu senzor de umiditate configurat, zona nu răcește cât timp senzorul e indisponibil. Fără senzor, zona răcește fără protecție la umiditate.",
     zoneOther:"ID-ul zonei, profilul termic și parametrii termici rămân în Settings → Devices & services → Virtual Climate.", zoneSuccess:"Zona a fost salvată. Instanța se reîncarcă.",
   },
+};
+
+// Human labels and explanations for stored settings; slugs stay the storage keys.
+const FIELD_INFO = {
+  global_co_mode_entity: {
+    en:["Global mode helper", "Helper (input_select, select or legacy input_boolean) that sets the system mode: HEAT, COOL or OFF. OFF stops new cycles; running circuits still finish minimum run and post-run. Zones set to AUTO follow this mode."],
+    ro:["Helper mod global", "Helper-ul (input_select, select sau input_boolean vechi) care stabilește modul sistemului: HEAT, COOL sau OFF. OFF oprește ciclurile noi; circuitul în funcțiune își termină timpul minim și post-funcționarea. Zonele pe AUTO urmează acest mod."]},
+  circuit_control: {
+    en:["Circuit control", "Who commands the shared circuit. direct: Virtual Climate switches the pump, sources and changeover itself. external: it only sends a heating demand to another controller (circuit_demand_entity); the direct pump, source and changeover fields must then be empty. External control is heating-only."],
+    ro:["Control circuit", "Cine comandă circuitul comun. direct: Virtual Climate comută singur pompa, sursele și changeover-ul. external: trimite doar o cerere de încălzire către alt controler (circuit_demand_entity); câmpurile directe pentru pompă, surse și changeover trebuie să fie goale. Controlul extern este doar pentru încălzire."]},
+  heating_source_entity: {
+    en:["Heating source switch", "Direct profile: switch that requests heat from the boiler or heat pump. Started after the pump and its start delay, kept on at least the minimum run time. Without it (and without a cooling source) a configured pump runs alone and the source must work independently."],
+    ro:["Comutator sursă încălzire", "Profil direct: comutatorul care cere căldură de la centrală sau pompa de căldură. Pornește după pompă și întârzierea de pornire și rămâne pornit cel puțin timpul minim de funcționare. Fără el (și fără sursă de răcire), o pompă configurată funcționează singură, iar sursa trebuie să lucreze independent."]},
+  cooling_source_entity: {
+    en:["Cooling source switch", "Direct profile: switch that requests cooling. Without a cooling source or changeover, cooling is not offered on a circuit that has a heating source."],
+    ro:["Comutator sursă răcire", "Profil direct: comutatorul care cere răcire. Fără sursă de răcire sau changeover, răcirea nu este disponibilă pe un circuit care are sursă de încălzire."]},
+  circulation_pump_entity: {
+    en:["Circulation pump switch", "Direct profile: pump command. It starts only after a zone valve reports open and stops after the pump post-run, so water always has an open path."],
+    ro:["Comutator pompă circulație", "Profil direct: comanda pompei. Pornește doar după ce o valvă de zonă raportează deschis și se oprește după post-funcționare, astfel încât apa are mereu un traseu deschis."]},
+  changeover_entity: {
+    en:["Changeover switch", "Direct profile: tells a shared source which mode to run. off = heating, on = cooling. Switched before the source starts."],
+    ro:["Comutator changeover", "Profil direct: indică unei surse comune modul de lucru. off = încălzire, on = răcire. Se comută înainte de pornirea sursei."]},
+  circuit_demand_entity: {
+    en:["External circuit demand", "External profile: switch or input_boolean turned on when zones need heat. The external controller decides how to run pump and source."],
+    ro:["Cerere circuit extern", "Profil extern: switch sau input_boolean pornit când zonele au nevoie de căldură. Controlerul extern decide cum funcționează pompa și sursa."]},
+  circuit_state_entity: {
+    en:["Reported circuit state", "External profile, optional: sensor showing what the external controller reports. Diagnostic only; it does not shorten any timer."],
+    ro:["Stare raportată circuit", "Profil extern, opțional: senzor cu starea raportată de controlerul extern. Doar pentru diagnostic; nu scurtează nicio temporizare."]},
+  external_start_delay_seconds: {
+    en:["External demand delay (s)", "External profile: extra wait after zone valves open before demand is sent. Use it if the external controller must not start against closed valves."],
+    ro:["Întârziere cerere externă (s)", "Profil extern: așteptare suplimentară după deschiderea valvelor, înainte de trimiterea cererii. Util dacă controlerul extern nu trebuie să pornească pe valve închise."]},
+  external_post_run_seconds: {
+    en:["Zone hold after demand stops (s)", "External profile: valid zones stay open this long after demand is withdrawn. Must be at least as long as the external controller's own pump post-run, otherwise the pump may run against closed valves."],
+    ro:["Menținere zone după cerere (s)", "Profil extern: zonele valide rămân deschise atât timp după retragerea cererii. Trebuie să fie cel puțin cât post-funcționarea pompei controlerului extern, altfel pompa poate funcționa pe valve închise."]},
+  pump_start_delay_seconds: {
+    en:["Pump start delay (s)", "Direct profile: wait between a zone valve reporting open and starting the pump."],
+    ro:["Întârziere pornire pompă (s)", "Profil direct: așteptarea dintre deschiderea raportată a unei valve și pornirea pompei."]},
+  heating_source_start_delay_seconds: {
+    en:["Heating source start delay (s)", "Direct profile: wait after the pump starts before requesting heat."],
+    ro:["Întârziere pornire sursă încălzire (s)", "Profil direct: așteptarea după pornirea pompei, înainte de cererea de căldură."]},
+  cooling_source_start_delay_seconds: {
+    en:["Cooling source start delay (s)", "Direct profile: wait after the pump starts before requesting cooling."],
+    ro:["Întârziere pornire sursă răcire (s)", "Profil direct: așteptarea după pornirea pompei, înainte de cererea de răcire."]},
+  minimum_run_time_seconds: {
+    en:["Minimum run time (s)", "Once a source request (direct) or external demand starts, it stays on at least this long, even if demand disappears, as long as a zone path remains open. Protects equipment from short cycling."],
+    ro:["Timp minim de funcționare (s)", "Odată pornită cererea către sursă (direct) sau cererea externă, rămâne activă cel puțin atât, chiar dacă cererea dispare, cât timp există o zonă deschisă. Protejează echipamentul de porniri scurte."]},
+  pump_post_run_seconds: {
+    en:["Pump post-run (s)", "Direct profile: the pump keeps running this long after the source request stops, with zone valves held open, to remove residual heat or cold."],
+    ro:["Post-funcționare pompă (s)", "Profil direct: pompa mai funcționează atât după oprirea cererii către sursă, cu valvele ținute deschise, pentru a evacua căldura sau frigul rămas."]},
+  minimum_off_time_seconds: {
+    en:["Minimum off time (s)", "After the source request or external demand stops, it cannot restart before this time has passed."],
+    ro:["Timp minim oprit (s)", "După oprirea cererii către sursă sau a cererii externe, aceasta nu poate reporni înainte să treacă acest timp."]},
+  target_supply_temperature_entity: {
+    en:["Supply target output", "Writable number or input_number that receives the calculated supply temperature target. A local device regulates the actual water temperature. Required for weather compensation in the direct profile."],
+    ro:["Ieșire țintă tur", "number sau input_number în care se scrie ținta calculată a temperaturii de tur. Temperatura reală a apei o reglează un dispozitiv local. Obligatorie pentru curba climatică în profilul direct."]},
+  heating_supply_target: {
+    en:["Constant heating target (°C)", "Supply target for constant heating. With weather compensation it is the fallback when outdoor data is invalid."],
+    ro:["Țintă constantă încălzire (°C)", "Ținta de tur pentru încălzirea constantă. La curba climatică este valoarea de rezervă când datele exterioare sunt invalide."]},
+  cooling_supply_target: {
+    en:["Constant cooling target (°C)", "Supply target in cooling. Cooling uses a constant target only. Floor and dew-point protections still apply per zone."],
+    ro:["Țintă constantă răcire (°C)", "Ținta de tur la răcire. Răcirea folosește doar țintă constantă. Protecțiile de pardoseală și punct de rouă se aplică în continuare pe fiecare zonă."]},
+  packing_mode: {
+    en:["Zone scheduling", "simultaneous: zone pulses start together at the beginning of each cycle. staggered: zones are ranked by demand and their pulses are offset, spreading load on the circuit; offsets may overlap to keep minimum on times."],
+    ro:["Programarea zonelor", "simultaneous: impulsurile zonelor pornesc împreună la începutul fiecărui ciclu. staggered: zonele sunt ordonate după cerere și impulsurile lor sunt decalate, distribuind sarcina pe circuit; decalajele se pot suprapune pentru a respecta timpii minimi."]},
+  t_cycle_seconds: {
+    en:["Initial cycle length (s)", "Cycle length used at start-up, before the coordinator adapts it to demand within the minimum and maximum below. In each cycle a zone's valve is open for a share proportional to its demand."],
+    ro:["Durată inițială ciclu (s)", "Durata ciclului la pornire, înainte ca coordonatorul să o adapteze la cerere între minimul și maximul de mai jos. În fiecare ciclu, valva unei zone stă deschisă o fracțiune proporțională cu cererea ei."]},
+  t_cycle_min: {
+    en:["Minimum cycle length (s)", "Shortest cycle the coordinator may choose. Shorter cycles react faster but switch valves and source more often. Must leave room for valve opening time and zone minimum on time."],
+    ro:["Durată minimă ciclu (s)", "Cel mai scurt ciclu pe care îl poate alege coordonatorul. Ciclurile scurte reacționează mai repede, dar comută mai des valvele și sursa. Trebuie să încapă timpul de deschidere a valvei și timpul minim pornit al zonei."]},
+  t_cycle_max: {
+    en:["Maximum cycle length (s)", "Longest cycle the coordinator may choose. Longer cycles mean fewer starts but slower reaction to changing demand."],
+    ro:["Durată maximă ciclu (s)", "Cel mai lung ciclu pe care îl poate alege coordonatorul. Ciclurile lungi înseamnă mai puține porniri, dar reacție mai lentă la schimbarea cererii."]},
+  rh_alert: {
+    en:["Humidity alert (%)", "Cooling only: from this humidity upwards the zone's cooling demand is reduced progressively, down to half at the fault threshold."],
+    ro:["Alertă umiditate (%)", "Doar la răcire: de la această umiditate în sus, cererea de răcire a zonei se reduce treptat, până la jumătate la pragul de defect."]},
+  rh_fault: {
+    en:["Humidity fault (%)", "Cooling only: at or above this humidity the zone stops cooling to avoid condensation, and resumes once humidity is below it again."],
+    ro:["Defect umiditate (%)", "Doar la răcire: la sau peste această umiditate zona oprește răcirea pentru a evita condensul și reia când umiditatea scade sub prag."]},
+  dp_safety_margin_c: {
+    en:["Dew-point safety margin (°C)", "Cooling only: when the floor (or, without a floor sensor, the room) temperature comes within this margin of the room dew point, cooling demand is reduced; at the dew point the zone stops. The dew point comes from room temperature and humidity."],
+    ro:["Marjă siguranță punct de rouă (°C)", "Doar la răcire: când temperatura pardoselii (sau a camerei, fără senzor de pardoseală) se apropie de punctul de rouă la mai puțin decât această marjă, cererea de răcire se reduce; la punctul de rouă zona se oprește. Punctul de rouă se calculează din temperatura și umiditatea camerei."]},
+  instance_temperature_fallback: {
+    en:["Heat zones with missing sensors", "Opt-in. A zone whose room sensor is unavailable can keep heating using the median of the other zones' rooms, only while measured zones are requesting heat. Temporary measure while a sensor is repaired; never used for cooling."],
+    ro:["Încălzire zone fără senzor", "Opțional. O zonă cu senzorul de cameră indisponibil poate încălzi folosind mediana celorlalte camere, doar cât timp zonele măsurate cer căldură. Soluție temporară până se repară senzorul; nu se folosește la răcire."]},
+  heating_control_strategy: {
+    en:["Zone heating strategy", "How zone heating demand becomes valve pulses. legacy: proportional scheduling (default). observe: computes proposals and learns without changing commands. adaptive: experimental thermal-memory control. Independent of the supply-temperature strategy; cooling is unaffected."],
+    ro:["Strategie încălzire zone", "Cum se transformă cererea de căldură a zonelor în impulsuri de valvă. legacy: programare proporțională (implicit). observe: calculează propuneri și învață fără a schimba comenzile. adaptive: control experimental cu memorie termică. Independent de strategia temperaturii de tur; răcirea nu este afectată."]},
+  thermal_parameters: {
+    en:["Thermal parameters", "Advanced model assumptions used by observe and adaptive strategies (delays, gains, comfort limits). Zone values override instance values. Not measured equipment data."],
+    ro:["Parametri termici", "Ipoteze avansate de model folosite de strategiile observe și adaptive (întârzieri, câștiguri, limite de confort). Valorile zonei le suprascriu pe cele ale instanței. Nu sunt date măsurate ale echipamentului."]},
+  heating_strategy: {
+    en:["Heating supply strategy", "constant: fixed heating target. weather_compensated: target follows the outdoor curve; needs an outdoor sensor and, in the direct profile, a target output."],
+    ro:["Strategie tur încălzire", "constant: țintă fixă. weather_compensated: ținta urmează curba climatică; necesită senzor exterior și, în profilul direct, o ieșire pentru țintă."]},
+  cooling_strategy: {
+    en:["Cooling supply strategy", "Cooling supports only a constant target."],
+    ro:["Strategie tur răcire", "Răcirea acceptă doar țintă constantă."]},
+  outdoor_sensor: {
+    en:["Outdoor sensor", "Outdoor temperature used by weather compensation. If it becomes invalid, the constant heating target is used."],
+    ro:["Senzor exterior", "Temperatura exterioară folosită de curba climatică. Dacă devine invalidă, se folosește ținta constantă de încălzire."]},
+  supply_sensor: {
+    en:["Supply sensor", "Optional measured supply water temperature. Enables supply deviation monitoring and supply verification in diagnostics."],
+    ro:["Senzor tur", "Opțional, temperatura măsurată a apei pe tur. Permite monitorizarea abaterii turului și verificarea turului în diagnostic."]},
+  return_sensor: {
+    en:["Return sensor", "Optional return water temperature. Enables the supply-return difference alert."],
+    ro:["Senzor retur", "Opțional, temperatura apei pe retur. Permite alerta pentru diferența tur-retur."]},
+  outdoor_min: {
+    en:["Curve outdoor minimum (°C)", "Coldest end of the curve interval. Outside the interval the end segment is extrapolated and learning pauses. Changing it resets all curve learning."],
+    ro:["Exterior minim curbă (°C)", "Capătul rece al intervalului curbei. În afara intervalului se extrapolează ultimul segment și învățarea se oprește. Modificarea resetează toată învățarea curbei."]},
+  outdoor_max: {
+    en:["Curve outdoor maximum (°C)", "Warmest end of the curve interval. Changing it resets all curve learning."],
+    ro:["Exterior maxim curbă (°C)", "Capătul cald al intervalului curbei. Modificarea resetează toată învățarea curbei."]},
+  supply_points: {
+    en:["Curve supply points (°C)", "2–50 supply temperatures evenly spaced across the outdoor interval, coldest first. They must not rise as outdoor temperature rises. Changing a point resets its learning."],
+    ro:["Puncte tur curbă (°C)", "2–50 temperaturi de tur distribuite egal pe intervalul exterior, de la rece spre cald. Nu pot crește odată cu temperatura exterioară. Modificarea unui punct îi resetează învățarea."]},
+  heating_min: {en:["Minimum heating supply (°C)", "Lower limit for any heating target, including learning and boost."], ro:["Tur minim încălzire (°C)", "Limita inferioară pentru orice țintă de încălzire, inclusiv învățare și boost."]},
+  heating_max: {en:["Maximum heating supply (°C)", "Upper limit for any heating target, including learning and boost. Set it to what the floor or emitters tolerate."], ro:["Tur maxim încălzire (°C)", "Limita superioară pentru orice țintă de încălzire, inclusiv învățare și boost. Setează valoarea suportată de pardoseală sau corpuri."]},
+  cooling_min: {en:["Minimum cooling supply (°C)", "Lower limit for the cooling target. Keep it above the risk of condensation."], ro:["Tur minim răcire (°C)", "Limita inferioară pentru ținta de răcire. Păstreaz-o peste riscul de condens."]},
+  cooling_max: {en:["Maximum cooling supply (°C)", "Upper limit for the cooling target."], ro:["Tur maxim răcire (°C)", "Limita superioară pentru ținta de răcire."]},
+  learning_mode: {
+    en:["Curve learning", "off: base curve only. learn: tests small corrections per curve point and keeps those that improve comfort. frozen: applies already validated corrections without new trials. Requires a circuit whose requests Virtual Climate controls."],
+    ro:["Învățarea curbei", "off: doar curba de bază. learn: testează corecții mici pe fiecare punct și le păstrează pe cele care îmbunătățesc confortul. frozen: aplică doar corecțiile deja validate, fără probe noi. Necesită un circuit ale cărui cereri sunt controlate de Virtual Climate."]},
+  boost_enabled: {
+    en:["Recovery boost", "Weather compensation only: temporarily raises the target when rooms lag behind, within boost limits and supply limits."],
+    ro:["Boost de recuperare", "Doar la curba climatică: ridică temporar ținta când camerele rămân în urmă, în limitele de boost și de tur."]},
+  sample_seconds: {en:["Observation interval (s)", "How often learning and monitoring sample data; at least 60."], ro:["Interval observare (s)", "Cât de des eșantionează învățarea și monitorizarea; minimum 60."]},
+  max_gap_seconds: {en:["Maximum data gap (s)", "A gap longer than this invalidates the current observation or trial."], ro:["Pauză maximă date (s)", "O pauză mai lungă invalidează observația sau proba curentă."]},
+  sensor_max_age_seconds: {en:["Maximum sensor report age (s)", "Sensor values older than this are treated as invalid. 0 disables the check."], ro:["Vechime maximă senzor (s)", "Valorile mai vechi sunt tratate ca invalide. 0 dezactivează verificarea."]},
+  trend_seconds: {en:["Trend window (s)", "Window for room temperature trends; needs at least 90% data coverage."], ro:["Fereastră tendință (s)", "Fereastra pentru tendința temperaturii; necesită acoperire de cel puțin 90%."]},
+  minimum_active_fraction: {en:["Minimum activity fraction", "Minimum share of time zones must be active for an observation to count."], ro:["Fracție minimă de activitate", "Fracțiunea minimă de timp activ al zonelor pentru ca o observație să conteze."]},
+  learning_seconds: {en:["Observation before a trial (s)", "Valid time accumulated before a learning trial may start."], ro:["Observare înainte de probă (s)", "Timp valid acumulat înainte de a porni o probă de învățare."]},
+  probe_seconds: {en:["Trial duration (s)", "Valid time accumulated during a learning trial before it is judged."], ro:["Durată probă (s)", "Timp valid acumulat în timpul unei probe înainte de evaluare."]},
+  learning_step: {en:["Trial step (°C)", "Maximum change tested in one learning trial."], ro:["Pas probă (°C)", "Modificarea maximă testată într-o probă de învățare."]},
+  correction_limit: {en:["Correction limit (°C)", "Maximum learned correction for any curve point."], ro:["Limită corecție (°C)", "Corecția maximă învățată pentru un punct al curbei."]},
+  comfort_tolerance: {en:["Comfort tolerance (°C)", "Room deficit tolerated before learning or boost considers comfort degraded."], ro:["Toleranță confort (°C)", "Deficitul de temperatură tolerat înainte ca învățarea sau boostul să considere confortul degradat."]},
+  comfort_persistence_seconds: {en:["Comfort degradation time (s)", "Persistent degradation for this long rejects a trial early."], ro:["Durată degradare confort (s)", "O degradare persistentă atât timp respinge proba mai devreme."]},
+  minimum_learning_improvement: {en:["Minimum learning improvement (°C)", "Mean improvement required to keep an upward trial."], ro:["Îmbunătățire minimă învățare (°C)", "Îmbunătățirea medie necesară pentru a păstra o probă în sus."]},
+  probe_outdoor_tolerance: {en:["Trial outdoor tolerance (°C)", "Outdoor change that interrupts a running trial."], ro:["Toleranță exterior probă (°C)", "Variația exterioară care întrerupe o probă în curs."]},
+  boost_deficit: {en:["Boost threshold (°C)", "Room deficit above which recovery boost may start."], ro:["Prag boost (°C)", "Deficitul peste care poate porni boostul de recuperare."]},
+  boost_gain: {en:["Boost gain", "Boost per degree of deficit, reduced while rooms recover."], ro:["Câștig boost", "Boost per grad de deficit, redus cât timp camerele își revin."]},
+  boost_max: {en:["Maximum boost (°C)", "Largest boost, still within supply limits."], ro:["Boost maxim (°C)", "Boostul maxim, tot în limitele turului."]},
+  boost_rate_per_hour: {en:["Boost rate (°C/h)", "Maximum change of the boost per hour."], ro:["Rată boost (°C/h)", "Variația maximă a boostului pe oră."]},
+  minimum_recovery_rate: {en:["Reference recovery rate (°C/h)", "Room warming rate considered adequate recovery."], ro:["Rată de recuperare de referință (°C/h)", "Ritmul de încălzire a camerei considerat recuperare adecvată."]},
+  fault_seconds: {en:["Insufficient response window (s)", "Persistent poor room response for this long is reported as a fault."], ro:["Fereastră răspuns insuficient (s)", "Un răspuns slab persistent atât timp este raportat ca defect."]},
+  recovery_seconds: {en:["Recovery period (s)", "Acceptable response needed for this long to clear the fault."], ro:["Perioadă recuperare (s)", "Răspuns acceptabil necesar atât timp pentru a anula defectul."]},
+  supply_tolerance: {en:["Supply deviation alert (°C)", "Persistent mean difference between target and measured supply that raises an alert. Needs a supply sensor."], ro:["Alertă abatere tur (°C)", "Diferența medie persistentă între țintă și turul măsurat care generează alertă. Necesită senzor de tur."]},
+  delta_t_alert: {en:["Supply-return difference alert (°C)", "Persistent mean supply-return difference that raises an alert. Needs supply and return sensors."], ro:["Alertă diferență tur-retur (°C)", "Diferența medie persistentă tur-retur care generează alertă. Necesită senzori de tur și retur."]},
+  write_interval_seconds: {en:["Minimum write interval (s)", "Minimum time between writes or retries to the target output."], ro:["Interval minim scriere (s)", "Timpul minim între scrieri sau reîncercări către ieșirea țintă."]},
+  write_delta: {en:["Minimum write change (°C)", "Smaller target changes are not written, to avoid flooding the device."], ro:["Variație minimă scriere (°C)", "Schimbările mai mici nu se scriu, pentru a nu încărca dispozitivul."]},
+  write_refresh_seconds: {en:["Target refresh (s)", "An unchanged target is re-written this often."], ro:["Reîmprospătare țintă (s)", "O țintă neschimbată se rescrie la acest interval."]},
+  id: {en:["Zone ID", "Permanent identifier used in entity IDs, actions and import. Cannot be changed here."], ro:["ID zonă", "Identificator permanent folosit în ID-urile entităților, acțiuni și import. Nu se poate schimba aici."]},
+  name: {en:["Zone name", "Display name of the zone and its thermostat."], ro:["Nume zonă", "Numele afișat al zonei și al termostatului ei."]},
+  support_mode: {en:["Supported modes", "Modes this zone takes part in: HEAT, COOL or BOTH. A zone outside the active global mode stays closed."], ro:["Moduri permise", "Modurile în care participă zona: HEAT, COOL sau BOTH. O zonă care nu suportă modul global activ rămâne închisă."]},
+  temperature_filter_enabled: {en:["Smooth room temperature", "Averages the room reading over about 3 minutes to ignore sensor noise. Floor and dew-point checks use raw values."], ro:["Netezire temperatură cameră", "Mediază citirea camerei pe circa 3 minute pentru a ignora zgomotul senzorului. Verificările de pardoseală și punct de rouă folosesc valorile brute."]},
+  sensor_air: {en:["Room temperature sensor", "Main input for zone demand. If unavailable, the zone stops unless the missing-sensor heating fallback is enabled."], ro:["Senzor temperatură cameră", "Intrarea principală pentru cererea zonei. Dacă e indisponibil, zona se oprește, cu excepția cazului în care încălzirea fără senzor este activată."]},
+  sensor_rh: {en:["Humidity sensor", "Used in cooling for humidity thresholds and dew point. If configured and unavailable, the zone stops cooling. Not used in heating."], ro:["Senzor umiditate", "Folosit la răcire pentru pragurile de umiditate și punctul de rouă. Dacă e configurat și indisponibil, zona oprește răcirea. Nu se folosește la încălzire."]},
+  sensor_floor: {en:["Floor temperature sensor", "Optional. Required for floor limits; in cooling it is the surface compared with the dew point."], ro:["Senzor temperatură pardoseală", "Opțional. Necesar pentru limitele de pardoseală; la răcire este suprafața comparată cu punctul de rouă."]},
+  switch_actuator: {en:["Valve / actuator switch", "Switch or group that opens the zone valve. Its reported state drives pump start and timing; it does not confirm real water flow."], ro:["Comutator valvă / actuator", "Comutatorul sau grupul care deschide valva zonei. Starea raportată condiționează pornirea pompei și temporizările; nu confirmă debitul real."]},
+  window_switch: {en:["Window contact", "Optional. While open, the zone stops heating or cooling."], ro:["Contact fereastră", "Opțional. Cât timp e deschis, zona nu încălzește și nu răcește."]},
+  open_s: {en:["Valve opening time (s)", "Time the actuator needs to open fully; the circuit waits for it before starting."], ro:["Timp deschidere valvă (s)", "Timpul necesar actuatorului ca să se deschidă complet; circuitul îl așteaptă înainte de pornire."]},
+  close_s: {en:["Valve closing time (s)", "Time the actuator needs to close fully; included in zone timing."], ro:["Timp închidere valvă (s)", "Timpul necesar actuatorului ca să se închidă complet; inclus în temporizările zonei."]},
+  zone_min_on_s: {en:["Zone minimum on time (s)", "Shortest useful valve pulse. Smaller demand is deferred rather than sent as a too-short pulse."], ro:["Timp minim pornit zonă (s)", "Cel mai scurt impuls util al valvei. O cerere mai mică este amânată, nu trimisă ca impuls prea scurt."]},
+  zone_min_off_s: {en:["Zone minimum off time (s)", "Minimum rest between two valve pulses of the zone."], ro:["Timp minim oprit zonă (s)", "Pauza minimă între două impulsuri ale valvei zonei."]},
+  floor_limits: {en:["Floor limits (°C)", "heat_max stops heating and cool_min stops cooling when reached. heat_min and cool_max are diagnostic only. Requires a floor sensor; never replaces the room setpoint."], ro:["Limite pardoseală (°C)", "heat_max oprește încălzirea, iar cool_min oprește răcirea când sunt atinse. heat_min și cool_max sunt doar pentru diagnostic. Necesită senzor de pardoseală; nu înlocuiește temperatura dorită a camerei."]},
+  thermal_profile: {en:["Thermal profile", "underfloor or radiator: default thermal model assumptions for observe and adaptive strategies."], ro:["Profil termic", "underfloor sau radiator: ipotezele implicite ale modelului termic pentru strategiile observe și adaptive."]},
+};
+const VALUE_LABELS = {
+  en:{simultaneous:"Simultaneous", staggered:"Staggered", legacy:"Legacy (proportional)", observe:"Observe only", adaptive:"Adaptive", underfloor:"Underfloor", radiator:"Radiator", learn:"Learn and apply", frozen:"Validated corrections only", off:"Off", constant:"Constant", weather_compensated:"Weather compensation", direct:"Direct", external:"External", HEAT:"Heating only", COOL:"Cooling only", BOTH:"Heating and cooling"},
+  ro:{simultaneous:"Simultan", staggered:"Decalat", legacy:"Clasic (proporțional)", observe:"Doar observare", adaptive:"Adaptiv", underfloor:"Pardoseală", radiator:"Radiator", learn:"Învață și aplică", frozen:"Doar corecții validate", off:"Oprit", constant:"Constant", weather_compensated:"Curbă climatică", direct:"Direct", external:"Extern", HEAT:"Doar încălzire", COOL:"Doar răcire", BOTH:"Încălzire și răcire"},
 };
 
 class VirtualClimatePanel extends HTMLElement {
@@ -91,7 +260,7 @@ class VirtualClimatePanel extends HTMLElement {
     this._onPop = () => this._readRoute();
     this._onUnload = (event) => { if (this._dirty()) { event.preventDefault(); event.returnValue = ""; } };
   }
-  t(key) { return TEXT[this._hass?.language?.startsWith("ro") ? "ro" : "en"][key] || key; }
+  t(key) { return TEXT[this._lang()][key] || key; }
   set hass(value) {
     const languageChanged = this._hass && this._hass.language !== value.language;
     this._hass = value;
@@ -247,11 +416,19 @@ class VirtualClimatePanel extends HTMLElement {
     if (typeof value === "boolean") return value ? "✓" : "—";
     if (Array.isArray(value)) return value.map((item) => this._format(item)).join(", ");
     if (typeof value === "object") return Object.entries(value).map(([key, item]) => `${key}: ${this._format(item)}`).join(" · ");
-    return String(value);
+    return VALUE_LABELS[this._lang()][value] ?? String(value);
   }
-  _rows(object) {
+  _lang() { return this._hass?.language?.startsWith("ro") ? "ro" : "en"; }
+  _label(scope, key) {
+    const info = FIELD_INFO[key]?.[this._lang()];
+    if (!info) return `<code>${escapeHTML(key)}</code>`;
+    const id = `info-${scope}-${key}`.replace(/[^a-zA-Z0-9_-]/g, "_");
+    return `<span class="field-label">${escapeHTML(info[0])}<button type="button" class="info" popovertarget="${id}" aria-label="${escapeHTML(this.t("moreInfo"))}: ${escapeHTML(info[0])}">i</button></span>
+      <div popover id="${id}" class="info-pop"><strong>${escapeHTML(info[0])}</strong><p>${escapeHTML(info[1])}</p><code>${escapeHTML(key)}</code></div>`;
+  }
+  _rows(object, scope = "global") {
     return Object.entries(object).filter(([, value]) => value !== null && value !== undefined && value !== "")
-      .map(([key, value]) => `<tr><td><code>${escapeHTML(key)}</code></td><td>${escapeHTML(this._format(value))}</td></tr>`).join("");
+      .map(([key, value]) => `<tr><td>${this._label(scope, key)}</td><td>${escapeHTML(this._format(value))}</td></tr>`).join("");
   }
   _savedConfigView() {
     if (!this._config) return `<section class="card"><h2>${this.t("savedConfig")}</h2><p>${this.t("loading")}</p></section>`;
@@ -259,8 +436,8 @@ class VirtualClimatePanel extends HTMLElement {
     const head = `<thead><tr><th>${this.t("setting")}</th><th>${this.t("value")}</th></tr></thead>`;
     return `<section class="card"><h2>${this.t("savedConfig")}</h2><p>${this.t("savedConfigHelp")}</p>
       <details open><summary>${this.t("globalSettings")}</summary><div class="table-scroll"><table>${head}<tbody>${this._rows(global)}</tbody></table></div></details>
-      <details><summary>${this.t("supply")}</summary><div class="table-scroll"><table>${head}<tbody>${this._rows(supply || {})}</tbody></table></div></details>
-      ${this._config.config.zones.map((zone) => `<details><summary>${this.t("zone")}: ${escapeHTML(zone.name || zone.id)}</summary><div class="table-scroll"><table>${head}<tbody>${this._rows(zone)}</tbody></table></div></details>`).join("")}</section>`;
+      <details><summary>${this.t("supply")}</summary><div class="table-scroll"><table>${head}<tbody>${this._rows(supply || {}, "supply")}</tbody></table></div></details>
+      ${this._config.config.zones.map((zone) => `<details><summary>${this.t("zone")}: ${escapeHTML(zone.name || zone.id)}</summary><div class="table-scroll"><table>${head}<tbody>${this._rows(zone, zone.id)}</tbody></table></div></details>`).join("")}</section>`;
   }
   _number(key, min, max, step = "any") {
     return `<label>${this.t(key)}<input name="${key}" type="number" min="${min}" max="${max}" step="${step}" required value="${escapeHTML(this._draft[key])}"></label>`;
@@ -486,6 +663,7 @@ const STYLES = `
   main{max-width:1320px;margin:auto;padding:32px}.page-heading{display:flex;justify-content:space-between;align-items:center;margin:4px 0 26px;gap:16px}.eyebrow{text-transform:uppercase;letter-spacing:.09em;font-size:11px;font-weight:700;color:var(--accent);margin:0 0 8px}h1{font-size:28px;line-height:1.25;letter-spacing:-.6px;margin:0 0 10px;font-weight:600}h2{font-size:18px;margin:0 0 18px;font-weight:600}h3{font-size:16px;margin:0 0 20px}p{line-height:1.6;margin:8px 0 18px;color:var(--secondary-text-color,#63717b)}.card{background:var(--card-background-color,#fff);border:1px solid var(--divider-color,#e5e7eb);border-radius:14px;padding:24px;margin-bottom:20px}.metrics{display:flex;flex-wrap:wrap;gap:24px 40px}.metric{display:flex;flex-direction:column;gap:10px;min-width:130px}.metric span{font-size:12px;color:var(--secondary-text-color,#63717b)}.metric strong{font-size:21px;font-weight:500}.zone-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}.zone{margin:0}.room-reading{display:flex;align-items:baseline;gap:12px;margin-bottom:24px}.room-reading strong{font-size:30px}.room-reading span{font-size:11px;color:var(--secondary-text-color,#63717b)}.section-title{margin:30px 0 18px}.zone-status{font-size:12px;margin:12px 0 0}.settings-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,1fr);gap:24px;align-items:start}aside{position:sticky;top:20px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.fields label{min-width:0}label{display:flex;flex-direction:column;gap:8px;font-size:13px;font-weight:500;margin-bottom:18px}input,select{font:inherit;color:inherit;background:var(--card-background-color,#fff);border:1px solid var(--divider-color,#cbd1d6);border-radius:8px;padding:12px;min-width:0;width:100%;min-height:44px}input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}input:invalid{border-color:var(--error-color,#db4437)}.check{display:flex;flex-direction:row;align-items:center;gap:10px}.check input{width:18px;min-height:18px}fieldset{border:0;padding:0;margin:0;min-width:0}.hint,.footnote{font-size:12px;color:var(--secondary-text-color,#63717b)}.hint{margin:0 0 20px}.footnote{margin:24px 0}.badge{font-size:12px;background:var(--secondary-background-color,#eef2f5);padding:8px 12px;border-radius:30px;white-space:nowrap}[hidden]{display:none!important}button{font:inherit;font-weight:500;padding:12px 18px;border:1px solid var(--divider-color,#cbd1d6);border-radius:8px;cursor:pointer;background:var(--card-background-color,#fff);color:inherit;min-height:44px}button.primary{background:var(--accent);border-color:var(--accent);color:var(--text-primary-color,#fff)}button:disabled{opacity:.5;cursor:wait}.actions{display:flex;justify-content:flex-end;gap:12px;padding:8px 0 20px}.alert{padding:16px;border-radius:8px;background:var(--secondary-background-color,#eef2f5);line-height:1.6;margin-bottom:20px}.alert.error{border-left:4px solid var(--error-color,#db4437)}.alert.success{border-left:4px solid var(--success-color,#43a047)}.alert button{margin-left:12px}.review-card{border:2px solid var(--accent)}.table-scroll{overflow:auto;margin-bottom:20px}table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}td,th{padding:10px 8px;border-bottom:1px solid var(--divider-color,#e5e7eb);max-width:260px;overflow-wrap:anywhere}th{color:var(--secondary-text-color,#63717b);font-weight:500}td input{max-width:120px}svg{display:block;width:100%;height:auto;overflow:visible}svg text{fill:var(--secondary-text-color,#63717b);font-size:11px}svg path{fill:none;stroke-width:3}.gridline{stroke:var(--divider-color,#e5e7eb)}.saved-curve{stroke:var(--secondary-text-color,#63717b);stroke-dasharray:6 5}.draft-curve{stroke:var(--accent)}svg circle{fill:var(--card-background-color,#fff);stroke:var(--accent);stroke-width:2}details{border-top:1px solid var(--divider-color,#e5e7eb);padding:12px 0}summary{cursor:pointer;font-weight:500;padding:4px 0}details table{margin-top:12px}code{font-size:12px}.zone-picker{max-width:420px}.legend{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--secondary-text-color,#63717b)}.saved-line,.draft-line{width:25px;border-top:3px solid var(--accent)}.saved-line{border-top:3px dashed var(--secondary-text-color,#63717b)}.draft-line{margin-left:18px}
   @media(max-width:850px){main{padding:20px}.settings-grid{grid-template-columns:1fr}aside{position:static;grid-row:1}.preview-card{padding:18px}.zone-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}header,nav{padding-left:16px;padding-right:16px}.page-heading{align-items:flex-start}h1{font-size:24px}.badge{white-space:normal}.instance{font-size:0}.instance select{font-size:14px;min-width:130px;max-width:210px}}
   @media(max-width:480px){header{gap:8px}header b{font-size:17px}main{padding:16px}.card{padding:18px}.fields{grid-template-columns:1fr;gap:0}.metrics{gap:22px}.metric{min-width:110px}.metric strong{font-size:18px}nav{gap:0}nav button{padding:16px 12px}.actions{flex-direction:column}.instance select{max-width:150px}.page-heading{display:block}.badge{display:inline-block;margin-top:10px}}
+.field-label{display:inline-flex;align-items:center;gap:6px}.info{width:18px;height:18px;min-width:18px;padding:0;border-radius:50%;border:1px solid var(--secondary-text-color);background:none;color:var(--secondary-text-color);font:italic 600 11px/1 serif;cursor:pointer}.info:hover,.info:focus-visible{color:var(--primary-color);border-color:var(--primary-color)}.info-pop{max-width:min(440px,90vw);padding:16px 18px;border:1px solid var(--divider-color);border-radius:12px;background:var(--card-background-color,#fff);color:var(--primary-text-color);box-shadow:0 8px 28px rgba(0,0,0,.25);line-height:1.45}.info-pop::backdrop{background:rgba(0,0,0,.15)}.info-pop p{margin:8px 0}.info-pop code{color:var(--secondary-text-color);font-size:12px}
 `;
 
 customElements.define("virtual-climate-panel", VirtualClimatePanel);
